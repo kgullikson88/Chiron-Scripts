@@ -26,10 +26,12 @@ if __name__ == "__main__":
     for i, order in enumerate(orders[:-1]):
       #Convert to nanometers
       order.x *= units.Angstrom.to(units.nm)
+      plt.plot(order.x, order.y)
       
       #Blaze correction
       if blazecorrect:
         blaze = FittingUtilities.Continuum(order.x-order.x.mean(), order.y, fitorder=9, lowreject=1.5, highreject=5)
+        #plt.plot(order.x, blaze)
         #plt.figure(1)
         #plt.plot(order.x, order.y)
         #plt.plot(order.x, blaze)
@@ -45,7 +47,9 @@ if __name__ == "__main__":
                            "continuum": order.cont,
                            "error": order.err}
       column_list.append(columns)
-    #plt.show()
+    plt.xlabel("Wavelength (nm)")
+    plt.ylabel("Flux (counts)")
+    plt.show()
     FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
 
 

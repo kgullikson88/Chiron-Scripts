@@ -108,7 +108,7 @@ if __name__ == "__main__":
         fitter.resolution_fit_mode = "gauss"
         model = fitter.GenerateModel(fitpars, LineList)
         primary = model.copy()
-      elif model_amplitude >= 0.01 and model_amplitude < 0.1:
+      elif model_amplitude >= 0.01 and model_amplitude < 1:
         logfile.write("Fitting order %i with guassian line profiles\n" %(i+start)) 
         print "Fitting line profiles with gaussian profile"
 	try:
