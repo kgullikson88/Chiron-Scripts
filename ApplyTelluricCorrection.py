@@ -30,6 +30,10 @@ def Correct(original, corrected, offset=None, get_primary=False):
   #Read in the data and model
   original_orders = FitsUtils.MakeXYpoints(original, extensions=True, x="wavelength", y="flux", errors="error", cont="continuum")
   corrected_orders, corrected_headers = ReadCorrectedFile(corrected)
+  for order, model in zip(original_orders, corrected_orders):
+    plt.plot(order.x, order.y/order.cont, 'k-')
+    plt.plot(model.x, model.y, 'r-')
+  plt.show()
   if get_primary:
     primary_orders = ReadCorrectedFile(corrected, yaxis="primary")[0]
   if offset == None:

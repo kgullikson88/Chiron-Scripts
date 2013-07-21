@@ -13,6 +13,7 @@ import time
 import os
 import subprocess
 import pyfits
+import FittingUtilities
 
 
 class LineFitter:
@@ -55,21 +56,34 @@ class LineFitter:
     start = 0
     print "There are %i orders." %len(self.orders)
     for i, order in enumerate(self.orders[start:]):
+      #Set up figure
       self.fig = plt.figure(1, figsize=(11,10))
       plt.title("Order # %i" %(i+start+1))
       plotgrid = gridspec.GridSpec(2,1)
       self.mainaxis = plt.subplot(plotgrid[0])
       self.fitaxis = plt.subplot(plotgrid[1])
       cid = self.fig.canvas.mpl_connect('key_press_event', self.keypress)
+
+      #Look for any bad spikes near the beginning or end of the order
+      median = numpy.mean(order.y)
+      std = numpy.std(order.y)
+      length = 30
+      badindices = numpy.where(numpy.abs(order.y[:length]-median)/std > 5)[0]
+      order.y[badindices] = order.cont[badindices]
+      badindices = numpy.where(numpy.abs(order.y[-length:]-median)/std > 5)[0]
+      order.y[-length+badindices] = order.cont[-length+badindices]
       self.current_order = order.copy()
+      
       left = numpy.searchsorted(self.model.x, order.x[0]-10.0)
       right = numpy.searchsorted(self.model.x, order.x[-1]+10.0)
       current_model = DataStructures.xypoint(x=self.model.x[left:right], y=self.model.y[left:right])
       current_model = MakeModel.ReduceResolution(current_model, 60000)
       self.current_model = MakeModel.RebinData(current_model, order.x)
+
+      
       offset = self.CCImprove(self.current_order, self.current_model)
       self.current_model.x -= offset
-      self.current_model.y *= 0.8
+      #self.current_model.y *= 0.8
 
       self.PlotArrays(((order.x, order.y), (self.current_model.x, (self.current_model.y)*self.current_order.cont)), self.mainaxis, legend=False)
       plt.show()
@@ -236,7 +250,7 @@ class LineFitter:
     
     
   
-  def ConvolveSmooth(self, numiters=10, lowreject=2, highreject=3):
+  def ConvolveSmooth_Hanning(self, numiters=10, lowreject=2, highreject=3):
     done = False
     data = self.smoothing_data.copy()
     #data.y /= data.cont
@@ -248,6 +262,34 @@ class LineFitter:
       done = True
       s = numpy.r_[data.y[self.window_size/2:0:-1], data.y, data.y[-1:-self.window_size/2:-1]]
       y = numpy.convolve(window/window.sum(), s, mode='valid')
+      
+      reduced = data.y/y
+      sigma = numpy.std(reduced)
+      mean = numpy.mean(reduced)
+      badindices = numpy.where(numpy.logical_or((reduced - mean)/sigma < -lowreject, (reduced - mean)/sigma > highreject))[0]
+      if badindices.size > 0:
+        done = False
+        data.y[badindices] = y[badindices]
+    
+    return DataStructures.xypoint(x=self.smoothing_data.x, y=y/self.smoothing_data.cont)
+
+  
+    
+  
+  def ConvolveSmooth(self, numiters=10, lowreject=2, highreject=3):
+    done = False
+    data = self.smoothing_data.copy()
+    #data.y /= data.cont
+    iterations = 0
+    if self.window_size % 2 == 0:
+      self.window_size += 1
+    
+    while not done and iterations < numiters:
+      iterations += 1
+      done = True
+      y = FittingUtilities.savitzky_golay(data.y, self.window_size, 5)
+      #s = numpy.r_[data.y[self.window_size/2:0:-1], data.y, data.y[-1:-self.window_size/2:-1]]
+      #y = numpy.convolve(window/window.sum(), s, mode='valid')
       
       reduced = data.y/y
       sigma = numpy.std(reduced)
@@ -325,8 +367,9 @@ class LineFitter:
       hdulist[extension] = tablehdu
     else:
       hdulist.append(tablehdu)
-    hdulist.flush(output_verify='warn')
-    hdulist.close(output_verify='ignore')
+    hdulist.flush(output_verify='fix')
+    hdulist.close()
+    #hdulist.close(output_verify='ignore')
   
     return
 

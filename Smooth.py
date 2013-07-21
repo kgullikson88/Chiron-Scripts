@@ -1,82 +1,42 @@
 import numpy
-import matplotlib.pyplot as plt
-from scipy.interpolate import InterpolatedUnivariateSpline as interp
-from scipy.optimize import leastsq, brute
-from scipy import mat
-from scipy.linalg import svd, diagsvd
-import sys
-import os
 import FitsUtils
-from collections import defaultdict
-import DataStructures
-from astropy import units, constants
-import MakeModel
-import RotBroad
 import FittingUtilities
-import FindContinuum
-
-
-
-def Smooth(fname, window_size=91, numiters=100, lowreject=3, highreject=3, smoothorder=3):
-  orders = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", errors="error")
-  column_list = []
-  for i, order in enumerate(orders):
-    print "\n\n"
-    done = False
-    x = order.x.copy()
-    y = order.y.copy()
-    indices = numpy.array([True]*x.size)
-    iteration = 0
-    while not done and iteration < numiters:
-      done = True
-      iteration += 1
-      smoothed = FittingUtilities.savitzky_golay(y, window_size, smoothorder)
-      residuals = y/smoothed
-      if iteration == 1:
-        #Save the first and last points, for interpolation
-        first, last = smoothed[0], smoothed[-1]
-      mean = residuals.mean()
-      std = residuals.std()
-      print residuals.size, x.size, y.size
-      #plt.plot((residuals - mean)/std)
-      #plt.show()
-      badindices = numpy.where( numpy.logical_or( (residuals-mean)/std > highreject, (residuals-mean)/std < -lowreject ) )[0]
-      if badindices.size > 1 and y.size - badindices.size > 2*window_size and iteration < numiters:
-        done = False
-        x = numpy.delete(x, badindices)
-        y = numpy.delete(y, badindices)
-
-    print "iter = %i" %iteration
-    if x[0] > order.x[0]:
-      x = numpy.append(numpy.array([order.x[0]]), x)
-      smoothed = numpy.append(numpy.array([first]), smoothed)
-    if x[-1] < order.x[-1]:
-      x = numpy.append(x, numpy.array([order.x[-1]]))
-      smoothed = numpy.append(smoothed, numpy.array([last]))
-    print x.size, y.size, smoothed.size
-    smooth_fcn = interp(x, smoothed, k=1)
-    smoothed = smooth_fcn(order.x)
-
-    order.cont = FittingUtilities.Continuum(order.x, order.y)
-    plt.figure(1)
-    plt.plot(order.x, order.y/order.cont, 'k-')
-    plt.plot(order.x, smoothed/order.cont, 'r-')
-    #plt.figure(2)
-    #plt.plot(order.x, order.y/smoothed)
-    #plt.plot(order.x, smoothed)
-    #orders[i].y /= smoothed
-    column = {"wavelength": order.x,
-              "flux": order.y/smoothed,
-              "continuum": numpy.ones(order.x.size),
-              "error": order.err}
-    column_list.append(column)
-  plt.show()
-  outfilename = "%s_smoothed.fits" %(fname.split(".fits")[0])
-  print "Outputting to %s" %outfilename
-  FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
-
+import matplotlib.pyplot as plt
+import sys
+from astropy import units
+import DataStructures
+from scipy.interpolate import InterpolatedUnivariateSpline as interp
 
 
 if __name__ == "__main__":
   for fname in sys.argv[1:]:
-    Smooth(fname, window_size=201, lowreject=5, highreject=5)
+    orders = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
+    column_list = []
+    for order in orders:
+      #Linearize
+      yfcn = interp(order.x, order.y)
+      errfcn = interp(order.x, order.err)
+      contfcn = interp(order.x, order.cont)
+      order.x = numpy.linspace(order.x[0], order.x[-1], order.x.size)
+      order.y = yfcn(order.x)
+      order.err = errfcn(order.x)
+      order.cont = contfcn(order.x)
+      
+      order2 = order.copy()
+      denoised = FittingUtilities.Denoise3(order2) #, snr=400.0, reduction_factor=0.15)
+      denoised.y = FittingUtilities.Iterative_SV(denoised.y, 91, 5, lowreject=1.5, highreject=5)
+
+      column = {"wavelength": denoised.x,
+                "flux": (order.y - denoised.y) + numpy.median(order.cont),
+                "continuum": denoised.cont,
+                "error": denoised.err}
+      column_list.append(column)
+      plt.figure(1)
+      plt.plot(order.x, order.y)
+      plt.plot(denoised.x, denoised.y)
+      plt.figure(2)
+      plt.plot(order.x, (order.y-denoised.y)/numpy.median(order.y))
+    plt.show()
+    outfilename = "%s_denoised.fits" %(fname.split(".fits")[0])
+    print "Outputting to %s" %outfilename
+    FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
