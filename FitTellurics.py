@@ -21,6 +21,7 @@ if __name__ == "__main__":
   #Initialize fitter
   fitter = TelluricFitter.TelluricFitter()
   fitter.SetTelluricLineListFile(linelist)
+  fitter.SetObservatory("CTIO")
   LineList = numpy.loadtxt(linelist)
   logfile = open("fitlog.txt", "w")
  
@@ -54,7 +55,7 @@ if __name__ == "__main__":
 
     header = pyfits.getheader(fname)
     angle = float(header["ZD"])
-    resolution = 60000.0
+    resolution = 80000.0
     humidity = header["OUTHUM"]
     pressure = header["OUTPRESS"]
     temperature = header["OUTTEMP"] + 273.15

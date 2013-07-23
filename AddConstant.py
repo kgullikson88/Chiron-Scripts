@@ -10,7 +10,20 @@ import sys
 
 
 if __name__ == "__main__":
-  for fname in sys.argv[1:]:
+  fileList = []
+  outfilename = None
+  count = False
+  for arg in sys.argv[1:]:
+    if "-out" in arg:
+      outfilename = arg.split("=")[-1]
+    else:
+      fileList.append(arg)
+
+  if len(fileList) > 1:
+    count = True
+    counter = 1
+    
+  for fname in fileList:
     orders = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
     lowest = 9e30
     for order in orders:
@@ -28,11 +41,15 @@ if __name__ == "__main__":
 		  "continuum": order.cont,
 		  "error": order.err}
 	column_list.append(column)
-      if "-" in fname:
-	idx = int(fname.split("-")[-1].split(".fits")[0])
-	outfilename = "%s-%i.fits" %(fname.split("-")[0], idx+1)
-      else:
-	outfilename = "%s-0.fits" %(fname.split(".fits")[0])
+      if outfilename == None:
+        if "-" in fname:
+          idx = int(fname.split("-")[-1].split(".fits")[0])
+          outfilename = "%s-%i.fits" %(fname.split("-")[0], idx+1)
+        else:
+          outfilename = "%s-0.fits" %(fname.split(".fits")[0])
+      elif count:
+        outfilename = "%s-%i.fits" %(outfilename.split(".fits")[0], counter)
+        counter += 1
       print "Outputting new file to %s" %outfilename
       FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
     else:
