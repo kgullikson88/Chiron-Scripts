@@ -12,9 +12,7 @@ from astropy import units, constants
 import FindContinuum
 
 homedir = os.environ["HOME"]
-weather_file = homedir + "/School/Research/Useful_Datafiles/Weather.dat"
 linelist = homedir + "/School/Research/Useful_Datafiles/Linelist_visible.dat"
-telluric_orders = [3,4,5,6,8,9,10,11,13,14,15,16,17,19,20,24,25]
 
 
 if __name__ == "__main__":
@@ -22,7 +20,7 @@ if __name__ == "__main__":
   fitter = TelluricFitter.TelluricFitter()
   fitter.SetTelluricLineListFile(linelist)
   fitter.SetObservatory("CTIO")
-  LineList = numpy.loadtxt(linelist)
+  LineList = numpy.loadtxt(linelist, usecols=(0,))
   logfile = open("fitlog.txt", "w")
  
   fileList = []
@@ -80,8 +78,10 @@ if __name__ == "__main__":
     test_model = fitter.GenerateModel(fitpars, LineList, nofit=True)
     numpy.savetxt("Test_Model.dat", numpy.transpose((test_model.x, test_model.y)), fmt="%.8f")
     
-
+    print "Starting at order %i" %start
     #START LOOPING OVER ORDERS
+    column_list = []
+    header_list = []
     for i, order in enumerate(orders[start:]):
       print "\n***************************\nFitting order %i: " %(i+start)
       fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
@@ -92,7 +92,7 @@ if __name__ == "__main__":
       if lowpoint < 0:
         order.y -= lowpoint
       
-      order.cont = FindContinuum.Continuum(order.x, order.y, fitorder=3, lowreject=2, highreject=10)
+      order.cont = FindContinuum.Continuum(order.x, order.y, fitorder=3, lowreject=1.5, highreject=10)
       primary = DataStructures.xypoint(x=order.x, y=numpy.ones(order.x.size))
       
       fitter.ImportData(order)
@@ -101,7 +101,7 @@ if __name__ == "__main__":
       left = numpy.searchsorted(test_model.x, order.x[0])
       right = numpy.searchsorted(test_model.x, order.x[-1])
       
-      model = DataStructures.xypoint(x=test_model.x[left:right], y=test_model.y[left:right])
+      model = test_model[left:right].copy()
       model_amplitude = 1.0 - min(model.y)
       print "Model amplitude: %g" %model_amplitude
       if model_amplitude < 0.01:
@@ -110,7 +110,7 @@ if __name__ == "__main__":
         data = order.copy()
         fitter.resolution_fit_mode = "gauss"
         model = fitter.GenerateModel(fitpars, LineList)
-        primary = model.copy()
+      
       elif model_amplitude >= 0.01 and model_amplitude < 1:
         logfile.write("Fitting order %i with guassian line profiles\n" %(i+start)) 
         print "Fitting line profiles with gaussian profile"
@@ -121,6 +121,7 @@ if __name__ == "__main__":
 	
 	models.append(model)
         data = fitter.data
+      
       else: 
         logfile.write("Fitting order %i with SVD\n" %(i+start))
         print "Large model amplitude. Using SVD for line profiles"
@@ -169,11 +170,15 @@ if __name__ == "__main__":
           header_info.append([namedict[parname][1], parval, namedict[parname][2] ])
         except KeyError:
           print "Not saving the following info: %s" %(fitter.parnames[j])
-      
+      column_list.append(columns)
+      header_list.append(header_info)
       
       if i == 0 and makenew:
         FitsUtils.OutputFitsFileExtensions(columns, fname, outfilename, headers_info=[header_info,], mode="new")
       else:
         FitsUtils.OutputFitsFileExtensions(columns, outfilename, outfilename, headers_info=[header_info,], mode="append")
+    
+    outfilename2 = "test_output.fits"
+    FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename2, headers_info=header_list, mode='new')
 
   logfile.close()
