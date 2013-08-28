@@ -97,6 +97,7 @@ def MakeXYpoints(datafile, extensions=False, x=None, y=None, cont=None, errors=N
           data = hdulist[i].data
           xypt = DataStructures.xypoint(x=data.field(x), y=data.field(y), cont=data.field(cont), err=data.field(errors))
           orders.append(xypt)
+    hdulist.close()
 
   else:
     #Data is in a big array.
