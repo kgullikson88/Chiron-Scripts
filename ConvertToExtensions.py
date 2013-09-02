@@ -18,6 +18,9 @@ if __name__ == "__main__":
   for fname in fileList:
     outfilename = "%s-0.fits" %(fname.split(".fits")[0])
     header = pyfits.getheader(fname)
+    if header["IMAGETYP"] != "object":
+      print "Image type is %s. Skipping" %header["IMAGETYP"]
+      continue
     orders = FitsUtils.MakeXYpoints(fname, errors=2)
     orders = orders[::-1]    #Reverse order so the bluest order is first
     if blazecorrect:
