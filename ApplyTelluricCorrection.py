@@ -32,11 +32,13 @@ def Correct(original, corrected, offset=None, get_primary=False):
   original_orders = FitsUtils.MakeXYpoints(original, extensions=True, x="wavelength", y="flux", errors="error", cont="continuum")
   corrected_orders, corrected_headers = ReadCorrectedFile(corrected)
   test_orders, header = ReadCorrectedFile(corrected, yaxis="flux")
+  """
   for order, model in zip(test_orders, corrected_orders):
     plt.plot(order.x, order.y/order.cont)
     plt.plot(model.x, model.y)
   plt.title("Correction in corrected file only")
   plt.show()
+  """
   if get_primary:
     primary_orders = ReadCorrectedFile(corrected, yaxis="primary")[0]
   if offset == None:
@@ -55,11 +57,11 @@ def Correct(original, corrected, offset=None, get_primary=False):
       model = DataStructures.xypoint(x=data.x, y=numpy.ones(data.x.size))
       print "Warning!!! Telluric Model not found for order %i" %i
 
-
+    """
     plt.figure(1)
     plt.plot(data.x, data.y/data.cont)
     plt.plot(model.x, model.y)
-    #plt.show()
+    """
     if model.size() < data.size():
       left = numpy.searchsorted(data.x, model.x[0])
       right = numpy.searchsorted(data.x, model.x[-1])
@@ -98,33 +100,34 @@ def main1():
     corrected_orders = Correct(original, corrected, offset=None, get_primary=primary)
 
     column_list = []
-    plt.figure(2)
+    #plt.figure(2)
     for i, data in enumerate(corrected_orders):
-      plt.plot(data.x, data.y/data.cont)
+      #plt.plot(data.x, data.y/data.cont)
       #Set up data structures for OutputFitsFile
       columns = {"wavelength": data.x,
                  "flux": data.y,
                  "continuum": data.cont,
                  "error": data.err}
       column_list.append(columns)
-    plt.title("Corrected data")
-    plt.show()
+    #plt.title("Corrected data")
+    #plt.show()
     FitsUtils.OutputFitsFileExtensions(column_list, original, outfilename, mode="new")
 
   else:
     allfiles = os.listdir("./")
-    corrected_files = [f for f in allfiles if "Corrected_" in f and f.endswith(".fits")]
+    corrected_files = [f for f in allfiles if "Corrected_" in f and f.endswith("-0.fits")]
     #original_files = [f for f in allfiles if any(f in cf for cf in corrected_files)]
 
     #print corrected_files
     #print original_files
 
     for corrected in corrected_files:
-      original = [f for f in allfiles if (f in corrected and f != corrected)]
-      if len(original) == 1:
-        original = original[0]
-      else:
-        sys.exit("Error! %i matches found to corrected file %s" %(len(original), corrected))
+      original = corrected.split("Corrected_")[-1].split("-")[0] + ".fits"
+      #original = [f for f in allfiles if (f in corrected and f != corrected)]
+      #if len(original) == 1:
+      #  original = original[0]
+      #else:
+      #  sys.exit("Error! %i matches found to corrected file %s" %(len(original), corrected))
 
       print corrected, original
       outfilename = "%s_telluric_corrected.fits" %(original.split(".fits")[0])
@@ -134,7 +137,7 @@ def main1():
 
       column_list = []
       for i, data in enumerate(corrected_orders):
-        plt.plot(data.x, data.y/data.cont)
+        #plt.plot(data.x, data.y/data.cont)
         #Set up data structures for OutputFitsFile
         columns = {"wavelength": data.x,
                    "flux": data.y,
@@ -143,10 +146,10 @@ def main1():
         column_list.append(columns)
       FitsUtils.OutputFitsFileExtensions(column_list, original, outfilename, mode="new")
         
-      plt.title(original)
-      plt.xlabel("Wavelength (nm)")
-      plt.ylabel("Flux")
-      plt.show()
+      #plt.title(original)
+      #plt.xlabel("Wavelength (nm)")
+      #plt.ylabel("Flux")
+      #plt.show()
 
 
 

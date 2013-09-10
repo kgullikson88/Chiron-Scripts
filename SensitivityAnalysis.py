@@ -13,7 +13,7 @@ from astropy import units, constants
 import StarData
 import SpectralTypeRelations
 from PlotBlackbodies import Planck
-import RotBroad
+import RotBroad_Fast as RotBroad
 import FittingUtilities
 import MakeModel
 import Smooth
@@ -126,7 +126,7 @@ if __name__ == "__main__":
   tellurics=False
   trimsize = 100
   windowsize = 101
-  vsini = 10.0*units.km.to(units.cm)
+  vsini = 20.0*units.km.to(units.cm)
   MS = SpectralTypeRelations.MainSequence()
   vel_list = range(-400, 400, 50)
   outdir = "Sensitivity/"
@@ -210,10 +210,7 @@ if __name__ == "__main__":
 
     #Read in the name of the star from the fits header
     header = pyfits.getheader(fname)
-    #starname = header["OBJECT"].split()[0].replace("_", " ")
     starname = header["OBJECT"]
-    #print header["OBJECT"]
-    #print starname
 
     #Get spectral type of the primary from the name and simbad
     stardata = StarData.GetData(starname)
@@ -224,15 +221,18 @@ if __name__ == "__main__":
 
     #Begin loop over model spectra
     for j, model in enumerate(model_data):
+	    
       #Get info about the secondary star for this model temperature
       secondary_spt = MS.GetSpectralType(MS.Temperature, temp_list[j])
       secondary_radius = MS.Interpolate(MS.Radius, secondary_spt)
       secondary_mass = MS.Interpolate(MS.Mass, secondary_spt)
       massratio = secondary_mass / primary_mass
 
+      #Rotationally Broaden model
       left = numpy.searchsorted(model.x, orders_original[0].x[0] - 10.0)
       right = numpy.searchsorted(model.x, orders_original[-1].x[-1] + 10.0)
-      model = RotBroad.Broaden2(model[left:right], vsini)
+      model = RotBroad.Broaden(model[left:right], vsini, linear=False)
+      model_data[j] = model.copy()
       MODEL = interp(model.x, model.y)
 
       #Loop over velocities
@@ -243,6 +243,7 @@ if __name__ == "__main__":
         for i, order in enumerate(orders):
           order2 = order.copy()
           #Process the model
+	  print "Before making model segment"
           #a: make a segment of the total model to work with
           left = max(0, numpy.searchsorted(model.x, order2.x[0] - 10)-1 )
           right = min(model.size()-1, numpy.searchsorted(model.x, order2.x[-1] + 10))
@@ -253,13 +254,16 @@ if __name__ == "__main__":
           model2.cont = FittingUtilities.Continuum(model2.x, model2.y, fitorder=3, lowreject=1.5, highreject=10.0)
 
           #b: Convolve to detector resolution
+	  print "Before reducing resolution"
           model2 = MakeModel.ReduceResolution(model2.copy(), 60000, extend=False)
 
           #c: rebin to the same spacing as the data
+	  print "Before rebinning"
           xgrid = numpy.arange(model2.x[0], model2.x[-1], order2.x[1] - order2.x[0])
           model2 = MakeModel.RebinData(model2.copy(), xgrid)
 
           #d: scale to be at the appropriate flux ratio
+	  print "Before scaling"
           primary_flux = Planck(order2.x.mean()*units.nm.to(units.cm), primary_temp)
           #Check for known secondaries
           if companions:
@@ -274,82 +278,19 @@ if __name__ == "__main__":
           model2.y = (model2.y/model2.cont - 1.0)*scale
           model2.cont = numpy.ones(model2.size())
           model_fcn = interp(model2.x, model2.y)
-          #print "Tprim, Tsec = %g, %g" %(primary_temp, temp_list[j])
-          #print "Rprim, Rsec = %g, %g" %(primary_radius, secondary_radius)
-          #print "Fprim, Fsec = %g, %g" %(primary_flux, secondary_flux)
-          #plt.plot(order2.x, order2.y/order2.cont)
-          #plt.plot(order2.x, model_fcn(order2.x))
-          print "lambda, scale = %g, \t%g" %(numpy.median(order.x), scale)
           order2.y = (order2.y/order2.cont + model_fcn(order2.x))*order2.cont
-          #plt.plot(order2.x, order2.y/order2.cont)
-          #plt.show()
 
           #Smooth data in the same way I would normally
+	  print "Before smoothing"
           smoothed = Smooth.SmoothData(order2, windowsize, 5)
-          #smoothed =  FittingUtilities.savitzky_golay(order2.y, windowsize, 5)
-          #reduceddata = order2.y/smoothed.y
           order2.y /= smoothed.y
           order2.cont = FittingUtilities.Continuum(order2.x, order2.y, fitorder=2)
           orders[i] = order2.copy()
 
 
         #Do the actual cross-correlation using PyCorr2 (order by order with appropriate weighting)
-        corr = Correlate.PyCorr2(orders, resolution=60000, models=[model_data[j],], stars=[star_list[j],], temps=[temp_list[j],], gravities=[gravity_list[j],], metallicities=[metal_list[j],], vsini=vsini, debug=False, save_output=False)[0]
-        """
-          
-          #vsini = 60.0
-          #order2.x, order2.y = FittingUtilities.HighPassFilter(order2, vsini*units.km.to(units.cm), linearize=True)
-          #x, reduceddata = FittingUtilities.HighPassFilter(order2, vsini*units.km.to(units.cm), linearize=True)
-          #filterfcn = interp(x, reduceddata)
-          #reduceddata = filterfcn(order2.x)
-          #plt.plot(order2.x, order2.y)
-          #plt.plot(order2.x, reduceddata+2)
-          #plt.show()
-          #model3.x, model3.y = FittingUtilities.HighPassFilter(model3, vsini*units.km.to(units.cm), linearize=True)
-          #x, reducedmodel = FittingUtilities.HighPassFilter(model3, vsini*units.km.to(units.cm), linearize=True)
-          #plt.plot(model3.x, model3.y/model3.cont)
-          #plt.plot(x, reducedmodel/model3.cont+1)
-          #plt.show()
-
-          #Do the cross-correlations
-          reducedmodel = model3.y
-          #reduceddata = order2.y
-          reducedmodel = model3.y/model3.cont
-          meandata = reduceddata.mean()
-          meanmodel = reducedmodel.mean()
-          data_rms = numpy.sqrt(numpy.sum((reduceddata - meandata)**2))
-          model_rms = numpy.sqrt(numpy.sum((reducedmodel - meanmodel)**2))
-          left = numpy.searchsorted(model2.x, order2.x[0])
-          right = model2.x.size - numpy.searchsorted(model2.x, order2.x[-1])
-          delta = left - right
-
-          #plt.plot(order2.x, reduceddata - meandata)
-          #plt.plot(model2.x, reducedmodel - meanmodel)
-          #plt.show()
-          ycorr = scipy.signal.fftconvolve(reduceddata - meandata, (reducedmodel - meanmodel)[::-1], mode='valid')
-          xcorr = numpy.arange(ycorr.size)
-          lags = xcorr - (model2.x.size + order2.x.size + delta - 1.0)/2.0
-          lags = xcorr - right
-          distancePerLag = model2.x[1] - model2.x[0]
-          offsets = -lags*distancePerLag
-          velocity = offsets*3e5 / numpy.median(order2.x)
-          velocity, ycorr = velocity[::-1], ycorr[::-1]
-          left = numpy.searchsorted(velocity, -1000)
-          right = numpy.searchsorted(velocity, +1000)
-          corr = DataStructures.xypoint(right - left + 1)
-          corr.x = velocity[left:right]
-          corr.y = ycorr[left:right]/(data_rms*model_rms) * scale
-          corrlist.append(corr.copy())
-          normalization += 1.0 * scale
-
-        #Add up the individual CCFs
-        master_corr = corrlist[0]
-        for corr in corrlist[1:]:
-          correlation = interp(corr.x, corr.y)
-          master_corr.y += correlation(master_corr.x)
-        master_corr.y /= normalization
-        """
-        
+        corr = Correlate.PyCorr2(orders, resolution=60000, models=[model_data[j],], stars=[star_list[j],], temps=[temp_list[j],], gravities=[gravity_list[j],], metallicities=[metal_list[j],], vsini=0.0, debug=False, save_output=False)[0]
+              
         #output
         outfilename = "%s%s_t%i_v%i" %(outdir, fname.split(".fits")[0], temp_list[j], vel)
         print "Outputting CCF to %s" %outfilename
