@@ -243,7 +243,6 @@ if __name__ == "__main__":
         for i, order in enumerate(orders):
           order2 = order.copy()
           #Process the model
-	  print "Before making model segment"
           #a: make a segment of the total model to work with
           left = max(0, numpy.searchsorted(model.x, order2.x[0] - 10)-1 )
           right = min(model.size()-1, numpy.searchsorted(model.x, order2.x[-1] + 10))
@@ -254,16 +253,13 @@ if __name__ == "__main__":
           model2.cont = FittingUtilities.Continuum(model2.x, model2.y, fitorder=3, lowreject=1.5, highreject=10.0)
 
           #b: Convolve to detector resolution
-	  print "Before reducing resolution"
           model2 = MakeModel.ReduceResolution(model2.copy(), 60000, extend=False)
 
           #c: rebin to the same spacing as the data
-	  print "Before rebinning"
           xgrid = numpy.arange(model2.x[0], model2.x[-1], order2.x[1] - order2.x[0])
           model2 = MakeModel.RebinData(model2.copy(), xgrid)
 
           #d: scale to be at the appropriate flux ratio
-	  print "Before scaling"
           primary_flux = Planck(order2.x.mean()*units.nm.to(units.cm), primary_temp)
           #Check for known secondaries
           if companions:
@@ -281,7 +277,6 @@ if __name__ == "__main__":
           order2.y = (order2.y/order2.cont + model_fcn(order2.x))*order2.cont
 
           #Smooth data in the same way I would normally
-	  print "Before smoothing"
           smoothed = Smooth.SmoothData(order2, windowsize, 5)
           order2.y /= smoothed.y
           order2.cont = FittingUtilities.Continuum(order2.x, order2.y, fitorder=2)
