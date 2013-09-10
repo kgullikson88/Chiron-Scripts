@@ -70,6 +70,9 @@ if __name__ == "__main__":
 
   for fname in allcalib:
     header = pyfits.getheader(caldir + "/" + fname)
+    if not "OBJECT" in header:
+      print "Header of %s had no 'object' keyword!" %fname
+      continue
     otype = header["OBJECT"].lower()
     if header["ccdsum"].strip() == ccdsum and abs(header['deckpos'] - decker) < 0.001 and otype != "thar":
       #Copy to output directory

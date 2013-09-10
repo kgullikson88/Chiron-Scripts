@@ -65,7 +65,7 @@ if __name__ == "__main__":
   if len(fileList) > 1:
     Add(fileList)
   else:
-    allfiles = [f for f in os.listdir("./") if f.startswith("achi") and "-" in f]
+    allfiles = [f for f in os.listdir("./") if f.startswith("echi") and "-" in f]
     fileDict = defaultdict(list)
     for fname in allfiles:
       header = pyfits.getheader(fname)

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import DataStructures
 import os
 import FindContinuum
+import FittingUtilities
 import numpy
 
 
@@ -34,14 +35,16 @@ def Correct(original, corrected, offset=None, get_primary=False):
   for order, model in zip(test_orders, corrected_orders):
     plt.plot(order.x, order.y/order.cont)
     plt.plot(model.x, model.y)
+  plt.title("Correction in corrected file only")
   plt.show()
   if get_primary:
     primary_orders = ReadCorrectedFile(corrected, yaxis="primary")[0]
   if offset == None:
     offset = len(original_orders) - len(corrected_orders)
+  print "Offset = ", offset
   for i in range(offset, len(original_orders)):
     data = original_orders[i]
-    data.cont = FindContinuum.Continuum(data.x, data.y)
+    data.cont = FittingUtilities.Continuum(data.x, data.y)
     try:
       model = corrected_orders[i-offset]
       header = corrected_headers[i-offset]
@@ -52,8 +55,10 @@ def Correct(original, corrected, offset=None, get_primary=False):
       model = DataStructures.xypoint(x=data.x, y=numpy.ones(data.x.size))
       print "Warning!!! Telluric Model not found for order %i" %i
 
-    #plt.plot(data.x, data.y/data.cont)
-    #plt.plot(model.x, model.y)
+
+    plt.figure(1)
+    plt.plot(data.x, data.y/data.cont)
+    plt.plot(model.x, model.y)
     #plt.show()
     if model.size() < data.size():
       left = numpy.searchsorted(data.x, model.x[0])
@@ -67,12 +72,12 @@ def Correct(original, corrected, offset=None, get_primary=False):
     badindices = numpy.where(numpy.logical_or(data.y <= 0, model.y < 0.05))[0]
     model.y[badindices] = data.y[badindices]
 
-    plt.plot(data.x, data.y / model.y)
+    #plt.plot(data.x, data.y / model.y)
     data.y /= model.y
     if get_primary:
       data.y /= primary.y
     original_orders[i] = data.copy()
-  plt.show()
+  #plt.show()
   return original_orders
 
 
@@ -93,6 +98,7 @@ def main1():
     corrected_orders = Correct(original, corrected, offset=None, get_primary=primary)
 
     column_list = []
+    plt.figure(2)
     for i, data in enumerate(corrected_orders):
       plt.plot(data.x, data.y/data.cont)
       #Set up data structures for OutputFitsFile
@@ -101,9 +107,9 @@ def main1():
                  "continuum": data.cont,
                  "error": data.err}
       column_list.append(columns)
-    FitsUtils.OutputFitsFileExtensions(column_list, original, outfilename, mode="new")
-    
+    plt.title("Corrected data")
     plt.show()
+    FitsUtils.OutputFitsFileExtensions(column_list, original, outfilename, mode="new")
 
   else:
     allfiles = os.listdir("./")

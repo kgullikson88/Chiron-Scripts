@@ -16,6 +16,8 @@ from PlotBlackbodies import Planck
 import RotBroad
 import FittingUtilities
 import MakeModel
+import Smooth
+import Correlate
 
 
 #Ensure a directory exists. Create it if not
@@ -33,12 +35,19 @@ badregions = [[588.8, 589.9],
               [627.1, 635.4]]
 badregions = [[0, 466],
 #badregions = [[0, 540],
-              [567.5, 575.5],
-              [587.5, 593],
-              [627, 634.5],
-              [686, 706],
-              [716, 742],
-              [759, 9e9]]
+#              [567.5, 575.5],
+#              [587.5, 593],
+              [627, 634],
+              [686.5, 696],
+              [716, 734],
+              [759, 771.2],
+              [813, 9e9]]
+badpixels_by_order = {0: [680,740],
+                      1: [680,740],
+                      2: [680,740],
+                      3: [680,740],
+                      4: [680,740],
+                      5: [680,740]}
 
 #Set up model list
 model_list = [ modeldir + "lte30-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
@@ -90,7 +99,7 @@ temp_list = []
 gravity_list = []
 metal_list = []
 model_data = []
-for fname in model_list:
+for fname in model_list[8:9]:
   if "PHOENIX2004" in fname:
     temp = int(fname.split("lte")[-1][:2])*100
     gravity = float(fname.split("lte")[-1][3:6])
@@ -116,7 +125,8 @@ if __name__ == "__main__":
   extensions=True
   tellurics=False
   trimsize = 100
-  windowsize = 91
+  windowsize = 101
+  vsini = 10.0*units.km.to(units.cm)
   MS = SpectralTypeRelations.MainSequence()
   vel_list = range(-400, 400, 50)
   outdir = "Sensitivity/"
@@ -159,28 +169,51 @@ if __name__ == "__main__":
       order.cont = CONT(order.x)
       order.err = ERROR(order.x)
 
+      #Interpolate over bad pixels
+      if i in badpixels_by_order:
+        left, right = badpixels_by_order[i][0], badpixels_by_order[i][1]
+        m = (order.y[right] - order.y[left]) / (order.x[right] - order.x[left])
+        order.y[left:right] = m*(order.x[left:right] - order.x[left]) + order.y[left]
+        order.err[left:right] = 9e9
       
       #Remove bad regions from the data
       for region in badregions:
         left = numpy.searchsorted(order.x, region[0])
         right = numpy.searchsorted(order.x, region[1])
-        order.x = numpy.delete(order.x, numpy.arange(left, right))
-        order.y = numpy.delete(order.y, numpy.arange(left, right))
-        order.cont = numpy.delete(order.cont, numpy.arange(left, right))
-        order.err = numpy.delete(order.err, numpy.arange(left, right))
+        if left == 0 or right == order.size():
+          order.x = numpy.delete(order.x, numpy.arange(left, right))
+          order.y = numpy.delete(order.y, numpy.arange(left, right))
+          order.cont = numpy.delete(order.cont, numpy.arange(left, right))
+          order.err = numpy.delete(order.err, numpy.arange(left, right))
+        else:
+          print "Warning! Bad region covers the middle of order %i" %i
+          print "Interpolating rather than removing"
+          order.y[left:right] = order.cont[left:right]
+          order.err[left:right] = 9e9
 
       #Remove whole order if it is too small
-      if order.x.size > windowsize:
-        order.cont = FittingUtilities.Continuum(order.x, order.y, lowreject=3, highreject=3)
-        orders_original[numorders -1 -i] = order.copy()
+      remove = False
+      if order.x.size <= windowsize:
+        remove = True
       else:
+        velrange = 3e5 * (numpy.median(order.x) - order.x[0]) / numpy.median(order.x)
+        if velrange <= 1000.0:
+          remove = True
+      if remove:
         print "Removing order %i" %(numorders - 1 - i)
         orders_original.pop(numorders - 1 - i)
+      else:
+        order.cont = FittingUtilities.Continuum(order.x, order.y, lowreject=3, highreject=3)
+        orders_original[numorders -1 -i] = order.copy()
+       
         
 
     #Read in the name of the star from the fits header
     header = pyfits.getheader(fname)
-    starname = header["OBJECT"].split()[0].replace("_", " ")
+    #starname = header["OBJECT"].split()[0].replace("_", " ")
+    starname = header["OBJECT"]
+    #print header["OBJECT"]
+    #print starname
 
     #Get spectral type of the primary from the name and simbad
     stardata = StarData.GetData(starname)
@@ -190,23 +223,23 @@ if __name__ == "__main__":
 
     #Begin loop over model spectra
     for j, model in enumerate(model_data):
-      orders = [order.copy() for order in orders_original]   #Make a copy of orders
       #Get info about the secondary star for this model temperature
       secondary_spt = MS.GetSpectralType(MS.Temperature, temp_list[j])
       secondary_radius = MS.Interpolate(MS.Radius, secondary_spt)
       secondary_mass = MS.Interpolate(MS.Mass, secondary_spt)
       massratio = secondary_mass / primary_mass
 
-      left = numpy.searchsorted(model.x, orders[0].x[0] - 10.0)
-      right = numpy.searchsorted(model.x, orders[-1].x[-1] + 10.0)
-      model = RotBroad.Broaden2(model[left:right], 20*units.km.to(units.cm))
+      left = numpy.searchsorted(model.x, orders_original[0].x[0] - 10.0)
+      right = numpy.searchsorted(model.x, orders_original[-1].x[-1] + 10.0)
+      model = RotBroad.Broaden2(model[left:right], vsini)
       MODEL = interp(model.x, model.y)
 
       #Loop over velocities
       for vel in vel_list:
         corrlist = []
         normalization = 0.0
-        for i, order in enumerate(orders[::-1]):
+        orders = [order.copy() for order in orders_original]   #Make a copy of orders
+        for i, order in enumerate(orders):
           order2 = order.copy()
           #Process the model
           #a: make a segment of the total model to work with
@@ -216,31 +249,50 @@ if __name__ == "__main__":
           model2 = DataStructures.xypoint(right - left + 1)
           model2.x = numpy.linspace(model.x[left], model.x[right], right - left + 1)
           model2.y = MODEL(model2.x*(1.0+vel/3e5))
-          model3 = model2.copy()
-          model3.y = MODEL(model2.x)
+          #model3 = model2.copy()
+          #model3.y = MODEL(model2.x)
           model2.cont = FittingUtilities.Continuum(model2.x, model2.y, fitorder=3, lowreject=1.5, highreject=10.0)
-          model3.cont = FittingUtilities.Continuum(model3.x, model3.y, fitorder=3, lowreject=1.5, highreject=10.0)
+          #model3.cont = FittingUtilities.Continuum(model3.x, model3.y, fitorder=3, lowreject=1.5, highreject=10.0)
 
           #b: Convolve to detector resolution
           model2 = MakeModel.ReduceResolution(model2.copy(), 60000, extend=False)
-          model3 = MakeModel.ReduceResolution(model3.copy(), 60000, extend=False)
+          #model3 = MakeModel.ReduceResolution(model3.copy(), 60000, extend=False)
 
           #c: rebin to the same spacing as the data
           xgrid = numpy.arange(model2.x[0], model2.x[-1], order2.x[1] - order2.x[0])
           model2 = MakeModel.RebinData(model2.copy(), xgrid)
-          model3 = MakeModel.RebinData(model3.copy(), xgrid)
+          #model3 = MakeModel.RebinData(model3.copy(), xgrid)
 
           #d: scale to be at the appropriate flux ratio
           primary_flux = Planck(order2.x.mean()*units.nm.to(units.cm), primary_temp)
           secondary_flux = Planck(order2.x.mean()*units.nm.to(units.cm), temp_list[j])
           scale = secondary_flux / primary_flux * (secondary_radius/primary_radius)**2
-          model2.y = (model2.y/model2.cont - 1.0)*scale + 1.0
+          model2.y = (model2.y/model2.cont - 1.0)*scale
+          model2.cont = numpy.ones(model2.size())
           model_fcn = interp(model2.x, model2.y)
-          order2.y = (order2.y/order2.cont + model_fcn(order2.x))
+          #print "Tprim, Tsec = %g, %g" %(primary_temp, temp_list[j])
+          #print "Rprim, Rsec = %g, %g" %(primary_radius, secondary_radius)
+          #print "Fprim, Fsec = %g, %g" %(primary_flux, secondary_flux)
+          #plt.plot(order2.x, order2.y/order2.cont)
+          #plt.plot(order2.x, model_fcn(order2.x))
+          print "lambda, scale = %g, \t%g" %(numpy.median(order.x), scale)
+          order2.y = (order2.y/order2.cont + model_fcn(order2.x))*order2.cont
+          #plt.plot(order2.x, order2.y/order2.cont)
+          #plt.show()
 
           #Smooth data in the same way I would normally
-          smoothed =  FittingUtilities.savitzky_golay(order2.y, windowsize, 5)
-          reduceddata = order2.y/smoothed
+          smoothed = Smooth.SmoothData(order2, windowsize, 5)
+          #smoothed =  FittingUtilities.savitzky_golay(order2.y, windowsize, 5)
+          #reduceddata = order2.y/smoothed.y
+          order2.y /= smoothed.y
+          order2.cont = FittingUtilities.Continuum(order2.x, order2.y, fitorder=2)
+          orders[i] = order2.copy()
+
+
+        #Do the actual cross-correlation using PyCorr2 (order by order with appropriate weighting)
+        corr = Correlate.PyCorr2(orders, resolution=60000, models=[model_data[j],], stars=[star_list[j],], temps=[temp_list[j],], gravities=[gravity_list[j],], metallicities=[metal_list[j],], vsini=vsini, debug=False, save_output=False)[0]
+        """
+          
           #vsini = 60.0
           #order2.x, order2.y = FittingUtilities.HighPassFilter(order2, vsini*units.km.to(units.cm), linearize=True)
           #x, reduceddata = FittingUtilities.HighPassFilter(order2, vsini*units.km.to(units.cm), linearize=True)
@@ -292,20 +344,21 @@ if __name__ == "__main__":
           correlation = interp(corr.x, corr.y)
           master_corr.y += correlation(master_corr.x)
         master_corr.y /= normalization
-
+        """
+        
         #output
         outfilename = "%s%s_t%i_v%i" %(outdir, fname.split(".fits")[0], temp_list[j], vel)
         print "Outputting CCF to %s" %outfilename
-        numpy.savetxt(outfilename, numpy.transpose((master_corr.x, master_corr.y)), fmt="%.10g")
+        numpy.savetxt(outfilename, numpy.transpose((corr.x, corr.y)), fmt="%.10g")
 
         #Write to logfile
-        idx = numpy.argmax(master_corr.y)
-        vmax = master_corr.x[idx]
-        fit = FittingUtilities.Continuum(master_corr.x, master_corr.y, fitorder=2, lowreject=3, highreject=3)
-        master_corr.y -= fit
-        mean = master_corr.y.mean()
-        std = master_corr.y.std()
-        significance = (master_corr.y[idx] - mean)/std
+        idx = numpy.argmax(corr.y)
+        vmax = corr.x[idx]
+        fit = FittingUtilities.Continuum(corr.x, corr.y, fitorder=2, lowreject=3, highreject=3)
+        corr.y -= fit
+        mean = corr.y.mean()
+        std = corr.y.std()
+        significance = (corr.y[idx] - mean)/std
         tolerance = 10.0
         if numpy.abs(vmax - vel) <= tolerance:
           #Signal found!
