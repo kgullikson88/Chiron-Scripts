@@ -61,15 +61,6 @@ model_list = [ modeldir + "lte30-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.s
                modeldir + "lte66-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
                modeldir + "lte67-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
                modeldir + "lte68-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte69-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte69-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte70-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte70-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte72-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte74-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte74-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte76-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte78-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
 	       modeldir + "lte30-4.0-0.5.Cond.PHOENIX2004.tab.7.sorted",
                modeldir + "lte30-4.0+0.5.Cond.PHOENIX2004.tab.7.sorted",
                modeldir + "lte31-4.0-0.5.Cond.PHOENIX2004.tab.7.sorted",
@@ -141,17 +132,7 @@ model_list = [ modeldir + "lte30-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.s
                modeldir + "lte66-4.0+0.5.Cond.PHOENIX2004.direct.7.sorted",
                modeldir + "lte67-4.0+0.5.Cond.PHOENIX2004.direct.7.sorted",
                modeldir + "lte68-4.0-0.5.Cond.PHOENIX2004.direct.7.sorted",
-               modeldir + "lte68-4.0+0.5.Cond.PHOENIX2004.direct.7.sorted",
-               modeldir + "lte69-4.0-0.5.Cond.PHOENIX2004.direct.7.sorted",
-               modeldir + "lte69-4.0+0.5.Cond.PHOENIX2004.direct.7.sorted",
-               modeldir + "lte70-3.5-0.5.Cond.PHOENIX2004.direct.7.sorted",
-               modeldir + "lte70-4.0+0.5.Cond.PHOENIX2004.direct.7.sorted",
-               modeldir + "lte72-3.5-0.5.Cond.PHOENIX2004.direct.7.sorted",
-               modeldir + "lte72-4.0+0.5.Cond.PHOENIX2004.direct.7.sorted",
-               modeldir + "lte74-4.0+0.5.Cond.PHOENIX2004.direct.7.sorted",
-               modeldir + "lte76-4.0+0.5.Cond.PHOENIX2004.direct.7.sorted",
-               modeldir + "lte78-3.5-0.5.Cond.PHOENIX2004.direct.7.sorted",
-               modeldir + "lte78-4.0+0.5.Cond.PHOENIX2004.direct.7.sorted"]
+               modeldir + "lte68-4.0+0.5.Cond.PHOENIX2004.direct.7.sorted"]
                
                
 star_list = []
@@ -259,6 +240,6 @@ if __name__ == "__main__":
       output_dir = output_dir + "Cross_correlations/"
     #Do the cross-correlation
     for vsini in [10, 20, 30, 40]:
-      Correlate.PyCorr2(orders, resolution=60000, outdir=output_dir, models=model_data, stars=star_list, temps=temp_list, gravities=gravity_list, metallicities=metal_list, vsini=vsini*units.km.to(units.cm), debug=True, outfilebase=outfilebase)
+      Correlate.PyCorr2(orders, resolution=60000, outdir=output_dir, models=model_data, stars=star_list, temps=temp_list, gravities=gravity_list, metallicities=metal_list, vsini=vsini*units.km.to(units.cm), debug=False, outfilebase=outfilebase)
 
 
