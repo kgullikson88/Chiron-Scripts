@@ -31,8 +31,10 @@ def Add(fileList, outfilename=None):
   column_list = []
   for i in range(numorders):
     total = all_data[0][i].copy()
+    total.y[total.y < 0.0] = 0.0
     total.err = total.err**2
     for observation in all_data[1:]:
+      observations[i].y[observation[i].y < 0.0] = 0.0
       flux = interp(observation[i].x, observation[i].y)
       error = interp(observation[i].x, observation[i].err**2, k=1)
       total.y += flux(total.x)

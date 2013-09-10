@@ -85,7 +85,7 @@ if __name__ == "__main__":
     for i, order in enumerate(orders[start:]):
       print "\n***************************\nFitting order %i: " %(i+start)
       fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
-                          "waveend": order.x[-1] + 20.0)
+                          "waveend": order.x[-1] + 20.0})
 
       if lowpoint < 0:
         order.y -= lowpoint

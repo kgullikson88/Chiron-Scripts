@@ -17,6 +17,7 @@ import RotBroad
 import FittingUtilities
 import MakeModel
 import Smooth
+import HelperFunctions
 import Correlate
 
 
@@ -115,7 +116,6 @@ for fname in model_list[8:9]:
   temp_list.append(temp)
   gravity_list.append(gravity)
   metal_list.append(metallicity)
-
 
   
 
@@ -220,6 +220,7 @@ if __name__ == "__main__":
     primary_temp = MS.Interpolate(MS.Temperature, stardata.spectype[:2])
     primary_radius = MS.Interpolate(MS.Radius, stardata.spectype[:2])
     primary_mass = MS.Interpolate(MS.Mass, stardata.spectype[:2])
+    companions = HelperFunctions.CheckMultiplicityWDS(starname)
 
     #Begin loop over model spectra
     for j, model in enumerate(model_data):
@@ -249,22 +250,25 @@ if __name__ == "__main__":
           model2 = DataStructures.xypoint(right - left + 1)
           model2.x = numpy.linspace(model.x[left], model.x[right], right - left + 1)
           model2.y = MODEL(model2.x*(1.0+vel/3e5))
-          #model3 = model2.copy()
-          #model3.y = MODEL(model2.x)
           model2.cont = FittingUtilities.Continuum(model2.x, model2.y, fitorder=3, lowreject=1.5, highreject=10.0)
-          #model3.cont = FittingUtilities.Continuum(model3.x, model3.y, fitorder=3, lowreject=1.5, highreject=10.0)
 
           #b: Convolve to detector resolution
           model2 = MakeModel.ReduceResolution(model2.copy(), 60000, extend=False)
-          #model3 = MakeModel.ReduceResolution(model3.copy(), 60000, extend=False)
 
           #c: rebin to the same spacing as the data
           xgrid = numpy.arange(model2.x[0], model2.x[-1], order2.x[1] - order2.x[0])
           model2 = MakeModel.RebinData(model2.copy(), xgrid)
-          #model3 = MakeModel.RebinData(model3.copy(), xgrid)
 
           #d: scale to be at the appropriate flux ratio
           primary_flux = Planck(order2.x.mean()*units.nm.to(units.cm), primary_temp)
+          #Check for known secondaries
+          if companions:
+            for configuration in companions:
+              component = companions[configuration]
+              if component["Separation"] < 3.0:
+                print "Known %s companion with a separation of %g arcseconds!" %(component["Secondary SpT"], component["Separation"])
+                temperature = MS.Interpolate(MS.Temperature, component["Secondary SpT"])
+                primary_flux += Planck(order2.x.mean()*units.nm.to(units.cm), temperature)
           secondary_flux = Planck(order2.x.mean()*units.nm.to(units.cm), temp_list[j])
           scale = secondary_flux / primary_flux * (secondary_radius/primary_radius)**2
           model2.y = (model2.y/model2.cont - 1.0)*scale
