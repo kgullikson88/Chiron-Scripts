@@ -154,6 +154,9 @@ if __name__ == "__main__":
     numorders = len(orders_original)
     for i, order in enumerate(orders_original[::-1]):
       #Linearize
+      DATA = interp(order.x, order.y)
+      CONT = interp(order.x, order.cont)
+      ERROR = interp(order.x, order.err)
       order.x = numpy.linspace(order.x[0], order.x[-1], order.size())
       order.y = DATA(order.x)
       order.cont = CONT(order.x)
