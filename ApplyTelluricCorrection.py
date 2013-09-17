@@ -9,6 +9,7 @@ import FindContinuum
 import FittingUtilities
 import numpy
 
+plot = True
 
 def ReadCorrectedFile(fname, yaxis="model"):
   orders = []
@@ -32,13 +33,14 @@ def Correct(original, corrected, offset=None, get_primary=False):
   original_orders = FitsUtils.MakeXYpoints(original, extensions=True, x="wavelength", y="flux", errors="error", cont="continuum")
   corrected_orders, corrected_headers = ReadCorrectedFile(corrected)
   test_orders, header = ReadCorrectedFile(corrected, yaxis="flux")
-  """
-  for order, model in zip(test_orders, corrected_orders):
-    plt.plot(order.x, order.y/order.cont)
-    plt.plot(model.x, model.y)
-  plt.title("Correction in corrected file only")
-  plt.show()
-  """
+
+  if plot:
+    for order, model in zip(test_orders, corrected_orders):
+      plt.plot(order.x, order.y/order.cont)
+      plt.plot(model.x, model.y)
+    plt.title("Correction in corrected file only")
+    plt.show()
+  
   if get_primary:
     primary_orders = ReadCorrectedFile(corrected, yaxis="primary")[0]
   if offset == None:
@@ -57,11 +59,11 @@ def Correct(original, corrected, offset=None, get_primary=False):
       model = DataStructures.xypoint(x=data.x, y=numpy.ones(data.x.size))
       print "Warning!!! Telluric Model not found for order %i" %i
 
-    """
-    plt.figure(1)
-    plt.plot(data.x, data.y/data.cont)
-    plt.plot(model.x, model.y)
-    """
+    if plot:
+      plt.figure(1)
+      plt.plot(data.x, data.y/data.cont)
+      plt.plot(model.x, model.y)
+    
     if model.size() < data.size():
       left = numpy.searchsorted(data.x, model.x[0])
       right = numpy.searchsorted(data.x, model.x[-1])
@@ -79,7 +81,8 @@ def Correct(original, corrected, offset=None, get_primary=False):
     if get_primary:
       data.y /= primary.y
     original_orders[i] = data.copy()
-  #plt.show()
+  if plot:
+    plt.show()
   return original_orders
 
 
@@ -100,17 +103,20 @@ def main1():
     corrected_orders = Correct(original, corrected, offset=None, get_primary=primary)
 
     column_list = []
-    #plt.figure(2)
+    if plot:
+      plt.figure(2)
     for i, data in enumerate(corrected_orders):
-      #plt.plot(data.x, data.y/data.cont)
+      if plot:
+        plt.plot(data.x, data.y/data.cont)
       #Set up data structures for OutputFitsFile
       columns = {"wavelength": data.x,
                  "flux": data.y,
                  "continuum": data.cont,
                  "error": data.err}
       column_list.append(columns)
-    #plt.title("Corrected data")
-    #plt.show()
+    if plot:
+      plt.title("Corrected data")
+      plt.show()
     FitsUtils.OutputFitsFileExtensions(column_list, original, outfilename, mode="new")
 
   else:
@@ -136,8 +142,11 @@ def main1():
       corrected_orders = Correct(original, corrected, offset=None)
 
       column_list = []
+      if plot:
+        plt.figure(2)
       for i, data in enumerate(corrected_orders):
-        #plt.plot(data.x, data.y/data.cont)
+        if plot:
+          plt.plot(data.x, data.y/data.cont)
         #Set up data structures for OutputFitsFile
         columns = {"wavelength": data.x,
                    "flux": data.y,
@@ -145,11 +154,12 @@ def main1():
                    "error": data.err}
         column_list.append(columns)
       FitsUtils.OutputFitsFileExtensions(column_list, original, outfilename, mode="new")
-        
-      #plt.title(original)
-      #plt.xlabel("Wavelength (nm)")
-      #plt.ylabel("Flux")
-      #plt.show()
+
+      if plot:
+        plt.title(original)
+        plt.xlabel("Wavelength (nm)")
+        plt.ylabel("Flux")
+        plt.show()
 
 
 

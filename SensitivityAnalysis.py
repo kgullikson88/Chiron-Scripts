@@ -43,12 +43,7 @@ badregions = [[0, 466],
               [716, 734],
               [759, 771.2],
               [813, 9e9]]
-badpixels_by_order = {0: [680,740],
-                      1: [680,740],
-                      2: [680,740],
-                      3: [680,740],
-                      4: [680,740],
-                      5: [680,740]}
+badpixels_by_order = {}  #Empty for now
 
 #Set up model list
 model_list = [ modeldir + "lte30-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
@@ -158,13 +153,8 @@ if __name__ == "__main__":
     #Loop over orders, removing bad parts
     numorders = len(orders_original)
     for i, order in enumerate(orders_original[::-1]):
-      #Only use the middle half of each order (lots of noise on the edges)
-      DATA = interp(order.x, order.y)
-      CONT = interp(order.x, order.cont)
-      ERROR = interp(order.x, order.err)
-      left = int(order.size()/4.0)
-      right = int(order.size()*3.0/4.0 + 0.5)
-      order.x = numpy.linspace(order.x[left], order.x[right],right - left + 1)
+      #Linearize
+      order.x = numpy.linspace(order.x[0], order.x[-1], order.size())
       order.y = DATA(order.x)
       order.cont = CONT(order.x)
       order.err = ERROR(order.x)

@@ -14,6 +14,8 @@ import os
 import subprocess
 import pyfits
 import FittingUtilities
+import DataStructures
+from astropy import units
 
 
 class LineFitter:
@@ -63,16 +65,13 @@ class LineFitter:
       self.mainaxis = plt.subplot(plotgrid[0])
       self.fitaxis = plt.subplot(plotgrid[1])
       cid = self.fig.canvas.mpl_connect('key_press_event', self.keypress)
-
-      #Look for any bad spikes near the beginning or end of the order
-      median = numpy.mean(order.y)
-      std = numpy.std(order.y)
-      length = 30
-      badindices = numpy.where(numpy.abs(order.y[:length]-median)/std > 5)[0]
-      order.y[badindices] = order.cont[badindices]
-      badindices = numpy.where(numpy.abs(order.y[-length:]-median)/std > 5)[0]
-      order.y[-length+badindices] = order.cont[-length+badindices]
+      
+      #Remove low frequency components
       self.current_order = order.copy()
+      if numpy.min(order.y/order.cont) > 0.15:
+        x,y = FittingUtilities.IterativeLowPass(order.copy(), 250*units.km.to(units.cm), linearize=True, lowreject=2.0, highreject=10)
+        smoothed = UnivariateSpline(x,y, s=0)
+        self.current_order.y *= self.current_order.cont / smoothed(self.current_order.x)
       
       left = numpy.searchsorted(self.model.x, order.x[0]-10.0)
       right = numpy.searchsorted(self.model.x, order.x[-1]+10.0)
@@ -80,12 +79,8 @@ class LineFitter:
       current_model = MakeModel.ReduceResolution(current_model, 60000)
       self.current_model = MakeModel.RebinData(current_model, order.x)
 
-      
-      offset = self.CCImprove(self.current_order, self.current_model)
-      self.current_model.x -= offset
-      #self.current_model.y *= 0.8
 
-      self.PlotArrays(((order.x, order.y), (self.current_model.x, (self.current_model.y)*self.current_order.cont)), self.mainaxis, legend=False)
+      self.PlotArrays(((self.current_order.x, self.current_order.y), (self.current_model.x, (self.current_model.y)*self.current_order.cont)), self.mainaxis, legend=False)
       plt.show()
 
       print "Done with order %i" %(i+start)
@@ -98,8 +93,7 @@ class LineFitter:
                  "error": data.err}
       self.EditFitsFile(columns, self.outfilename, i+start+1)
       
-      #FitsUtils.OutputFitsFile(self.template, self.orders, errors=2)
-
+      
 
   def keypress(self, event):
     if event.key == "S":
@@ -279,6 +273,7 @@ class LineFitter:
   def ConvolveSmooth(self, numiters=10, lowreject=2, highreject=3):
     done = False
     data = self.smoothing_data.copy()
+    data = FittingUtilities.Denoise3(data)
     #data.y /= data.cont
     iterations = 0
     if self.window_size % 2 == 0:

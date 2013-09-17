@@ -1,4 +1,4 @@
-import FitsUtils
+import FitsUtils_NativeReductions as FitsUtils
 import FittingUtilities
 import pyfits
 import sys
@@ -11,45 +11,59 @@ from astropy import units
 if __name__ == "__main__":
   fileList = []
   blazecorrect = True
+  plotresult = False
   for arg in sys.argv[1:]:
     if "blaze" in arg:
       blazecorrect = False
+    elif "-p" in arg:
+      plotresult = True
     else:
       fileList.append(arg)
+
+  #Read blaze orders
+  if blazecorrect:
+    blazefile = [f for f in os.listdir("./") if "slicerflat" in f][0]
+    hdulist = pyfits.open(blazefile)
+    data = hdulist[0].data
+    blaze_orders = [data[2][i][::-1] / data[2][i].mean() for i in range(data.shape[1])][::-1]
+  
   for fname in fileList:
     outfilename = "%s-0.fits" %(fname.split(".fits")[0])
     header = pyfits.getheader(fname)
+    if header["IMAGETYP"] != "object":
+      print "Image type is %s. Skipping" %header["IMAGETYP"]
+      continue
     orders = FitsUtils.MakeXYpoints(fname)
     #orders = orders[::-1]    #Reverse order so the bluest order is first
 
     column_list = []
-    for i, order in enumerate(orders[:-1]):
+    for i, order in enumerate(orders[:-1]):      
       #Convert to nanometers
       order.x *= units.Angstrom.to(units.nm)
-      plt.plot(order.x, order.y)
       
+      if plotresult:
+        plt.figure(1)
+        plt.plot(order.x, blaze_orders[i] * numpy.max(order.y) / numpy.max(blaze_orders[i]))
+        plt.plot(order.x, order.y)
       #Blaze correction
       if blazecorrect:
-        blaze = FittingUtilities.Continuum(order.x-order.x.mean(), order.y, fitorder=9, lowreject=1.5, highreject=5)
-        #plt.plot(order.x, blaze)
-        #plt.figure(1)
-        #plt.plot(order.x, order.y)
-        #plt.plot(order.x, blaze)
-        blaze /= blaze.max()
-        order.y /= blaze
-        order.err /= blaze
-        
+        order.y /= blaze_orders[i]
+
+      if plotresult:
+        plt.figure(2)
+        plt.plot(order.x, order.y)
       order.cont = FittingUtilities.Continuum(order.x, order.y, fitorder=3, lowreject=1.5, highreject=5)
       #plt.figure(2)
       #plt.plot(order.x, order.y/order.cont)
-      columns = columns = {"wavelength": order.x,
+      columns = {"wavelength": order.x,
                            "flux": order.y,
                            "continuum": order.cont,
                            "error": order.err}
       column_list.append(columns)
-    plt.xlabel("Wavelength (nm)")
-    plt.ylabel("Flux (counts)")
-    plt.show()
+    if plotresult:
+      plt.xlabel("Wavelength (nm)")
+      plt.ylabel("Flux (counts)")
+      plt.show()
     FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
 
 
