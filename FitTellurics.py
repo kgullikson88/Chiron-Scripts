@@ -65,7 +65,7 @@ if __name__ == "__main__":
                         "temperature": temperature,
                         "pressure": pressure,
                         "resolution": resolution})
-    fitter.SetBounds({"h2o": [1.0, 96.0],
+    fitter.SetBounds({"h2o": [1.0, 98.0],
                       "o2": [5e4, 1e6],
                       "resolution": [resolution/2.0, resolution*2.0]})
     models = []
@@ -86,6 +86,8 @@ if __name__ == "__main__":
       print "\n***************************\nFitting order %i: " %(i+start)
       fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
                           "waveend": order.x[-1] + 20.0})
+      fitter.FitVariable({"h2o": humidity, 
+                          "o2": 2.12e5})
 
       if lowpoint < 0:
         order.y -= lowpoint
@@ -176,7 +178,6 @@ if __name__ == "__main__":
       else:
         FitsUtils.OutputFitsFileExtensions(columns, outfilename, outfilename, headers_info=[header_info,], mode="append")
     
-    outfilename2 = "test_output.fits"
-    FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename2, headers_info=header_list, mode='new')
+    
 
   logfile.close()
