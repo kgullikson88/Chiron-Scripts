@@ -38,17 +38,17 @@ if __name__ == "__main__":
       #denoised.y = FittingUtilities.Iterative_SV(denoised.y, 91, 5, lowreject=2, highreject=2, numiters=10)
 
       column = {"wavelength": denoised.x,
-                "flux": (order.y - denoised.y) + numpy.median(order.cont),
+                "flux": order.y / denoised.y,
                 "continuum": denoised.cont,
                 "error": denoised.err}
       column_list.append(column)
-      #plt.figure(1)
-      #plt.plot(order.x, order.y/order.y.mean())
-      #plt.plot(denoised.x, denoised.y/denoised.y.mean())
-      #plt.figure(2)
-      #plt.plot(order.x, order.y/denoised.y)
-      #plt.plot(order.x, (order.y-denoised.y)/numpy.median(order.y))
-    #plt.show()
+      plt.figure(1)
+      plt.plot(order.x, order.y/order.y.mean())
+      plt.plot(denoised.x, denoised.y/denoised.y.mean())
+      plt.figure(2)
+      plt.plot(order.x, order.y/denoised.y)
+      plt.plot(order.x, (order.y-denoised.y)/numpy.median(order.y))
+    plt.show()
     outfilename = "%s_smoothed.fits" %(fname.split(".fits")[0])
     print "Outputting to %s" %outfilename
     FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')

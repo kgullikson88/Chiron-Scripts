@@ -140,7 +140,7 @@ temp_list = []
 gravity_list = []
 metal_list = []
 model_data = []
-for fname in model_list:
+for fname in model_list[:2]:
   if "PHOENIX2004" in fname:
     temp = int(fname.split("lte")[-1][:2])*100
     gravity = float(fname.split("lte")[-1][3:6])
@@ -192,9 +192,7 @@ if __name__ == "__main__":
       DATA = interp(order.x, order.y)
       CONT = interp(order.x, order.cont)
       ERROR = interp(order.x, order.err)
-      left = int(order.size()/4.0)
-      right = int(order.size()*3.0/4.0 + 0.5)
-      order.x = numpy.linspace(order.x[left], order.x[right], right - left + 1)
+      order.x = numpy.linspace(order.x[0], order.x[-1], order.size())
       order.y = DATA(order.x)
       order.cont = CONT(order.x)
       order.err = ERROR(order.x)
@@ -210,12 +208,20 @@ if __name__ == "__main__":
         order.err = numpy.delete(order.err, numpy.arange(left, right))
 
       #Remove whole order if it is too small
-      if order.x.size > 10:
-        order.cont = FindContinuum.Continuum(order.x, order.y, lowreject=3, highreject=3)
-        orders[numorders -1 -i] = order.copy()
+      remove = False
+      if order.x.size <= 1:
+        remove = True
       else:
+        velrange = 3e5 * (numpy.median(order.x) - order.x[0]) / numpy.median(order.x)
+        print velrange
+        if velrange <= 1050.0:
+          remove = True
+      if remove:
         print "Removing order %i" %(numorders - 1 - i)
         orders.pop(numorders - 1 - i)
+      else:
+        order.cont = FittingUtilities.Continuum(order.x, order.y, lowreject=3, highreject=3)
+        orders[numorders -1 -i] = order.copy()
 
     """
     for i, order in enumerate(orders):
@@ -240,6 +246,6 @@ if __name__ == "__main__":
       output_dir = output_dir + "Cross_correlations/"
     #Do the cross-correlation
     for vsini in [10, 20, 30, 40]:
-      Correlate.PyCorr2(orders, resolution=60000, outdir=output_dir, models=model_data, stars=star_list, temps=temp_list, gravities=gravity_list, metallicities=metal_list, vsini=vsini*units.km.to(units.cm), debug=False, outfilebase=outfilebase)
+      Correlate.PyCorr2(orders, resolution=80000, outdir=output_dir, models=model_data, stars=star_list, temps=temp_list, gravities=gravity_list, metallicities=metal_list, vsini=vsini*units.km.to(units.cm), debug=False, outfilebase=outfilebase)
 
 
