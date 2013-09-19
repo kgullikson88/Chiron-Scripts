@@ -95,7 +95,7 @@ temp_list = []
 gravity_list = []
 metal_list = []
 model_data = []
-for fname in model_list[8:9]:
+for fname in model_list:
   if "PHOENIX2004" in fname:
     temp = int(fname.split("lte")[-1][:2])*100
     gravity = float(fname.split("lte")[-1][3:6])
@@ -258,8 +258,9 @@ if __name__ == "__main__":
           if companions:
             for configuration in companions:
               component = companions[configuration]
-              if component["Separation"] < 3.0 and i == 0:
-                print "Known %s companion with a separation of %g arcseconds!" %(component["Secondary SpT"], component["Separation"])
+              if component["Separation"] < 3.0:
+		if i == 0:
+                  print "Known %s companion with a separation of %g arcseconds!" %(component["Secondary SpT"], component["Separation"])
                 temperature = MS.Interpolate(MS.Temperature, component["Secondary SpT"])
                 primary_flux += Planck(order2.x.mean()*units.nm.to(units.cm), temperature)
           secondary_flux = Planck(order2.x.mean()*units.nm.to(units.cm), temp_list[j])
