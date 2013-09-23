@@ -140,7 +140,7 @@ temp_list = []
 gravity_list = []
 metal_list = []
 model_data = []
-for fname in model_list[:2]:
+for fname in model_list:
   if "PHOENIX2004" in fname:
     temp = int(fname.split("lte")[-1][:2])*100
     gravity = float(fname.split("lte")[-1][3:6])

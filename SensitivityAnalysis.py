@@ -278,7 +278,7 @@ if __name__ == "__main__":
 
 
         #Do the actual cross-correlation using PyCorr2 (order by order with appropriate weighting)
-        corr = Correlate.PyCorr2(orders, resolution=60000, models=[model_data[j],], stars=[star_list[j],], temps=[temp_list[j],], gravities=[gravity_list[j],], metallicities=[metal_list[j],], vsini=0.0, debug=False, save_output=False)[0]
+        corr = Correlate.PyCorr2(orders, resolution=80000, models=[model_data[j],], stars=[star_list[j],], temps=[temp_list[j],], gravities=[gravity_list[j],], metallicities=[metal_list[j],], vsini=0.0, debug=False, save_output=False)[0]
               
         #output
         outfilename = "%s%s_t%i_v%i" %(outdir, fname.split(".fits")[0], temp_list[j], vel)

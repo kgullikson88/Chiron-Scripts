@@ -9,7 +9,7 @@ import FindContinuum
 import FittingUtilities
 import numpy
 
-plot = True
+plot = False
 
 def ReadCorrectedFile(fname, yaxis="model"):
   orders = []
