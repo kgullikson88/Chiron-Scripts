@@ -26,6 +26,7 @@ badregions = [[0, 466],
               [627, 634.5],
               [686, 706],
               [716, 742],
+              [749.1, 749.45],
               [759, 9e9]]
 
 #Set up model list
@@ -192,7 +193,9 @@ if __name__ == "__main__":
       DATA = interp(order.x, order.y)
       CONT = interp(order.x, order.cont)
       ERROR = interp(order.x, order.err)
-      order.x = numpy.linspace(order.x[0], order.x[-1], order.size())
+      left = 20
+      right = -20
+      order.x = numpy.linspace(order.x[left], order.x[right], order.size())
       order.y = DATA(order.x)
       order.cont = CONT(order.x)
       order.err = ERROR(order.x)
@@ -213,7 +216,6 @@ if __name__ == "__main__":
         remove = True
       else:
         velrange = 3e5 * (numpy.median(order.x) - order.x[0]) / numpy.median(order.x)
-        print velrange
         if velrange <= 1050.0:
           remove = True
       if remove:
@@ -223,12 +225,12 @@ if __name__ == "__main__":
         order.cont = FittingUtilities.Continuum(order.x, order.y, lowreject=3, highreject=3)
         orders[numorders -1 -i] = order.copy()
 
-    """
+    
     for i, order in enumerate(orders):
-      plt.plot(order.x, order.y/order.cont+i)
-      plt.show()
-    sys.exit()
-    """
+      plt.plot(order.x, order.y/order.cont)
+    plt.show()
+    #sys.exit()
+    
 
     #Smooth data
     if smooth:
