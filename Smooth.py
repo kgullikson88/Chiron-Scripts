@@ -9,6 +9,7 @@ import DataStructures
 from scipy.interpolate import InterpolatedUnivariateSpline as interp
 import MakeModel
 
+plot = False
 
 def SmoothData(order, windowsize=91, smoothorder=5, lowreject=3, highreject=3, numiters=10):
   denoised = FittingUtilities.Denoise3(order.copy())
@@ -42,13 +43,15 @@ if __name__ == "__main__":
                 "continuum": denoised.cont,
                 "error": denoised.err}
       column_list.append(column)
-      plt.figure(1)
-      plt.plot(order.x, order.y/order.y.mean())
-      plt.plot(denoised.x, denoised.y/denoised.y.mean())
-      plt.figure(2)
-      plt.plot(order.x, order.y/denoised.y)
-      plt.plot(order.x, (order.y-denoised.y)/numpy.median(order.y))
-    plt.show()
+      if plot:
+        plt.figure(1)
+        plt.plot(order.x, order.y/order.y.mean())
+        plt.plot(denoised.x, denoised.y/denoised.y.mean())
+        plt.figure(2)
+        plt.plot(order.x, order.y/denoised.y)
+        plt.plot(order.x, (order.y-denoised.y)/numpy.median(order.y))
+    if plot:
+      plt.show()
     outfilename = "%s_smoothed.fits" %(fname.split(".fits")[0])
     print "Outputting to %s" %outfilename
     FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
