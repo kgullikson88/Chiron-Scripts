@@ -226,9 +226,9 @@ if __name__ == "__main__":
         orders[numorders -1 -i] = order.copy()
 
     
-    for i, order in enumerate(orders):
-      plt.plot(order.x, order.y/order.cont)
-    plt.show()
+    #for i, order in enumerate(orders):
+    #  plt.plot(order.x, order.y/order.cont)
+    #plt.show()
     #sys.exit()
     
 

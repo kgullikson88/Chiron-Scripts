@@ -9,7 +9,7 @@ import os
 from matplotlib import rc
 #rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
 ## for Palatino and other serif fonts use:
-rc('font',**{'family':'serif','serif':['Palatino']})
+#rc('font',**{'family':'serif','serif':['Palatino']})
 #rc('text', usetex=True)
 import matplotlib.pyplot as plt
 import numpy
@@ -26,8 +26,26 @@ from astropy import units, constants
     star lines in known SB1s.
   The key is the star name, and the value is the estimated temperature
 """
-NewDetections = {"HIP 92855": 0.1} #TODO: actually make this a temperature! Is a mass ratio now for testing!
-
+NewDetections = {"HIP 58590": [3800,],
+                 "HIP 82673": [6000,],
+		 "HIP 87108": [3500,4400],
+		 "HIP 104139": [5000,],
+		 "HIP 95241": [4300,],
+		 "HIP 116247": [3400,],
+		 "HIP 117452": [4700,],
+		 "HIP 60009": [3300,5500],
+		 "HIP 63724": [3400,],
+		 "HIP 79404": [3800,6000],
+		 "HIP 92855": [4000,5800],
+		 "HIP 112029": [6300,],
+		 "HIP 76600": [5600,],
+		 "HIP 77516": [3500,],
+		 "HIP 78820": [4000,],
+		 "HIP 76267": [6500,],
+		 "HIP 88816": [6400,],
+		 "HIP 80883": [3700,],
+		 "HIP 78554": [3400,]
+		 }
 
 
 """
@@ -94,9 +112,9 @@ if __name__ == "__main__":
   for directory in dirlist:
     starlist = [f for f in os.listdir(directory) if f.startswith("H") and f.endswith("-0.fits")]
     for star in starlist:
-      multiple = False
       #First, get the known companions
       multiple = False
+      sb = False
       header = pyfits.getheader("%s/%s" %(directory, star))
       starname = header['OBJECT']
       print starname
@@ -110,6 +128,7 @@ if __name__ == "__main__":
           print "\tq = %g" %(comp[1]/(primary_mass))
           mass_ratios.append(comp[1]/primary_mass)
       if code == 1:
+	sb = True
         multiple = True
         q = value
         wds = False
@@ -131,8 +150,19 @@ if __name__ == "__main__":
 
       #Now, put in my data
       if starname in NewDetections:
-        new_massratios.append(NewDetections[starname])
-        multiple = True
+	for T in NewDetections[starname]:
+	  spt = MS.GetSpectralType(MS.Temperature, T)
+	  mass = MS.Interpolate(MS.Mass, spt)
+	  new_q = mass/primary_mass
+	  previously_known = False
+	  for comp in known_companions:
+	    if abs(new_q - comp[1]) < 0.1 and comp[0] < 4.0:
+	      previously_known = True
+	  if sb and abs(new_q - q) < 0.1:
+	    previously_known = True
+	if not previously_known:
+	  new_massratios.append(new_q)
+          multiple = True
 
       #Keep track of total binary fraction
       if multiple:
@@ -150,7 +180,22 @@ if __name__ == "__main__":
     print "Found new entries!"
     mass_ratios = [mass_ratios, new_massratios]
   print len(mass_ratios)
-  plt.hist(mass_ratios, bins=bins, color=['gray','green'], stacked=True)
+  #nums, bins = numpy.histogram(mass_ratios[0], bins=bins)
+  plt.hist(mass_ratios, bins=bins, color=['0.25','0.5'], histtype='barstacked', label=["Known companions", "Candidate companions"])
+  plt.legend(loc='best')
+  #Make error bars
+  nums = numpy.zeros(bins.size-1)
+  for i in range(len(mass_ratios)):
+    nums += numpy.histogram(mass_ratios[i], bins=bins)[0]
+  lower = []
+  upper = []
+  for n in nums:
+    pl, pu = HelperFunctions.BinomialErrors(n, numstars)
+    lower.append(pl*numpy.sqrt(nums.sum()))
+    upper.append(pu*numpy.sqrt(nums.sum()))
+  #p = nums/nums.sum()
+  #errors = nums*p*(1.0-p)
+  plt.errorbar(bins[:-1] + 0.05, nums, yerr=[lower,upper], fmt=None, ecolor='0.0', elinewidth=2, capsize=5)
   """
   if len(new_massratios) > 0:
     y,edges = numpy.histogram(new_massratios, bins=bins)
@@ -160,13 +205,13 @@ if __name__ == "__main__":
     #plt.hist(new_massratios, bins=bins, bottom=height, color='green')
   """
   plt.xlabel(r"$\rm M_s/M_p$")
-  plt.ylabel("Frequency")
+  plt.ylabel("Number")
   plt.title("Mass Ratio Distribution for Companions within 100\"")
   
-  plt.figure(2)
-  plt.hist(mass_ratios, bins=bins, color=['gray','green'], cumulative=True, normed=True, histtype='step', linewidth=2, stacked=True)
-  plt.plot(bins, bins, 'k--', linewidth=2)
-  plt.xlabel(r"$\rm M_s/M_p$")
-  plt.ylabel("Cumulative Frequency")
+  #plt.figure(2)
+  #plt.hist(mass_ratios, bins=bins, color=['gray','green'], cumulative=True, normed=True, histtype='step', linewidth=2, stacked=True)
+  #plt.plot(bins, bins, 'k--', linewidth=2)
+  #plt.xlabel(r"$\rm M_s/M_p$")
+  #plt.ylabel("Cumulative Frequency")
   plt.show()
       
