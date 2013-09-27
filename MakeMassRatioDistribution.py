@@ -101,7 +101,8 @@ if __name__ == "__main__":
   for arg in sys.argv[1:]:
     dirlist.append(arg)
   if len(dirlist) == 0:
-    dirlist = [d for d in os.listdir("./") if d.startswith("2013")]
+    sys.exit("This function has been obsoleted by the version in School/Research.\nPlease use that one!")
+    #dirlist = [d for d in os.listdir("./") if d.startswith("2013")]
 
   MS = SpectralTypeRelations.MainSequence()
 
