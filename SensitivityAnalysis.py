@@ -36,13 +36,13 @@ badregions = [[588.8, 589.9],
               [627.1, 635.4]]
 badregions = [[0, 466],
 #badregions = [[0, 540],
-#              [567.5, 575.5],
-#              [587.5, 593],
-              [627, 634],
-              [686.5, 696],
-              [716, 734],
-              [759, 771.2],
-              [813, 9e9]]
+              [567.5, 575.5],
+              [587.5, 593],
+              [627, 634.5],
+              [686, 706],
+              [716, 742],
+              [749.1, 749.45],
+              [759, 9e9]]
 badpixels_by_order = {}  #Empty for now
 
 #Set up model list
@@ -157,7 +157,8 @@ if __name__ == "__main__":
       DATA = interp(order.x, order.y)
       CONT = interp(order.x, order.cont)
       ERROR = interp(order.x, order.err)
-      order.x = numpy.linspace(order.x[0], order.x[-1], order.size())
+      left, right = 20, -20
+      order.x = numpy.linspace(order.x[left], order.x[right], order.size())
       order.y = DATA(order.x)
       order.cont = CONT(order.x)
       order.err = ERROR(order.x)
