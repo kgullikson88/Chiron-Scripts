@@ -41,11 +41,14 @@ NewDetections = {"HIP 58590": [3800,],
 		 "HIP 76600": [5600,],
 		 "HIP 77516": [3500,],
 		 "HIP 78820": [4000,],
-		 "HIP 76267": [6500,],
 		 "HIP 88816": [6400,],
 		 "HIP 80883": [3700,],
 		 "HIP 78554": [3400,]
 		 }
+
+#Do the same thing for known binaries which are not in WDS or SB9
+KnownBinaries = {"HIP 76267": [5800,]
+                 }
 
 
 """

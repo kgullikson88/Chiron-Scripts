@@ -26,7 +26,7 @@ def Add(fileList, outfilename=None):
 
   #If we get this far, all is well. Add each order indidually
   numorders = numorders[0]
-  if outfilename == "None":
+  if outfilename == None:
     outfilename = "Total.fits"
   column_list = []
   for i in range(numorders):
