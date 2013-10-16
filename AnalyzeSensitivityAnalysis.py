@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy
 from collections import defaultdict
 import SpectralTypeRelations
-import pyfits
+from astropy.io import fits as pyfits
 import StarData
 import FittingUtilities
 from astropy import units

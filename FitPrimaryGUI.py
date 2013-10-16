@@ -12,7 +12,7 @@ import sys
 import time
 import os
 import subprocess
-import pyfits
+from astropy.io import fits as pyfits
 import FittingUtilities
 import DataStructures
 from astropy import units
@@ -355,9 +355,7 @@ class LineFitter:
         header.update(info[0], info[1])
   
     #Open file and update the appropriate extension
-    hdulist = pyfits.open(filename, mode='update', save_backup=True)
-    print hdulist[0]
-    print hdulist[1]
+    hdulist = pyfits.open(filename, mode='update', save_backup=False)
     if extension < len(hdulist):
       hdulist[extension] = tablehdu
     else:

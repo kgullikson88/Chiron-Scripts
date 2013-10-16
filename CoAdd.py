@@ -5,7 +5,7 @@ import sys
 from scipy.interpolate import InterpolatedUnivariateSpline as interp
 import numpy
 import pylab
-import pyfits
+from astropy.io import fits as pyfits
 from collections import defaultdict
 import os
 

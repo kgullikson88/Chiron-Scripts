@@ -8,7 +8,7 @@ import sys
 import DataStructures
 #import FindContinuum
 import matplotlib.pyplot as plt
-import pyfits
+from astropy.io import fits as pyfits
 from astropy import units, constants
 import StarData
 import SpectralTypeRelations

@@ -1,4 +1,4 @@
-import pyfits
+from astropy.io import fits as pyfits
 import FitsUtils
 import sys
 from scipy.interpolate import InterpolatedUnivariateSpline as interp

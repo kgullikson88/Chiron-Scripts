@@ -2,7 +2,7 @@ import numpy
 import sys
 import os
 import matplotlib.pyplot as plt
-import pyfits
+from astropy.io import fits as pyfits
 from scipy.interpolate import InterpolatedUnivariateSpline as interp
 import TelluricFitter
 import FitsUtils

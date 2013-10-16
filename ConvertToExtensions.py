@@ -1,6 +1,6 @@
 import FitsUtils
 import FindContinuum
-import pyfits
+from astropy.io import fits as pyfits
 import sys
 import os
 import numpy

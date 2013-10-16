@@ -1,4 +1,4 @@
-import pyfits
+from astropy.io import fits as pyfits
 import matplotlib.pyplot as plt
 import sys
 import FitsUtils

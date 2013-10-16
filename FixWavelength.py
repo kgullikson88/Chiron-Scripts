@@ -5,7 +5,7 @@ import FittingUtilities
 import os
 import sys
 import MakeModel
-import pyfits
+from astropy.io import fits as pyfits
 
 if __name__ == "__main__":
   fileList = []

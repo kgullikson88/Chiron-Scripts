@@ -1,6 +1,6 @@
 import FitsUtils_NativeReductions as FitsUtils
 import FittingUtilities
-import pyfits
+from astropy.io import fits as pyfits
 import sys
 import os
 import numpy
