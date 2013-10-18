@@ -10,6 +10,7 @@ import DataStructures
 import Units
 from astropy import units, constants
 import FindContinuum
+import HelperFunctions
 
 homedir = os.environ["HOME"]
 linelist = homedir + "/School/Research/Useful_Datafiles/Linelist_visible.dat"
@@ -174,9 +175,9 @@ if __name__ == "__main__":
       header_list.append(header_info)
       
       if i == 0 and makenew:
-        FitsUtils.OutputFitsFileExtensions(columns, fname, outfilename, headers_info=[header_info,], mode="new")
+        HelperFunctions.OutputFitsFileExtensions(columns, fname, outfilename, headers_info=[header_info,], mode="new")
       else:
-        FitsUtils.OutputFitsFileExtensions(columns, outfilename, outfilename, headers_info=[header_info,], mode="append")
+        HelperFunctions.OutputFitsFileExtensions(columns, outfilename, outfilename, headers_info=[header_info,], mode="append")
     
     
 

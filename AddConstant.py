@@ -2,6 +2,7 @@ import numpy
 import FitsUtils
 import sys
 
+import HelperFunctions
 
 """
   This script will read in a CHIRON reduced spectrum find the lowest point and,
@@ -51,6 +52,6 @@ if __name__ == "__main__":
         outfilename = "%s-%i.fits" %(outfilename.split(".fits")[0], counter)
         counter += 1
       print "Outputting new file to %s" %outfilename
-      FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
+      HelperFunctions.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
     else:
       print "Lowest point is >0. Not making a new file!"

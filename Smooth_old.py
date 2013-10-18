@@ -73,7 +73,7 @@ def Smooth(fname, window_size=91, numiters=100, lowreject=3, highreject=3, smoot
   plt.show()
   outfilename = "%s_smoothed.fits" %(fname.split(".fits")[0])
   print "Outputting to %s" %outfilename
-  FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
+  HelperFunctions.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
 
 
 
@@ -138,7 +138,7 @@ def Filter(fname, vsini=100, numiters=100, lowreject=3, highreject=3):
   plt.show()
   outfilename = "%s_smoothed.fits" %(fname.split(".fits")[0])
   print "Outputting to %s" %outfilename
-  #FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
+  #HelperFunctions.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
 
 
 if __name__ == "__main__":

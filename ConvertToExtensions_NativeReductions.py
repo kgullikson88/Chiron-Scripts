@@ -6,7 +6,7 @@ import os
 import numpy
 import matplotlib.pyplot as plt
 from astropy import units
-
+import HelperFunctions
 
 if __name__ == "__main__":
   fileList = []
@@ -64,7 +64,7 @@ if __name__ == "__main__":
       plt.xlabel("Wavelength (nm)")
       plt.ylabel("Flux (counts)")
       plt.show()
-    FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
+    HelperFunctions.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
 
 
       

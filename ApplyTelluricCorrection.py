@@ -8,6 +8,7 @@ import os
 import FindContinuum
 import FittingUtilities
 import numpy
+import HelperFunctions
 
 plot = False
 
@@ -117,7 +118,7 @@ def main1():
     if plot:
       plt.title("Corrected data")
       plt.show()
-    FitsUtils.OutputFitsFileExtensions(column_list, original, outfilename, mode="new")
+    HelperFunctions.OutputFitsFileExtensions(column_list, original, outfilename, mode="new")
 
   else:
     allfiles = os.listdir("./")
@@ -153,7 +154,7 @@ def main1():
                    "continuum": data.cont,
                    "error": data.err}
         column_list.append(columns)
-      FitsUtils.OutputFitsFileExtensions(column_list, original, outfilename, mode="new")
+      HelperFunctions.OutputFitsFileExtensions(column_list, original, outfilename, mode="new")
 
       if plot:
         plt.title(original)

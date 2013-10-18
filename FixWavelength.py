@@ -6,6 +6,7 @@ import os
 import sys
 import MakeModel
 from astropy.io import fits as pyfits
+import HelperFunctions
 
 if __name__ == "__main__":
   fileList = []
@@ -68,6 +69,6 @@ if __name__ == "__main__":
       header_list.append((("WaveFixed", True, "Wavelength calibration taken from native reductions"),))
 
     
-    FitsUtils.OutputFitsFileExtensions(column_list, fname, fname, mode='new', headers_info = header_list)
+    HelperFunctions.OutputFitsFileExtensions(column_list, fname, fname, mode='new', headers_info = header_list)
 
 

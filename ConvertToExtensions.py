@@ -5,6 +5,7 @@ import sys
 import os
 import numpy
 import pylab
+import HelperFunctions
 
 
 if __name__ == "__main__":
@@ -54,6 +55,6 @@ if __name__ == "__main__":
                            "error": order.err}
       column_list.append(columns)
       
-    FitsUtils.OutputFitsFileExtensions(column_list, fname, outfilename, mode="new")
+    HelperFunctions.OutputFitsFileExtensions(column_list, fname, outfilename, mode="new")
 
       
