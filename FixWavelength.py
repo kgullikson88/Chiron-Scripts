@@ -12,6 +12,7 @@ if __name__ == "__main__":
   fileList = []
   single_template = False
   find_template=False
+  skip = 7
   for arg in sys.argv[1:]:
     if '-template' in arg:
       template = arg.split("=")[-1]
@@ -23,6 +24,8 @@ if __name__ == "__main__":
       for fname in ach_files:
         header = pyfits.getheader(fname)
         objects[header['object']] = fname
+    elif "-skip" in arg:
+      skip = int(arg.split("=")[-1])
     else:
       fileList.append(arg)
 
@@ -44,15 +47,19 @@ if __name__ == "__main__":
     elif find_template:
       header = pyfits.getheader(fname)
       obj = header['object']
-      fname2 = objects[obj]
-      native = FitsUtils.MakeXYpoints(fname2, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
+      try:
+        fname2 = fname.replace("echi", "achi")
+        native = FitsUtils.MakeXYpoints(fname2, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
+      except IOError:
+        fname2 = objects[obj]
+        native = FitsUtils.MakeXYpoints(fname2, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
       mine = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
     else:
       mine = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
 
     column_list = []
     header_list = []
-    for i, order in enumerate(mine[7:]):
+    for i, order in enumerate(mine[skip:]):
       shift, corr = FittingUtilities.CCImprove(native[i], order, debug=True, be_safe=False)
       pixelshift = shift*(native[i].x[-1] - native[i].x[0])/float(native[i].x.size)
       left = int(numpy.searchsorted(order.x, native[i].x[0]) + pixelshift + 0.5)

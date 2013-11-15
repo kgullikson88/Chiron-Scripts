@@ -124,7 +124,7 @@ def MakePlot(infilename):
                "SecondaryTemperature": "Secondary Temperature (K)",
                "SecondaryMass": "SecondaryMass (Solar Masses)",
                "MassRatio": "Mass Ratio",
-               "DetectionRate": "Detection Rate (Percent)",
+               "DetectionRate": "Detection Rate",
                "AverageSignificance": "Average Significance",
                "MagnitudeDifference": "Magnitude Difference"}
 
@@ -219,6 +219,9 @@ def MakePlot(infilename):
       plt.legend(loc='best')
       plt.xlabel(labeldict[xaxis])
       plt.ylabel(labeldict[yaxis])
+      if "DetectionRate" in yaxis:
+        ax = plt.gca()
+        ax.set_ylim([-0.05, 1.05])
       plt.title("Sensitivity Analysis")
     
   plt.show()

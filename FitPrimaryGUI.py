@@ -167,6 +167,7 @@ class LineFitter:
       #Divide data by smoothed version
       if self.mode == "spline":
         smoothed = self.SmoothData()
+        self.fig.canvas.mpl_disconnect(self.clickid)
       elif self.mode == "convolution":
         smoothed = self.ConvolveSmooth()
         smoothed.y *= self.current_order.cont/self.current_order.cont.mean()
@@ -186,6 +187,7 @@ class LineFitter:
   def onclick(self, event):
     print event.xdata, event.ydata
     self.clicks.append((event.xdata, event.ydata))
+    print "clicks array: ", self.clicks
 
     if len(self.clicks) < 2:
       return
@@ -202,7 +204,7 @@ class LineFitter:
       cont = numpy.poly1d(numpy.polyfit((x1, x2), (y1, y2), 1) )
       self.smoothing_data = DataStructures.xypoint(x=self.current_order.x[left:right],
                                                    y=self.current_order.y[left:right],
-                                                   cont=cont(self.current_order.x[left:right]) )
+      cont=cont(self.current_order.x[left:right]) )
       self.smoothing_factor *= self.smoothing_data.size()
       smoothed = self.SmoothData()
       #smoothed = UnivariateSpline(data.x, data.y/data.cont, s=6e-4 ) #numpy.median(data.y)/10000.0)

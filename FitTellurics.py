@@ -31,6 +31,9 @@ if __name__ == "__main__":
     if "-start" in arg:
       makenew = False
       start = int(arg.split("=")[-1])
+    elif "-atmos" in arg:
+      edit_atmosphere = True
+      atmosphere_fname = arg.split("=")[-1]
     else:
       fileList.append(arg)
 
@@ -58,6 +61,25 @@ if __name__ == "__main__":
     humidity = header["OUTHUM"]
     pressure = header["OUTPRESS"]
     temperature = header["OUTTEMP"] + 273.15
+
+    if edit_atmosphere:
+      #Read in GDAS atmosphere profile information
+      Pres,height,Temp,dew = numpy.loadtxt(atmosphere_fname, usecols=(0,1,2,3), unpack=True)
+      sorter = numpy.argsort(height)
+      height = height[sorter]
+      Pres = Pres[sorter]
+      Temp = Temp[sorter]
+      dew = dew[sorter]
+      
+      #Convert dew point temperature to ppmv
+      Pw = 6.116441 * 10**(7.591386*Temp/(Temp + 240.7263))
+      h2o = Pw / (Pres-Pw) * 1e6
+      
+      height /= 1000.0
+      Temp += 273.15
+      fitter.EditAtmosphereProfile("Temperature", height, Temp)
+      fitter.EditAtmosphereProfile("Pressure", height, Pres)
+      fitter.EditAtmosphereProfile("H2O", height, h2o)
     
     #Adjust fitter values
     fitter.FitVariable({"h2o": humidity, 

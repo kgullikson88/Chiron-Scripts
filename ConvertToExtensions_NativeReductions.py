@@ -8,17 +8,8 @@ import matplotlib.pyplot as plt
 from astropy import units
 import HelperFunctions
 
-if __name__ == "__main__":
-  fileList = []
-  blazecorrect = True
-  plotresult = False
-  for arg in sys.argv[1:]:
-    if "blaze" in arg:
-      blazecorrect = False
-    elif "-p" in arg:
-      plotresult = True
-    else:
-      fileList.append(arg)
+
+def Convert(fileList, blazecorrect=True, plotresult=False):
 
   #Read blaze orders
   if blazecorrect:
@@ -68,3 +59,17 @@ if __name__ == "__main__":
 
 
       
+
+if __name__ == "__main__":
+  fileList = []
+  blazecorrect = True
+  plotresult = False
+  for arg in sys.argv[1:]:
+    if "blaze" in arg:
+      blazecorrect = False
+    elif "-p" in arg:
+      plotresult = True
+    else:
+      fileList.append(arg)
+
+  Convert(fileList, blazecorrect, plotresult)

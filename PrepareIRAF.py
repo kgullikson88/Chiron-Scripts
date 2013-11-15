@@ -4,6 +4,7 @@ import os
 from collections import defaultdict
 import subprocess
 import HelperFunctions
+import ConvertToExtensions_NativeReductions as convert
 
 
 
@@ -97,14 +98,17 @@ if __name__ == "__main__":
 
   for otype in FileDict.keys():
     print otype
-    outfile = open("%s.list" %otype, "w")
+    #outfile = open("%s.list" %otype, "w")
     files = FileDict[otype]
     for fname in files:
       print "\t", fname
-      #outfile.write("%s/%s\n" %(caldir, fname))
-      #allfile.write("%s/%s\n" %(caldir, fname))
-    #outfile.close()
-  #allfile.close()
+  
+  #Finally, copy all achi* files from the science directory to this directory
+  cmd = "cp %sachi* ." %(datadir)
+  subprocess.check_call(cmd, shell=True)
+
+  achi_files = [f for f in os.listdir("./") if f.startswith("achi")]
+  convert.Convert(achi_files, False, False)
 
   
 

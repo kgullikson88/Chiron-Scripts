@@ -9,6 +9,70 @@ from astropy.io import fits as pyfits
 from collections import defaultdict
 import os
 import HelperFunctions
+import FittingUtilities
+
+
+def MedianAdd(fileList, outfilename=None):
+  all_data = []
+  numorders = []
+  medians = []
+  for fname in fileList:
+    observation = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
+    all_data.append(observation)
+    numorders.append(len(observation))
+    medians.append([numpy.median(order.y) for order in observation])
+
+  if any(n != numorders[0] for n in numorders):
+    print "Error! Some of the files had different numbers of orders!"
+    for i in range(len(fileList)):
+      print fileList[i], numorders[i]
+    sys.exit()
+
+  #If we get this far, all is well. Add each order indidually
+  numorders = numorders[0]
+  if outfilename == "None":
+    outfilename = "Total.fits"
+  column_list = []
+  for i in range(numorders):
+    x = all_data[0][i].x
+    total = numpy.zeros((len(all_data), x.size))
+    error = numpy.zeros(x.size)
+    norm = 0.0
+    for j, observation in enumerate(all_data):
+      observation[i].y[observation[i].y < 0.0] = 0.0
+      flux = interp(observation[i].x, observation[i].y/medians[j][i])
+      error += interp(observation[i].x, observation[i].err**2, k=1)(x)
+      total[j] = flux(x)
+      norm += medians[j][i]
+    
+    #for j in range(total.shape[0]):
+    #  pylab.plot(x, total[j])
+    #pylab.show()
+    flux = numpy.median(total, axis=0)*norm
+    cont = FittingUtilities.Continuum(x, flux, fitorder=3, lowreject=1.5, highreject=5)
+    #Set up data structures for OutputFitsFile
+    columns = {"wavelength": x,
+               "flux": flux,
+               "continuum": cont,
+               "error": numpy.sqrt(error)}
+    column_list.append(columns)
+
+    pylab.plot(x, flux/cont)
+    #pylab.plot(total.x, total.cont)
+
+  print "Outputting to %s" %outfilename
+  pylab.show()
+  FitsUtils.OutputFitsFileExtensions(column_list, fileList[0], outfilename, mode="new")
+  
+  #Add the files used to the primary header of the new file
+  hdulist = pyfits.open(outfilename, mode='update')
+  header = hdulist[0].header
+  for i in range(len(fileList)):
+    header.set("FILE%i" %(i+1), fileList[i], "File %i used in Co-Adding" %(i+1))
+  hdulist[0].header = header
+  hdulist.flush()
+  hdulist.close()
+  
 
 
 def Add(fileList, outfilename=None):
@@ -84,5 +148,5 @@ if __name__ == "__main__":
       starname = header['OBJECT'].replace(" ", "_")
       fileDict[starname].append(fname)
     for star in fileDict.keys():
-      Add(fileDict[star], outfilename="%s.fits" %star)
+      MedianAdd(fileDict[star], outfilename="%s.fits" %star)
     
