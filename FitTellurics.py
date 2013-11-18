@@ -27,6 +27,7 @@ if __name__ == "__main__":
   fileList = []
   start = 0
   makenew = True
+  edit_atmosphere=False
   for arg in sys.argv[1:]:
     if "-start" in arg:
       makenew = False
@@ -137,34 +138,48 @@ if __name__ == "__main__":
       elif model_amplitude >= 0.01 and model_amplitude < 1:
         logfile.write("Fitting order %i with guassian line profiles\n" %(i+start)) 
         print "Fitting line profiles with gaussian profile"
-	try:
-	  model = fitter.Fit(resolution_fit_mode="gauss", fit_primary=False, adjust_wave="model")
-	except ValueError:
-	  model = DataStructures.xypoint(x=order.x.copy(), y=numpy.ones(order.x.size))
-	
-	models.append(model)
+        try:
+          model = fitter.Fit(resolution_fit_mode="gauss", fit_primary=False, adjust_wave="model")
+        except ValueError:
+          model = DataStructures.xypoint(x=order.x.copy(), y=numpy.ones(order.x.size))
+        
+        models.append(model)
         data = fitter.data
       
       else: 
         logfile.write("Fitting order %i with SVD\n" %(i+start))
         print "Large model amplitude. Using SVD for line profiles"
-	try:
+        try:
           model = fitter.Fit(resolution_fit_mode="SVD", fit_primary=False, adjust_wave="model")
-	except ValueError:
-	  model = DataStructures.xypoint(x=order.x.copy(), y=numpy.ones(order.x.size))
+        except ValueError:
+          model = DataStructures.xypoint(x=order.x.copy(), y=numpy.ones(order.x.size))
 
-	models.append(model)
+        models.append(model)
         data = fitter.data
 
       logfile.write("Array sizes: wave, flux, cont, error, model, primary\n")
       logfile.write("%i\n%i\n%i\n%i\n%i\n%i\n\n\n" %(data.x.size, data.y.size, data.cont.size, data.err.size, model.y.size, primary.y.size))
+
+      #Log the parameter and chisq values for each step
+      summaryfile = open("chisq_summary.order%i.dat" %(i+start), "w")
+      parvals = [fitter.parvals[j] for j in range(len(fitter.parnames)) if fitter.fitting[j]]
+      parnames = [fitter.parnames[j] for j in range(len(fitter.parnames)) if fitter.fitting[j]]
+      for j in range(len(parnames)):
+        summaryfile.write(parnames[j].ljust(15))
+      summaryfile.write("\n")
+      chisq_vals = fitter.chisq_vals
+      for j in range(len(chisq_vals)):
+        for k in range(len(parvals)):
+          summaryfile.write("%.8g".ljust(15) %parvals[k][j])
+        summaryfile.write("%.8g\n" %chisq_vals[j])
+      summaryfile.close()
       
       #Set up data structures for OutputFitsFile
       columns = {"wavelength": data.x,
-	         "flux": data.y,
+                 "flux": data.y,
                  "continuum": data.cont,
                  "error": data.err,
-		 "model": model.y,
+                 "model": model.y,
                  "primary": primary.y}
       namedict = {"pressure": ["PRESFIT", "PRESVAL", "Pressure"],
                   "temperature": ["TEMPFIT", "TEMPVAL", "Temperature"],
