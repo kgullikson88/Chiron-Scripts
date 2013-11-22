@@ -26,12 +26,15 @@ if __name__ == "__main__":
  
   fileList = []
   start = 0
+  end = 999
   makenew = True
   edit_atmosphere=False
   for arg in sys.argv[1:]:
     if "-start" in arg:
       makenew = False
       start = int(arg.split("=")[-1])
+    elif "-end" in arg:
+      end = int(arg.split("=")[-1])
     elif "-atmos" in arg:
       edit_atmosphere = True
       atmosphere_fname = arg.split("=")[-1]
@@ -47,14 +50,6 @@ if __name__ == "__main__":
 
     #Read file
     orders = FitsUtils.MakeXYpoints(fname, errors="error", extensions=True, x="wavelength", y="flux")
-
-    #For some reason, this data goes well below zero (but not just in noise). BIAS error or something?
-    #Anyways, just add a constant to each order so that the lowest point is a 0
-    lowpoint = 9e30
-    for order in orders:
-      minimum = order.y.min()
-      if minimum < lowpoint:
-        lowpoint = minimum
 
     header = pyfits.getheader(fname)
     angle = float(header["ZD"])
@@ -92,11 +87,16 @@ if __name__ == "__main__":
     fitter.SetBounds({"h2o": [1.0, 98.0],
                       "o2": [5e4, 1e6],
                       "resolution": [resolution/2.0, resolution*2.0]})
+    
+    #Ignore the interstellar sodium D lines
+    fitter.IgnoreRegions([[588.98, 589.037], 
+                          [589.567, 589.632]])
     models = []
     
     #Make a test model, to determine whether/how to fit each value
-    fitter.AdjustValue({"wavestart": orders[0].x[0]-20,
-                        "waveend": orders[-1].x[-1]+20})
+    end = min(end, len(orders))
+    fitter.AdjustValue({"wavestart": orders[start].x[0]-20,
+                        "waveend": orders[end-1].x[-1]+20})
     fitpars = [fitter.const_pars[j] for j in range(len(fitter.parnames)) if fitter.fitting[j] ]
     fitter.DisplayVariables()
     test_model = fitter.GenerateModel(fitpars, LineList, nofit=True)
@@ -106,15 +106,14 @@ if __name__ == "__main__":
     #START LOOPING OVER ORDERS
     column_list = []
     header_list = []
-    for i, order in enumerate(orders[start:]):
+    for i, order in enumerate(orders[start:end]):
       print "\n***************************\nFitting order %i: " %(i+start)
       fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
                           "waveend": order.x[-1] + 20.0})
       fitter.FitVariable({"h2o": humidity, 
                           "o2": 2.12e5})
+                          
 
-      if lowpoint < 0:
-        order.y -= lowpoint
       
       order.cont = FindContinuum.Continuum(order.x, order.y, fitorder=3, lowreject=1.5, highreject=10)
       primary = DataStructures.xypoint(x=order.x, y=numpy.ones(order.x.size))
