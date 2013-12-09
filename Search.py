@@ -134,7 +134,8 @@ model_list = [ modeldir + "lte30-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.s
                modeldir + "lte67-4.0+0.5.Cond.PHOENIX2004.direct.7.sorted",
                modeldir + "lte68-4.0-0.5.Cond.PHOENIX2004.direct.7.sorted",
                modeldir + "lte68-4.0+0.5.Cond.PHOENIX2004.direct.7.sorted"]
-               
+
+
                
 star_list = []
 temp_list = []
@@ -205,16 +206,15 @@ if __name__ == "__main__":
       for region in badregions:
         left = numpy.searchsorted(order.x, region[0])
         right = numpy.searchsorted(order.x, region[1])
-	if left == 0 or right == order.size():
-	  order.x = numpy.delete(order.x, numpy.arange(left, right))
-	  order.y = numpy.delete(order.y, numpy.arange(left, right))
-	  order.cont = numpy.delete(order.cont, numpy.arange(left, right))
-	  order.err = numpy.delete(order.err, numpy.arange(left, right))
-	else:
+	if left > 0 and right < order.size():
 	  print "Warning! Bad region covers the middle of order %i" %i
-	  print "Interpolating rather than removing"
-	  order.y[left:right] = order.cont[left:right]
-	  order.err[left:right] = 9e9
+	  print "Removing full order!"
+	  left = 0
+	  right = order.size()
+	order.x = numpy.delete(order.x, numpy.arange(left, right))
+	order.y = numpy.delete(order.y, numpy.arange(left, right))
+	order.cont = numpy.delete(order.cont, numpy.arange(left, right))
+	order.err = numpy.delete(order.err, numpy.arange(left, right))
 
 
       #Remove whole order if it is too small
