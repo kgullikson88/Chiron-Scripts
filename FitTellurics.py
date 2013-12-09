@@ -13,15 +13,12 @@ import FindContinuum
 import HelperFunctions
 
 homedir = os.environ["HOME"]
-linelist = homedir + "/School/Research/Useful_Datafiles/Linelist_visible.dat"
 
 
 if __name__ == "__main__":
   #Initialize fitter
   fitter = TelluricFitter.TelluricFitter()
-  fitter.SetTelluricLineListFile(linelist)
   fitter.SetObservatory("CTIO")
-  LineList = numpy.loadtxt(linelist, usecols=(0,))
   logfile = open("fitlog.txt", "w")
  
   fileList = []
@@ -99,7 +96,7 @@ if __name__ == "__main__":
                         "waveend": orders[end-1].x[-1]+20})
     fitpars = [fitter.const_pars[j] for j in range(len(fitter.parnames)) if fitter.fitting[j] ]
     fitter.DisplayVariables()
-    test_model = fitter.GenerateModel(fitpars, LineList, nofit=True)
+    test_model = fitter.GenerateModel(fitpars, nofit=True)
     numpy.savetxt("Test_Model.dat", numpy.transpose((test_model.x, test_model.y)), fmt="%.8f")
     
     print "Starting at order %i" %start
@@ -132,7 +129,7 @@ if __name__ == "__main__":
         print "Skipping order %i" %(i+start)
         data = order.copy()
         fitter.resolution_fit_mode = "gauss"
-        model = fitter.GenerateModel(fitpars, LineList)
+        model = fitter.GenerateModel(fitpars)
       
       elif model_amplitude >= 0.01 and model_amplitude < 1:
         logfile.write("Fitting order %i with guassian line profiles\n" %(i+start)) 
