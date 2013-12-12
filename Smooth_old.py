@@ -13,6 +13,7 @@ from astropy import units, constants
 import MakeModel
 import RotBroad
 import FittingUtilities
+import HelperFunctions
 import FindContinuum
 
 
@@ -81,7 +82,7 @@ def Filter(fname, vsini=100, numiters=100, lowreject=3, highreject=3):
   orders = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", errors="error")
   column_list = []
   for i, order in enumerate(orders):
-    smoothed = FittingUtilities.IterativeLowPass(order, vsini*units.km.to(units.cm), numiter=numiters, lowreject=lowreject, highreject=highreject)
+    smoothed = HelperFunctions.IterativeLowPass(order, vsini*units.km.to(units.cm), numiter=numiters, lowreject=lowreject, highreject=highreject)
     plt.plot(order.x, order.y)
     plt.plot(order.x, smoothed)
     plt.show()

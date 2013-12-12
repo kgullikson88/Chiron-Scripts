@@ -1,6 +1,7 @@
 import numpy
 import FitsUtils
 import FittingUtilities
+import HelperFunctions
 import matplotlib.pyplot as plt
 import sys
 import os
@@ -13,7 +14,7 @@ import HelperFunctions
 plot = False
 
 def SmoothData(order, windowsize=91, smoothorder=5, lowreject=3, highreject=3, numiters=10):
-  denoised = FittingUtilities.Denoise3(order.copy())
+  denoised = HelperFunctions.Denoise(order.copy())
   denoised.y = FittingUtilities.Iterative_SV(denoised.y, windowsize, smoothorder, lowreject=lowreject, highreject=highreject, numiters=numiters)
   denoised.y /= denoised.y.max()
   return denoised
@@ -35,9 +36,6 @@ if __name__ == "__main__":
       order = MakeModel.RebinData(order, xgrid)
       
       denoised = SmoothData(order, 101, 5, 2, 2, 10)
-      #order2 = order.copy()
-      #denoised = FittingUtilities.Denoise3(order2) #, snr=400.0, reduction_factor=0.15)
-      #denoised.y = FittingUtilities.Iterative_SV(denoised.y, 91, 5, lowreject=2, highreject=2, numiters=10)
 
       column = {"wavelength": denoised.x,
                 "flux": order.y / denoised.y,

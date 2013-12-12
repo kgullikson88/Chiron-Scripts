@@ -14,6 +14,7 @@ import os
 import subprocess
 from astropy.io import fits as pyfits
 import FittingUtilities
+import HelperFunctions
 import DataStructures
 from astropy import units
 
@@ -26,7 +27,7 @@ class LineFitter:
     self.orders = FitsUtils.MakeXYpoints(infilename, errors="error", extensions=True, x="wavelength", y="flux")      
 
     for i, order in enumerate(self.orders):
-      self.orders[i].cont = FindContinuum.Continuum(order.x, order.y, lowreject=3, highreject=3, fitorder=2)
+      self.orders[i].cont = FittingUtilities.Continuum(order.x, order.y, lowreject=3, highreject=3, fitorder=2)
     
     if telluric:
       print "Reading telluric model from database"
@@ -69,7 +70,7 @@ class LineFitter:
       #Remove low frequency components
       self.current_order = order.copy()
       if numpy.min(order.y/order.cont) > 0.15:
-        x,y = FittingUtilities.IterativeLowPass(order.copy(), 250*units.km.to(units.cm), linearize=True, lowreject=2.0, highreject=10)
+        x,y = HelperFunctions.IterativeLowPass(order.copy(), 250*units.km.to(units.cm), linearize=True, lowreject=2.0, highreject=10)
         smoothed = UnivariateSpline(x,y, s=0)
         self.current_order.y *= self.current_order.cont / smoothed(self.current_order.x)
       
@@ -275,7 +276,7 @@ class LineFitter:
   def ConvolveSmooth(self, numiters=10, lowreject=2, highreject=3):
     done = False
     data = self.smoothing_data.copy()
-    data = FittingUtilities.Denoise3(data)
+    data = HelperFunctions.Denoise(data)
     #data.y /= data.cont
     iterations = 0
     if self.window_size % 2 == 0:
