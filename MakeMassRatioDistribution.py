@@ -28,23 +28,23 @@ from astropy import units, constants
 """
 NewDetections = {"HIP 58590": [3800,],
                  "HIP 82673": [6000,],
-		 "HIP 87108": [3500,4400],
-		 "HIP 104139": [5000,],
-		 "HIP 95241": [4300,],
-		 "HIP 116247": [3400,],
-		 "HIP 117452": [4700,],
-		 "HIP 60009": [3300,5500],
-		 "HIP 63724": [3400,],
-		 "HIP 79404": [3800,6000],
-		 "HIP 92855": [4000,5800],
-		 "HIP 112029": [6300,],
-		 "HIP 76600": [5600,],
-		 "HIP 77516": [3500,],
-		 "HIP 78820": [4000,],
-		 "HIP 88816": [6400,],
-		 "HIP 80883": [3700,],
-		 "HIP 78554": [3400,]
-		 }
+                 "HIP 87108": [3500,4400],
+                 "HIP 104139": [5000,],
+                 "HIP 95241": [4300,],
+                 "HIP 116247": [3400,],
+                 "HIP 117452": [4700,],
+                 "HIP 60009": [3300,5500],
+                 "HIP 63724": [3400,],
+                 "HIP 79404": [3800,6000],
+                 "HIP 92855": [4000,5800],
+                 "HIP 112029": [6300,],
+                 "HIP 76600": [5600,],
+                 "HIP 77516": [3500,],
+                 "HIP 78820": [4000,],
+                 "HIP 88816": [6400,],
+                 "HIP 80883": [3700,],
+                 "HIP 78554": [3400,]
+                 }
 
 #Do the same thing for known binaries which are not in WDS or SB9
 KnownBinaries = {"HIP 76267": [5800,]
@@ -132,7 +132,7 @@ if __name__ == "__main__":
           print "\tq = %g" %(comp[1]/(primary_mass))
           mass_ratios.append(comp[1]/primary_mass)
       if code == 1:
-	sb = True
+        sb = True
         multiple = True
         q = value
         wds = False
@@ -154,18 +154,18 @@ if __name__ == "__main__":
 
       #Now, put in my data
       if starname in NewDetections:
-	for T in NewDetections[starname]:
-	  spt = MS.GetSpectralType(MS.Temperature, T)
-	  mass = MS.Interpolate(MS.Mass, spt)
-	  new_q = mass/primary_mass
-	  previously_known = False
-	  for comp in known_companions:
-	    if abs(new_q - comp[1]) < 0.1 and comp[0] < 4.0:
-	      previously_known = True
-	  if sb and abs(new_q - q) < 0.1:
-	    previously_known = True
-	if not previously_known:
-	  new_massratios.append(new_q)
+        for T in NewDetections[starname]:
+          spt = MS.GetSpectralType(MS.Temperature, T)
+          mass = MS.Interpolate(MS.Mass, spt)
+          new_q = mass/primary_mass
+          previously_known = False
+          for comp in known_companions:
+            if abs(new_q - comp[1]) < 0.1 and comp[0] < 4.0:
+              previously_known = True
+          if sb and abs(new_q - q) < 0.1:
+            previously_known = True
+        if not previously_known:
+          new_massratios.append(new_q)
           multiple = True
 
       #Keep track of total binary fraction

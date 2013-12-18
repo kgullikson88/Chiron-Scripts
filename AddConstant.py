@@ -29,19 +29,19 @@ if __name__ == "__main__":
     lowest = 9e30
     for order in orders:
       if numpy.min(order.y) < lowest:
-	lowest = numpy.min(order.y)
+        lowest = numpy.min(order.y)
 
     if lowest < 0:
       column_list = []
       for order in orders:
-	order.y -= lowest
-	order.cont -= lowest
-	order.err -= lowest
-	column = {"wavelength": order.x,
-	          "flux": order.y,
-		  "continuum": order.cont,
-		  "error": order.err}
-	column_list.append(column)
+        order.y -= lowest
+        order.cont -= lowest
+        order.err -= lowest
+        column = {"wavelength": order.x,
+                  "flux": order.y,
+                  "continuum": order.cont,
+                  "error": order.err}
+        column_list.append(column)
       if outfilename == None:
         if "-" in fname:
           idx = int(fname.split("-")[-1].split(".fits")[0])

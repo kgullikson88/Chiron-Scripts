@@ -62,7 +62,7 @@ model_list = [ modeldir + "lte30-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.s
                modeldir + "lte66-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
                modeldir + "lte67-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
                modeldir + "lte68-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-	       modeldir + "lte30-4.0-0.5.Cond.PHOENIX2004.tab.7.sorted",
+               modeldir + "lte30-4.0-0.5.Cond.PHOENIX2004.tab.7.sorted",
                modeldir + "lte30-4.0+0.5.Cond.PHOENIX2004.tab.7.sorted",
                modeldir + "lte31-4.0-0.5.Cond.PHOENIX2004.tab.7.sorted",
                modeldir + "lte31-4.0+0.5.Cond.PHOENIX2004.tab.7.sorted",
@@ -206,15 +206,15 @@ if __name__ == "__main__":
       for region in badregions:
         left = numpy.searchsorted(order.x, region[0])
         right = numpy.searchsorted(order.x, region[1])
-	if left > 0 and right < order.size():
-	  print "Warning! Bad region covers the middle of order %i" %i
-	  print "Removing full order!"
-	  left = 0
-	  right = order.size()
-	order.x = numpy.delete(order.x, numpy.arange(left, right))
-	order.y = numpy.delete(order.y, numpy.arange(left, right))
-	order.cont = numpy.delete(order.cont, numpy.arange(left, right))
-	order.err = numpy.delete(order.err, numpy.arange(left, right))
+        if left > 0 and right < order.size():
+          print "Warning! Bad region covers the middle of order %i" %i
+          print "Removing full order!"
+          left = 0
+          right = order.size()
+        order.x = numpy.delete(order.x, numpy.arange(left, right))
+        order.y = numpy.delete(order.y, numpy.arange(left, right))
+        order.cont = numpy.delete(order.cont, numpy.arange(left, right))
+        order.err = numpy.delete(order.err, numpy.arange(left, right))
 
 
       #Remove whole order if it is too small
@@ -251,7 +251,7 @@ if __name__ == "__main__":
       output_dir = ""
       outfilebase = dirs[-1].split(".fits")[0]
       for directory in dirs[:-1]:
-	output_dir = output_dir + directory + "/"
+        output_dir = output_dir + directory + "/"
       output_dir = output_dir + "Cross_correlations/"
     #Do the cross-correlation
     for vsini in [10, 20, 30, 40]:
