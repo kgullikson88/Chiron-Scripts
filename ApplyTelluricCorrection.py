@@ -76,7 +76,7 @@ def Correct(original, corrected, offset=None, get_primary=False):
       sys.exit("Error! Model size (%i) is larger than data size (%i)" %(model.size(), data.size()))
 
     #if numpy.sum((model.x-data.x)**2) > 1e-8:
-    #  model = MakeModel.RebinData(model, data.x)
+    #  model = FittingUtilities.RebinData(model, data.x)
       
     badindices = numpy.where(numpy.logical_or(data.y <= 0, model.y < 0.05))[0]
     model.y[badindices] = data.y[badindices]

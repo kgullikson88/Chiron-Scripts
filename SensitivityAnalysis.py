@@ -247,11 +247,11 @@ if __name__ == "__main__":
           model2.cont = FittingUtilities.Continuum(model2.x, model2.y, fitorder=3, lowreject=1.5, highreject=10.0)
 
           #b: Convolve to detector resolution
-          model2 = MakeModel.ReduceResolution(model2.copy(), 60000, extend=False)
+          model2 = FittingUtilities.ReduceResolution(model2.copy(), 60000, extend=False)
 
           #c: rebin to the same spacing as the data
           xgrid = numpy.arange(model2.x[0], model2.x[-1], order2.x[1] - order2.x[0])
-          model2 = MakeModel.RebinData(model2.copy(), xgrid)
+          model2 = FittingUtilities.RebinData(model2.copy(), xgrid)
 
           #d: scale to be at the appropriate flux ratio
           primary_flux = Planck(order2.x.mean()*units.nm.to(units.cm), primary_temp)
