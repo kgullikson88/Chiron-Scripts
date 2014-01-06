@@ -115,7 +115,7 @@ def MakeXYpoints(datafile, errors=False, extensions=False, x=None, y=None, cont=
           if waveunits == "angstroms" or waveunits == "Angstroms":
             #wave_factor = Units.nm/Units.angstrom
             wave_factor = units.angstrom.to(units.nm)
-	    print "Wavelength units are Angstroms. Scaling wavelength by ", wave_factor
+            print "Wavelength units are Angstroms. Scaling wavelength by ", wave_factor
 
     #print retdict
     #print retdict['flux']

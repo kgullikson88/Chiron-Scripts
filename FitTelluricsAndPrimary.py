@@ -110,36 +110,36 @@ if __name__ == "__main__":
       elif model_amplitude >= 0.01 and model_amplitude < 1:
         logfile.write("Fitting order %i with guassian line profiles\n" %(i+start)) 
         print "Fitting line profiles with gaussian profile"
-	try:
-	  primary, model = fitter.Fit(resolution_fit_mode="gauss", fit_primary=True, adjust_wave="model")
-	except ValueError:
-	  model = DataStructures.xypoint(x=order.x.copy(), y=numpy.ones(order.x.size))
+        try:
+          primary, model = fitter.Fit(resolution_fit_mode="gauss", fit_primary=True, adjust_wave="model")
+        except ValueError:
+          model = DataStructures.xypoint(x=order.x.copy(), y=numpy.ones(order.x.size))
           primary = model.copy()
           primary.y = numpy.ones(primary.size())
-	
-	models.append(model)
+        
+        models.append(model)
         data = fitter.data
       else: 
         logfile.write("Fitting order %i with SVD\n" %(i+start))
         print "Large model amplitude. Using SVD for line profiles"
-	try:
+        try:
           primary, model = fitter.Fit(resolution_fit_mode="SVD", fit_primary=True, adjust_wave="model")
-	except ValueError:
-	  model = DataStructures.xypoint(x=order.x.copy(), y=numpy.ones(order.x.size))
+        except ValueError:
+          model = DataStructures.xypoint(x=order.x.copy(), y=numpy.ones(order.x.size))
           primary = model.copy()
           primary.y = numpy.ones(primary.size())
 
-	models.append(model)
+        models.append(model)
         data = fitter.data
 
       logfile.write("Array sizes: wave, flux, cont, error, model, primary\n")
       logfile.write("%i\n%i\n%i\n%i\n%i\n%i\n\n\n" %(data.x.size, data.y.size, data.cont.size, data.err.size, model.y.size, primary.y.size))
       #Set up data structures for OutputFitsFile
       columns = {"wavelength": data.x,
-	         "flux": data.y,
+                 "flux": data.y,
                  "continuum": data.cont,
                  "error": data.err,
-		 "model": model.y,
+                 "model": model.y,
                  "primary": primary.y}
       namedict = {"pressure": ["PRESFIT", "PRESVAL", "Pressure"],
                   "temperature": ["TEMPFIT", "TEMPVAL", "Temperature"],

@@ -303,7 +303,7 @@ if __name__ == "__main__":
             for configuration in companions:
               component = companions[configuration]
               if component["Separation"] < 3.0 and component["Secondary SpT"] != "Unknown":
-		if i == 0:
+                if i == 0:
                   print "Known %s companion with a separation of %g arcseconds!" %(component["Secondary SpT"], component["Separation"])
                 temperature = MS.Interpolate(MS.Temperature, component["Secondary SpT"])
                 primary_flux += Planck(order2.x.mean()*units.nm.to(units.cm), temperature)
