@@ -77,8 +77,8 @@ class LineFitter:
       left = numpy.searchsorted(self.model.x, order.x[0]-10.0)
       right = numpy.searchsorted(self.model.x, order.x[-1]+10.0)
       current_model = DataStructures.xypoint(x=self.model.x[left:right], y=self.model.y[left:right])
-      current_model = MakeModel.ReduceResolution(current_model, 60000)
-      self.current_model = MakeModel.RebinData(current_model, order.x)
+      current_model = FittingUtilities.ReduceResolution(current_model, 60000)
+      self.current_model = FittingUtilities.RebinData(current_model, order.x)
 
 
       self.PlotArrays(((self.current_order.x, self.current_order.y), (self.current_model.x, (self.current_model.y)*self.current_order.cont)), self.mainaxis, legend=False)

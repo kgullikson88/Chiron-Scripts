@@ -33,7 +33,7 @@ if __name__ == "__main__":
     for order in orders:
       #Linearize
       xgrid = numpy.linspace(order.x[0], order.x[-1], order.x.size)
-      order = MakeModel.RebinData(order, xgrid)
+      order = FittingUtilities.RebinData(order, xgrid)
       
       denoised = SmoothData(order, 101, 5, 2, 2, 10)
 
