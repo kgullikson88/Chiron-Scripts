@@ -135,7 +135,7 @@ if __name__ == "__main__":
         logfile.write("Fitting order %i with guassian line profiles\n" %(i+start)) 
         print "Fitting line profiles with gaussian profile"
         try:
-          model = fitter.Fit(resolution_fit_mode="gauss", fit_primary=False, adjust_wave="model")
+          primary, model = fitter.Fit(resolution_fit_mode="gauss", fit_primary=True, adjust_wave="model")
         except ValueError:
           model = DataStructures.xypoint(x=order.x.copy(), y=numpy.ones(order.x.size))
         
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         logfile.write("Fitting order %i with SVD\n" %(i+start))
         print "Large model amplitude. Using SVD for line profiles"
         try:
-          model = fitter.Fit(resolution_fit_mode="SVD", fit_primary=False, adjust_wave="model")
+          primary, model = fitter.Fit(resolution_fit_mode="SVD", fit_primary=True, adjust_wave="model")
         except ValueError:
           model = DataStructures.xypoint(x=order.x.copy(), y=numpy.ones(order.x.size))
 
