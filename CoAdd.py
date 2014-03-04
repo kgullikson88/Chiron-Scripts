@@ -12,7 +12,7 @@ import HelperFunctions
 import FittingUtilities
 
 
-def MedianAdd(fileList, outfilename=None):
+def MedianAdd(fileList, outfilename="Total.fits"):
   all_data = []
   numorders = []
   medians = []
@@ -44,10 +44,10 @@ def MedianAdd(fileList, outfilename=None):
       error += interp(observation[i].x, observation[i].err**2, k=1)(x)
       total[j] = flux(x)
       norm += medians[j][i]
-    
-    #for j in range(total.shape[0]):
-    #  pylab.plot(x, total[j])
-    #pylab.show()
+
+    pylab.figure(2)
+    for j in range(total.shape[0]):
+      pylab.plot(x, total[j])
     flux = numpy.median(total, axis=0)*norm
     cont = FittingUtilities.Continuum(x, flux, fitorder=3, lowreject=1.5, highreject=5)
     #Set up data structures for OutputFitsFile
@@ -57,6 +57,7 @@ def MedianAdd(fileList, outfilename=None):
                "error": numpy.sqrt(error)}
     column_list.append(columns)
 
+    pylab.figure(1)
     pylab.plot(x, flux/cont)
     #pylab.plot(total.x, total.cont)
 
@@ -148,5 +149,5 @@ if __name__ == "__main__":
       starname = header['OBJECT'].replace(" ", "_")
       fileDict[starname].append(fname)
     for star in fileDict.keys():
-      MedianAdd(fileDict[star], outfilename="%s.fits" %star)
+      Add(fileDict[star], outfilename="%s.fits" %star)
     

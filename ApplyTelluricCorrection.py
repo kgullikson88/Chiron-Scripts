@@ -32,7 +32,7 @@ def ReadCorrectedFile(fname, yaxis="model"):
 
 def Correct(original, corrected, offset=None, get_primary=False):
   #Read in the data and model
-  original_orders = FitsUtils.MakeXYpoints(original, extensions=True, x="wavelength", y="flux", errors="error", cont="continuum")
+  original_orders = HelperFunctions.ReadFits(original, extensions=True, x="wavelength", y="flux", errors="error", cont="continuum")
   corrected_orders, corrected_headers = ReadCorrectedFile(corrected)
   test_orders, header = ReadCorrectedFile(corrected, yaxis="flux")
 
@@ -113,6 +113,7 @@ def main1():
     for i, data in enumerate(corrected_orders):
       if plot:
         plt.plot(data.x, data.y/data.cont)
+        #plt.plot(data.x, data.cont)
       #Set up data structures for OutputFitsFile
       columns = {"wavelength": data.x,
                  "flux": data.y,
