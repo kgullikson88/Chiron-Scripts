@@ -133,7 +133,7 @@ def main1():
     #print original_files
 
     for corrected in corrected_files:
-      original = corrected.split("Corrected_")[-1].split("-")[0] + ".fits"
+      original = corrected.split("Corrected_")[-1] #.split("-")[0] + ".fits"
       #original = [f for f in allfiles if (f in corrected and f != corrected)]
       #if len(original) == 1:
       #  original = original[0]
