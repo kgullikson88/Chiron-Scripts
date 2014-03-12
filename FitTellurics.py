@@ -57,6 +57,7 @@ def GetAtmosphereFile(header):
     month = int(datestr.split("-")[1])
     day = int(datestr.split("-")[2])
     hour = (float(fname.split("_")[3]) + float(fname.split("_")[4].split(".")[0]))/2.0
+    hour = float(fname.split("_")[3])
     atmos_time = year + (month*30 + day)/365.0 + hour/(365.0*24.0)
     #atmos_time = hour
     if abs(atmos_time - obstime) < mindiff:
@@ -72,7 +73,7 @@ if __name__ == "__main__":
   #Initialize fitter
   fitter = TelluricFitter.TelluricFitter()
   fitter.SetObservatory("CTIO")
-  logfile = open("fitlog.txt", "w")
+  logfile = open("fitlog.txt", "a")
  
   fileList = []
   start = 0
@@ -133,12 +134,13 @@ if __name__ == "__main__":
     
     #Adjust fitter values
     humidity = 10.0
-    fitter.FitVariable({"h2o": humidity,
-                        "temperature": temperature})
+    fitter.FitVariable({"h2o": humidity})
+    #                    "temperature": temperature})
     #                    "o2": 2.12e5})
     fitter.AdjustValue({"angle": angle,
                         "pressure": pressure,
-                        "resolution": resolution,
+			"temperature": temperature,
+			"resolution": resolution,
 			"o2": 2.12e5})
     fitter.SetBounds({"h2o": [humidity_low, humidity_high],
                       "temperature": [temperature-10, temperature+10],
@@ -176,7 +178,7 @@ if __name__ == "__main__":
       h2o.append(fitter.const_pars[idx])
       idx = fitter.parnames.index("temperature")
       T.append(fitter.const_pars[idx])
-      chisquared.append(1.0/fitter.chisq_vals[-1])
+      chisquared.append((1.0-min(model.y))/fitter.chisq_vals[-1])
 
     # Determine the average humidity (weight by chi-squared)
     humidity = numpy.sum(numpy.array(h2o)*numpy.array(chisquared)) / numpy.sum(chisquared)
@@ -206,7 +208,7 @@ if __name__ == "__main__":
       wave0.append(fitter.data.x.mean())
       idx = fitter.parnames.index("o2")
       o2.append(fitter.const_pars[idx])
-      chisquared.append(1.0/fitter.chisq_vals[-1])
+      chisquared.append((1.0-min(model.y))/fitter.chisq_vals[-1])
 
     # Determine the average of the other parameter values
     chi2 = numpy.array(chisquared)
