@@ -79,10 +79,11 @@ def Correct(original, corrected, offset=None, get_primary=False):
     #  model = FittingUtilities.RebinData(model, data.x)
       
     badindices = numpy.where(numpy.logical_or(data.y <= 0, model.y < 0.05))[0]
-    model.y[badindices] = data.y[badindices]
+    model.y[badindices] = data.y[badindices]/data.cont[badindices]
 
     #plt.plot(data.x, data.y / model.y)
     data.y /= model.y
+    data.err /= model.y
     if get_primary:
       data.y /= primary.y
     original_orders[i] = data.copy()

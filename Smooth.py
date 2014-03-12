@@ -13,7 +13,7 @@ import HelperFunctions
 from collections import Counter
 from sklearn.gaussian_process import GaussianProcess
 
-plot = True
+plot = False
 
 def SmoothData(order, windowsize=91, smoothorder=5, lowreject=3, highreject=3, numiters=10):
   denoised = HelperFunctions.Denoise(order.copy())
@@ -45,12 +45,12 @@ def GPSmooth(data, low=0.1, high=10, debug=False):
   except ValueError:
     #On some orders with large telluric residuals, this will fail.
     # Just fall back to the old smoothing method in that case.
-    return SmoothData(data)
+    return SmoothData(data), 91
   smoothed = data.copy()
   if debug:
     print "\tSmoothing parameter theta = ", gp.theta_
   smoothed.y, smoothed.err = gp.predict(data.x[:,None], eval_MSE=True)
-  return smoothed
+  return smoothed, gp.theta_[0][0]
 
 
 if __name__ == "__main__":
@@ -62,6 +62,7 @@ if __name__ == "__main__":
   for fname in fileList:
     orders = HelperFunctions.ReadFits(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
     column_list = []
+    header_list = []
     for i, order in enumerate(orders):
       print "Smoothing order %i/%i" %(i+1, len(orders))
       #Fix errors
@@ -72,12 +73,13 @@ if __name__ == "__main__":
       order = FittingUtilities.RebinData(order, xgrid)
       
       #denoised = SmoothData(order, 101, 5, 2, 2, 10)
-      denoised = GPSmooth(order)
+      denoised, theta = GPSmooth(order)
 
       column = {"wavelength": denoised.x,
                 "flux": order.y / denoised.y,
                 "continuum": denoised.cont,
                 "error": denoised.err}
+      header_list.append(("Smoother", theta, "Smoothing Parameter"))
       column_list.append(column)
       if plot:
         plt.figure(1)
@@ -91,4 +93,4 @@ if __name__ == "__main__":
       plt.show()
     outfilename = "%s_smoothed.fits" %(fname.split(".fits")[0])
     print "Outputting to %s" %outfilename
-    HelperFunctions.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new')
+    HelperFunctions.OutputFitsFileExtensions(column_list, fname, outfilename, mode='new', headers_info=header_list)
