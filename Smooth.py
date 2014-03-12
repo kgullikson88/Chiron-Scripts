@@ -13,7 +13,7 @@ import HelperFunctions
 from collections import Counter
 from sklearn.gaussian_process import GaussianProcess
 
-plot = True
+plot = False
 
 def SmoothData(order, windowsize=91, smoothorder=5, lowreject=3, highreject=3, numiters=10):
   denoised = HelperFunctions.Denoise(order.copy())
