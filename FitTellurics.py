@@ -185,7 +185,7 @@ if __name__ == "__main__":
     temperature = numpy.sum(numpy.array(T)*numpy.array(chisquared)) / numpy.sum(chisquared)
     logfile.write("Humidity/Temperature values and their chi-squared values:\n")
     for h, t, c in zip(h2o, T, chisquared):
-      logfile.write("%g\t%g\n%g\n" %(h, t, 1.0/c))
+      logfile.write("%g\t%g\t%g\n" %(h, t, 1.0/c))
     logfile.write("\n")
     fitter.AdjustValue({"h2o": humidity,
                         "temperature": temperature})
@@ -224,7 +224,7 @@ if __name__ == "__main__":
     logfile.write("O2 abundance and their chi-squared:\n")
     for o, c in zip(o2, chi2[-2:]):
       logfile.write("%g\t%g\n" %(o, 1.0/c))
-    o2 = numpy.sum(o2*chi2[-2:])/numpy.sum(chi2[:-2])
+    o2 = numpy.sum(o2*chi2[-2:])/numpy.sum(chi2[-2:])
     resolution = numpy.sum(resolution[:-2]*chi2[:-2])/numpy.sum(chi2[:-2])
     """
     
@@ -245,6 +245,7 @@ if __name__ == "__main__":
       order.cont = FittingUtilities.Continuum(order.x, order.y, fitorder=3, lowreject=1.5, highreject=10)
       fitter.ImportData(order)
       fitter.resolution_fit_mode = "gauss"
+      #fitter.resolution_fit_mode = "svd"
       wave0 = order.x.mean()
       fitter.shift = vel/(constants.c.cgs.value*units.cm.to(units.km)) * wave0
       print "fitter.shift = ", fitter.shift
