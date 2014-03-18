@@ -16,13 +16,12 @@ modeldir = homedir + "/School/Research/Models/Sorted/Stellar/Vband/"
 
 #Define regions contaminated by telluric residuals or other defects. We will not use those regions in the cross-correlation
 badregions = [[0, 466],
-              [567.5, 575.5],
               [587.5, 593],
               [627, 634.5],
               [686, 706],
               [716, 742],
               [749.1, 749.45],
-              [759, 9e9]]
+              [780, 9e9]]
 
 #Define the values of vsini to search
 vsini_values = [10,20,30,40]
