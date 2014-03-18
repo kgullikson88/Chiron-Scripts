@@ -15,10 +15,11 @@ from sklearn.gaussian_process import GaussianProcess
 
 plot = False
 
-def SmoothData(order, windowsize=91, smoothorder=5, lowreject=3, highreject=3, numiters=10):
+def SmoothData(order, windowsize=91, smoothorder=5, lowreject=3, highreject=3, numiters=10, normalize=True):
   denoised = HelperFunctions.Denoise(order.copy())
   denoised.y = FittingUtilities.Iterative_SV(denoised.y, windowsize, smoothorder, lowreject=lowreject, highreject=highreject, numiters=numiters)
-  denoised.y /= denoised.y.max()
+  if normalize:
+    denoised.y /= denoised.y.max()
   return denoised
 
 
@@ -32,6 +33,16 @@ def GPSmooth(data, low=0.1, high=10, debug=False):
   The low and high keywords are reasonable bounds for  A and B stars with 
   vsini > 100 km/s.
   """
+
+  smoothed = data.copy()
+
+  # First, find outliers by doing a guess smooth
+  smoothed = SmoothData(data, normalize=False)
+  temp = smoothed.copy()
+  temp.y = data.y/smoothed.y
+  temp.cont = FittingUtilities.Continuum(temp.x, temp.y, lowreject=2, highreject=2, fitorder=3)
+  outliers = HelperFunctions.FindOutliers(temp, numsiglow=3, expand=5)
+  data.y[outliers] = smoothed.y[outliers]
     
   gp = GaussianProcess(corr='squared_exponential',
                        theta0 = numpy.sqrt(low*high),
@@ -46,7 +57,6 @@ def GPSmooth(data, low=0.1, high=10, debug=False):
     #On some orders with large telluric residuals, this will fail.
     # Just fall back to the old smoothing method in that case.
     return SmoothData(data), 91
-  smoothed = data.copy()
   if debug:
     print "\tSmoothing parameter theta = ", gp.theta_
   smoothed.y, smoothed.err = gp.predict(data.x[:,None], eval_MSE=True)
@@ -73,7 +83,7 @@ if __name__ == "__main__":
       order = FittingUtilities.RebinData(order, xgrid)
       
       #denoised = SmoothData(order, 101, 5, 2, 2, 10)
-      denoised, theta = GPSmooth(order)
+      denoised, theta = GPSmooth(order.copy())
 
       column = {"wavelength": denoised.x,
                 "flux": order.y / denoised.y,
