@@ -265,6 +265,15 @@ if __name__ == "__main__":
       primary, model = fitter.GenerateModel(fitpars, 
                                             separate_primary=True, 
                                             return_resolution=False)
+      
+      if min(model.y) > 0.98:
+	#The wavelength calibration might be off
+        wave0 = order.x.mean()
+        fitter.shift = vel/(constants.c.cgs.value*units.cm.to(units.km)) * wave0
+        model = fitter.GenerateModel(fitpars, separate_primary=False, nofit=True)
+        model.x /= (1.0 + vel/(constants.c.cgs.value*units.cm.to(units.km)))
+        model = FittingUtilities.RebinData(model, order.x)
+      
       """
       if min(model.y) > 0.9:
         # The wavelength calibration might be off.
