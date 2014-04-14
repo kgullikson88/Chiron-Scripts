@@ -66,6 +66,20 @@ def GetAtmosphereFile(header):
   return filename
 
 
+def FindOrderNums(orders, wavelengths):
+  """
+    Given a list of xypoint orders and
+    another list of wavelengths, this
+    finds the order numbers with the
+    requested wavelengths
+  """
+  nums = []
+  for wave in wavelengths:
+    for i, order in enumerate(orders):
+      if order.x[0] < wave and order.x[-1] > wave:
+        nums.append(i)
+        break
+  return nums
 
 
 
@@ -161,7 +175,8 @@ if __name__ == "__main__":
     wave0 = []
     chisquared = []
     #for i in [27, 28, 36, 37]:
-    for i in [42, 45, 46, 47]:
+    #for i in [42, 45, 46, 47]:
+    for i in FindOrderNums(orders, [700, 717, 726, 735]):
       print "\n***************************\nFitting order %i: " %(i)
       order = orders[i]
       fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
@@ -199,7 +214,8 @@ if __name__ == "__main__":
     
     # Now, determine the O2 abundance
     fitter.FitVariable({"o2": 2.12e5})
-    for i in [33, 41]:
+    #for i in [33, 41]:
+    for i in FindOrderNums(orders, [630, 690]):
       order = orders[i]
       fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
                           "waveend": order.x[-1] + 20.0})

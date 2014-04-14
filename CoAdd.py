@@ -108,17 +108,8 @@ def Add(fileList, outfilename=None):
       #total.err += error(total.x)
       total.y += rebinned.y
       total.err += rebinned.err**2
-      if rebinned.x[0] < 819 and rebinned.x[-1] > 819:
-        print rebinned.y
-        if numpy.any(numpy.isnan(rebinned.y)):
-          rebinned.output("Rebinned.dat")
+      
     total.err = numpy.sqrt(total.err)
-    if total.x[0] < 819 and total.x[-1] > 819:
-      print "\n"
-      print total.x
-      print total.y
-      badindices = numpy.isnan(total.y)
-      print numpy.any(numpy.isnan(total.y))
     total.cont = FittingUtilities.Continuum(total.x, total.y, fitorder=3, lowreject=1.5, highreject=5)
 
      #Set up data structures for OutputFitsFile
