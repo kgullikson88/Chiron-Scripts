@@ -11,29 +11,30 @@ import HelperFunctions
 if __name__ == "__main__":
   fileList = []
   single_template = False
-  find_template=False
+  find_template=True
   skip = 7
   for arg in sys.argv[1:]:
     if '-template' in arg:
       template = arg.split("=")[-1]
       single_template = True
-    elif "-find" in arg:
-      find_template=True
-      ach_files =[f for f in os.listdir("./") if f.startswith("achi") and f.endswith("-0.fits")]
-      objects = {}
-      for fname in ach_files:
-        header = pyfits.getheader(fname)
-        objects[header['object']] = fname
+      find_template = False
     elif "-skip" in arg:
       skip = int(arg.split("=")[-1])
     else:
       fileList.append(arg)
 
+  if find_template:
+    ach_files =[f for f in os.listdir("./") if f.startswith("achi") and f.endswith("-0.fits")]
+    objects = {}
+    for fname in ach_files:
+      header = pyfits.getheader(fname)
+      objects[header['object']] = fname
 
   if single_template:
     native = FitsUtils.MakeXYpoints(template, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
 
   for fname in fileList:
+    hdulist = pyfits.open(fname)
     if not single_template and not find_template:
       if fname.startswith("a"):
         native = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
@@ -60,6 +61,9 @@ if __name__ == "__main__":
     column_list = []
     header_list = []
     for i, order in enumerate(mine[skip:]):
+      if "WaveFixed" in hdulist[i+skip].header.keys() and hdulist[i+skip].header['WaveFixed']:
+        print "Wavelength calibration already done. Skipping order %i" %(i+skip)
+        continue
       shift, corr = FittingUtilities.CCImprove(native[i], order, debug=True, be_safe=False)
       pixelshift = shift*(native[i].x[-1] - native[i].x[0])/float(native[i].x.size)
       left = int(numpy.searchsorted(order.x, native[i].x[0]) + pixelshift + 0.5)
