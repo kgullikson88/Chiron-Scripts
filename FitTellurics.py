@@ -87,7 +87,6 @@ if __name__ == "__main__":
   #Initialize fitter
   fitter = TelluricFitter.TelluricFitter()
   fitter.SetObservatory("CTIO")
-  logfile = open("fitlog.txt", "a")
  
   fileList = []
   start = 0
@@ -109,6 +108,7 @@ if __name__ == "__main__":
 
   #START LOOPING OVER INPUT FILES
   for fname in fileList:
+    logfile = open("fitlog_%s.txt" %(fname.split(".fits")[0]), "a")
     logfile.write("Fitting file %s\n" %(fname))
     name = fname.split(".fits")[0]
     outfilename = "Corrected_%s.fits" %name
@@ -154,9 +154,9 @@ if __name__ == "__main__":
     #                    "o2": 2.12e5})
     fitter.AdjustValue({"angle": angle,
                         "pressure": pressure,
-			"temperature": temperature,
-			"resolution": resolution,
-			"o2": 2.12e5})
+                        "temperature": temperature,
+                        "resolution": resolution,
+                        "o2": 2.12e5})
     fitter.SetBounds({"h2o": [humidity_low, humidity_high],
                       "temperature": [temperature-10, temperature+10],
                       "o2": [5e4, 1e6],
