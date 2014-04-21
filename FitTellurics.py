@@ -265,6 +265,7 @@ if __name__ == "__main__":
 
     # Finally, apply these parameters to all orders in the data
     for i, order in enumerate(orders):
+      print "\n\nGenerating model for order %i of %i\n" %(i, len(orders))
       fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
                           "waveend": order.x[-1] + 20.0,
                           "o2": o2,
