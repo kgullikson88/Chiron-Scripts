@@ -35,6 +35,11 @@ if __name__ == "__main__":
 
   for fname in fileList:
     hdulist = pyfits.open(fname)
+    if all("WaveFixed" in hdu.header.keys() for hdu in hdulist[1:]):
+      print "Wavelength calibration already done. Skipping file %s" %fname
+      continue
+
+
     if not single_template and not find_template:
       if fname.startswith("a"):
         native = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
@@ -61,9 +66,6 @@ if __name__ == "__main__":
     column_list = []
     header_list = []
     for i, order in enumerate(mine[skip:]):
-      if "WaveFixed" in hdulist[i+skip].header.keys() and hdulist[i+skip].header['WaveFixed']:
-        print "Wavelength calibration already done. Skipping order %i" %(i+skip)
-        continue
       shift, corr = FittingUtilities.CCImprove(native[i], order, debug=True, be_safe=False)
       pixelshift = shift*(native[i].x[-1] - native[i].x[0])/float(native[i].x.size)
       left = int(numpy.searchsorted(order.x, native[i].x[0]) + pixelshift + 0.5)
@@ -72,6 +74,8 @@ if __name__ == "__main__":
       right = left + native[i].size()
       
       order = order[left:right]
+      
+
       columns = {"wavelength": order.x,
                  "flux": order.y,
                  "continuum": order.cont,

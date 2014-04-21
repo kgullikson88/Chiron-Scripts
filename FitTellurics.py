@@ -119,7 +119,7 @@ if __name__ == "__main__":
     header = pyfits.getheader(fname)
     angle = float(header["ZD"])
     resolution = 80000.0
-    humidity = header["OUTHUM"]
+    humidity = max(header["OUTHUM"], 5)
     pressure = header["OUTPRESS"]
     temperature = header["OUTTEMP"] + 273.15
 
