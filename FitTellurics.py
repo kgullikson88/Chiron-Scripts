@@ -176,7 +176,7 @@ if __name__ == "__main__":
     chisquared = []
     #for i in [27, 28, 36, 37]:
     #for i in [42, 45, 46, 47]:
-    for i in FindOrderNums(orders, [700, 717, 726, 735]):
+    for i in FindOrderNums(orders, [590, 650, 717, 726]):
       print "\n***************************\nFitting order %i: " %(i)
       order = orders[i]
       fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
