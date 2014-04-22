@@ -66,6 +66,20 @@ def GetAtmosphereFile(header):
   return filename
 
 
+def FindOrderNums(orders, wavelengths):
+  """
+    Given a list of xypoint orders and
+    another list of wavelengths, this
+    finds the order numbers with the
+    requested wavelengths
+  """
+  nums = []
+  for wave in wavelengths:
+    for i, order in enumerate(orders):
+      if order.x[0] < wave and order.x[-1] > wave:
+        nums.append(i)
+        break
+  return nums
 
 
 
@@ -73,7 +87,6 @@ if __name__ == "__main__":
   #Initialize fitter
   fitter = TelluricFitter.TelluricFitter()
   fitter.SetObservatory("CTIO")
-  logfile = open("fitlog.txt", "a")
  
   fileList = []
   start = 0
@@ -95,6 +108,7 @@ if __name__ == "__main__":
 
   #START LOOPING OVER INPUT FILES
   for fname in fileList:
+    logfile = open("fitlog_%s.txt" %(fname.split(".fits")[0]), "a")
     logfile.write("Fitting file %s\n" %(fname))
     name = fname.split(".fits")[0]
     outfilename = "Corrected_%s.fits" %name
@@ -105,7 +119,7 @@ if __name__ == "__main__":
     header = pyfits.getheader(fname)
     angle = float(header["ZD"])
     resolution = 80000.0
-    humidity = header["OUTHUM"]
+    humidity = max(header["OUTHUM"], 5)
     pressure = header["OUTPRESS"]
     temperature = header["OUTTEMP"] + 273.15
 
@@ -114,7 +128,9 @@ if __name__ == "__main__":
       atmosphere_fname = GetAtmosphereFile(header)
       
       #Read in GDAS atmosphere profile information
-      Pres,height,Temp,dew = numpy.loadtxt(atmosphere_fname, usecols=(0,1,2,3), unpack=True)
+      Pres,height,Temp,dew = numpy.loadtxt(atmosphere_fname,
+                                           usecols=(0,1,2,3), 
+                                           unpack=True)
       sorter = numpy.argsort(height)
       height = height[sorter]
       Pres = Pres[sorter]
@@ -133,19 +149,18 @@ if __name__ == "__main__":
       
     
     #Adjust fitter values
-    humidity = 10.0
     fitter.FitVariable({"h2o": humidity})
     #                    "temperature": temperature})
     #                    "o2": 2.12e5})
     fitter.AdjustValue({"angle": angle,
                         "pressure": pressure,
-			"temperature": temperature,
-			"resolution": resolution,
-			"o2": 2.12e5})
+                        "temperature": temperature,
+                        "resolution": resolution,
+                        "o2": 2.12e5})
     fitter.SetBounds({"h2o": [humidity_low, humidity_high],
                       "temperature": [temperature-10, temperature+10],
                       "o2": [5e4, 1e6],
-                      "resolution": [70000, 120000]})
+                      "resolution": [70000, 90000]})
     
     #Ignore the interstellar sodium D lines and parts of the O2 bands
     fitter.IgnoreRegions(badregions)
@@ -159,7 +174,9 @@ if __name__ == "__main__":
     waveshifts = []
     wave0 = []
     chisquared = []
-    for i in [27, 28, 36, 37]:
+    #for i in [27, 28, 36, 37]:
+    #for i in [42, 45, 46, 47]:
+    for i in FindOrderNums(orders, [700, 717, 726, 735]):
       print "\n***************************\nFitting order %i: " %(i)
       order = orders[i]
       fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
@@ -168,16 +185,20 @@ if __name__ == "__main__":
       primary = DataStructures.xypoint(x=order.x, y=numpy.ones(order.x.size))
       primary, model, R = fitter.Fit(data=order.copy(), 
                                      resolution_fit_mode="gauss", 
-                                     fit_primary=True, 
+                                     fit_source=True, 
                                      return_resolution=True,
-				     adjust_wave="model")
+				     adjust_wave="model",
+				     wavelength_fit_order=3)
       resolution.append(R)
       waveshifts.append(fitter.shift)
       wave0.append(fitter.data.x.mean())
-      idx = fitter.parnames.index("h2o")
-      h2o.append(fitter.const_pars[idx])
-      idx = fitter.parnames.index("temperature")
-      T.append(fitter.const_pars[idx])
+      h2o.append(fitter.GetValue("h2o"))
+      T.append(fitter.GetValue("temperature"))
+      
+      #idx = fitter.parnames.index("h2o")
+      #h2o.append(fitter.const_pars[idx])
+      #idx = fitter.parnames.index("temperature")
+      #T.append(fitter.const_pars[idx])
       chisquared.append((1.0-min(model.y))/fitter.chisq_vals[-1])
 
     # Determine the average humidity (weight by chi-squared)
@@ -186,13 +207,15 @@ if __name__ == "__main__":
     logfile.write("Humidity/Temperature values and their chi-squared values:\n")
     for h, t, c in zip(h2o, T, chisquared):
       logfile.write("%g\t%g\t%g\n" %(h, t, 1.0/c))
-    logfile.write("\n")
+    logfile.write("Best fit humidity = %g\n" %humidity)
+    logfile.write("Best fit temperature = %g\n\n" %temperature)
     fitter.AdjustValue({"h2o": humidity,
                         "temperature": temperature})
     
     # Now, determine the O2 abundance
     fitter.FitVariable({"o2": 2.12e5})
-    for i in [33, 41]:
+    #for i in [33, 41]:
+    for i in FindOrderNums(orders, [630, 690]):
       order = orders[i]
       fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
                           "waveend": order.x[-1] + 20.0})
@@ -200,14 +223,17 @@ if __name__ == "__main__":
       primary = DataStructures.xypoint(x=order.x, y=numpy.ones(order.x.size))
       primary, model, R = fitter.Fit(data=order.copy(), 
                                      resolution_fit_mode="gauss", 
-                                     fit_primary=True,
+                                     fit_source=True,
 				     return_resolution=True,
-                                     adjust_wave="model")
+                                     adjust_wave="model",
+				     wavelength_fit_order=3)
       resolution.append(R)
       waveshifts.append(fitter.shift)
       wave0.append(fitter.data.x.mean())
-      idx = fitter.parnames.index("o2")
-      o2.append(fitter.const_pars[idx])
+      o2.append(fitter.GetValue("o2"))
+
+      #idx = fitter.parnames.index("o2")
+      #o2.append(fitter.const_pars[idx])
       chisquared.append((1.0-min(model.y))/fitter.chisq_vals[-1])
 
     # Determine the average of the other parameter values
@@ -226,6 +252,9 @@ if __name__ == "__main__":
       logfile.write("%g\t%g\n" %(o, 1.0/c))
     o2 = numpy.sum(o2*chi2[-2:])/numpy.sum(chi2[-2:])
     resolution = numpy.sum(resolution[:-2]*chi2[:-2])/numpy.sum(chi2[:-2])
+    logfile.write("Best fit o2 mixing ratio = %g ppmv\n" %o2)
+    logfile.write("Best fit resolution = %g\n" %resolution)
+    logfile.write("Best fit velocity shift = %g km/s\n" %vel)
     """
     
     o2 = 224773
@@ -236,6 +265,7 @@ if __name__ == "__main__":
 
     # Finally, apply these parameters to all orders in the data
     for i, order in enumerate(orders):
+      print "\n\nGenerating model for order %i of %i\n" %(i, len(orders))
       fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
                           "waveend": order.x[-1] + 20.0,
                           "o2": o2,
@@ -246,53 +276,23 @@ if __name__ == "__main__":
       fitter.ImportData(order)
       fitter.resolution_fit_mode = "gauss"
       #fitter.resolution_fit_mode = "svd"
-      wave0 = order.x.mean()
-      fitter.shift = vel/(constants.c.cgs.value*units.cm.to(units.km)) * wave0
+      #wave0 = order.x.mean()
+      #fitter.shift = vel/(constants.c.cgs.value*units.cm.to(units.km)) * wave0
       print "fitter.shift = ", fitter.shift
       primary, model = fitter.GenerateModel(fitpars, 
                                             separate_primary=True, 
                                             return_resolution=False)
-      if min(model.y) > 0.9:
-	# The wavelength calibration might be off.
-	fitter.shift = 0.0
-	model = fitter.GenerateModel(fitpars, separate_primary=False, nofit=True)
-
-	model.x /= (1.0 + vel/(constants.c.cgs.value*units.cm.to(units.km)))
-	xgrid = numpy.linspace(model.x[0], model.x[-1], model.size())
-	model = FittingUtilities.RebinData(model, xgrid)
-	#order2 = order.copy()
-	#p = FittingUtilities.Iterative_SV(order2.y/order2.cont, 61, 4)
-	#order2.y /= p
-	#model2 = FittingUtilities.RebinData(model, order2.x)
-	left = numpy.searchsorted(model.x, order.x[0])
-	right = numpy.searchsorted(model.x, order.x[-1])
-	if min(model.y[left:right]) < 0.99:
-	  #Interpolate to finer spacing
-	  oversampling = 5.0
-          xgrid = numpy.linspace(order.x[0], order.x[-1], order.size()*oversampling)
-          order2 = FittingUtilities.RebinData(order, xgrid)
-          model2 = FittingUtilities.RebinData(model, xgrid)
-          p = FittingUtilities.Iterative_SV(order2.y/order2.cont, 61*oversampling, 4)
-	  order2.y /= p
-  	  shift, corr = FittingUtilities.CCImprove(order2, 
-	                                           model2,
-	                                           be_safe=True,
-	                                           tol=0.05,
-	                                           debug=True)
-	  model.x -= shift
-	  #plt.figure(1)
-	  #plt.plot(order2.x, order2.y/order2.cont)
-	  #plt.plot(order2.x, p)
-	  #plt.plot(model2.x, model2.y/model2.cont)
-	  #plt.figure(2)
-	  #plt.plot(corr.x, corr.y)
-	  #plt.show()
-	  print "Model has low amplitude! Shifting by %.5g nm" %shift
-	model = FittingUtilities.ReduceResolution(model, resolution)
-	model = FittingUtilities.RebinData(model, order.x)
-
+      
       data = fitter.data
-      data.cont = FittingUtilities.Continuum(data.x, data.y, fitorder=3, lowreject=2, highreject=2)
+      if min(model.y) > 0.98:
+        #The wavelength calibration might be off
+        wave0 = order.x.mean()
+        fitter.shift = vel/(constants.c.cgs.value*units.cm.to(units.km)) * wave0
+        model = fitter.GenerateModel(fitpars, separate_primary=False, nofit=True)
+        model.x /= (1.0 + vel/(constants.c.cgs.value*units.cm.to(units.km)))
+        model = FittingUtilities.RebinData(model, order.x)
+        data = order.copy()
+        data.cont = FittingUtilities.Continuum(data.x, data.y, fitorder=3, lowreject=2, highreject=5)
 
       # Set up data structures for OutputFitsFile
       columns = {"wavelength": data.x,
@@ -322,5 +322,4 @@ if __name__ == "__main__":
         HelperFunctions.OutputFitsFileExtensions(columns, outfilename, outfilename, headers_info=[header_info,], mode="append")
       
       
-  #plt.show()
-  logfile.close()
+    logfile.close()

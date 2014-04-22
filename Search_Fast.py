@@ -21,6 +21,7 @@ badregions = [[0, 466],
               [686, 706],
               [716, 742],
               [749.1, 749.45],
+              [759, 770],
               [780, 9e9]]
 
 #Define the values of vsini to search
@@ -159,7 +160,7 @@ for fname in model_list:
 
 def Process_Data(fname, extensions=True):
   if extensions:
-    orders = HelperFunctions.ReadFits(fname, extensions=extensions, x="wavelength", y="flux", errors="error", cont="continuum")
+    orders = HelperFunctions.ReadExtensionFits(fname)
           
   else:
     orders = HelperFunctions.ReadFits(fname, errors=2)
@@ -203,13 +204,18 @@ def Process_Data(fname, extensions=True):
       orders.pop(numorders - 1 - i)
     else:
       # Find outliers from e.g. bad telluric line or stellar spectrum removal.
-      outliers = HelperFunctions.FindOutliers(data)
-      order.y[outliers] = 0.0
       order.cont = FittingUtilities.Continuum(order.x, order.y, lowreject=3, highreject=3)
-      order.y[outliers] = order.cont[outliers]
-
+      outliers = HelperFunctions.FindOutliers(order, expand=5)
+      if len(outliers) > 0:
+        order.y[outliers] = 1.0
+        order.cont = FittingUtilities.Continuum(order.x, order.y, lowreject=3, highreject=3)
+        order.y[outliers] = order.cont[outliers]
+        #plt.plot(order.x, order.y/order.cont)
+        #plt.text(order.x.mean(), 1.01,str(numorders -1 -i))
+      
       # Save this order
       orders[numorders -1 -i] = order.copy()
+  #plt.show()
   return orders
 
 
@@ -248,18 +254,19 @@ if __name__ == "__main__":
             HelperFunctions.ensure_dir(output_dir)
         
     
-	          model = modeldict[temp][gravity][metallicity][vsini]
-	          pflag = not processed[temp][gravity][metallicity][vsini]
-	          retdict = Correlate.GetCCF(orders, 
-	                                     model,
-                                       resolution=80000.0,
+            model = modeldict[temp][gravity][metallicity][vsini]
+            pflag = not processed[temp][gravity][metallicity][vsini]
+            retdict = Correlate.GetCCF(orders, 
+                                       model,
+                                       resolution=60000.0,
                                        vsini=vsini, 
                                        rebin_data=True,
                                        process_model=pflag,
-                                       debug=True)
+                                       debug=True,
+                                       outputdir=output_dir.split("Cross_corr")[0])
             corr = retdict["CCF"]
-	          if pflag:
-	            processed[temp][gravity][metallicity][vsini] = True
+            if pflag:
+              processed[temp][gravity][metallicity][vsini] = True
               modeldict[temp][gravity][metallicity][vsini] = retdict["model"]
       
             outfilename = "%s%s.%.0fkps_%sK%+.1f%+.1f" %(output_dir, outfilebase, vsini, temp, gravity, metallicity)

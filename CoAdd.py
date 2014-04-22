@@ -80,7 +80,7 @@ def Add(fileList, outfilename=None):
   all_data = []
   numorders = []
   for fname in fileList:
-    observation = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
+    observation = HelperFunctions.ReadFits(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
     all_data.append(observation)
     numorders.append(len(observation))
 
@@ -101,12 +101,16 @@ def Add(fileList, outfilename=None):
     total.err = total.err**2
     for observation in all_data[1:]:
       observation[i].y[observation[i].y < 0.0] = 0.0
-      flux = interp(observation[i].x, observation[i].y)
-      error = interp(observation[i].x, observation[i].err**2, k=1)
-      total.y += flux(total.x)
-      total.err += error(total.x)
+      #flux = interp(observation[i].x, observation[i].y)
+      #error = interp(observation[i].x, observation[i].err**2, k=1)
+      rebinned = FittingUtilities.RebinData(observation[i], total.x)
+      #total.y += flux(total.x)
+      #total.err += error(total.x)
+      total.y += rebinned.y
+      total.err += rebinned.err**2
+      
     total.err = numpy.sqrt(total.err)
-    total.cont = FindContinuum.Continuum(total.x, total.y, fitorder=3, lowreject=1.5, highreject=5)
+    total.cont = FittingUtilities.Continuum(total.x, total.y, fitorder=3, lowreject=1.5, highreject=5)
 
      #Set up data structures for OutputFitsFile
     columns = {"wavelength": total.x,

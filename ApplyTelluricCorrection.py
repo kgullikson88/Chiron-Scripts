@@ -78,8 +78,10 @@ def Correct(original, corrected, offset=None, get_primary=False):
     #if numpy.sum((model.x-data.x)**2) > 1e-8:
     #  model = FittingUtilities.RebinData(model, data.x)
       
+    data.y[data.y/data.cont < 1e-5] = 1e-5*data.cont[data.y/data.cont < 1e-5]
     badindices = numpy.where(numpy.logical_or(data.y <= 0, model.y < 0.05))[0]
     model.y[badindices] = data.y[badindices]/data.cont[badindices]
+    model.y[model.y < 1e-5] = 1e-5
 
     #plt.plot(data.x, data.y / model.y)
     data.y /= model.y

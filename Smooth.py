@@ -42,7 +42,8 @@ def GPSmooth(data, low=0.1, high=10, debug=False):
   temp.y = data.y/smoothed.y
   temp.cont = FittingUtilities.Continuum(temp.x, temp.y, lowreject=2, highreject=2, fitorder=3)
   outliers = HelperFunctions.FindOutliers(temp, numsiglow=3, expand=5)
-  data.y[outliers] = smoothed.y[outliers]
+  if len(outliers) > 0:
+    data.y[outliers] = smoothed.y[outliers]
     
   gp = GaussianProcess(corr='squared_exponential',
                        theta0 = numpy.sqrt(low*high),
@@ -89,7 +90,7 @@ if __name__ == "__main__":
                 "flux": order.y / denoised.y,
                 "continuum": denoised.cont,
                 "error": denoised.err}
-      header_list.append(("Smoother", theta, "Smoothing Parameter"))
+      header_list.append((("Smoother", theta, "Smoothing Parameter"),))
       column_list.append(column)
       if plot:
         plt.figure(1)

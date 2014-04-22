@@ -45,11 +45,11 @@ if __name__ == "__main__":
       if pixelscale:
         order.x = numpy.arange(order.size())
       if tellurics:
-        plt.plot(order.x, order.y/order.cont, 'k-')
-        plt.plot(order.x, model[i].y, 'r-')
+        plt.plot(order.x, order.y/order.cont, 'k-', rasterized=True)
+        plt.plot(order.x, model[i].y, 'r-', rasterized=True)
       else:
         if normalize:
-          plt.plot(order.x, order.y/order.cont)
+          plt.plot(order.x, order.y/order.cont, rasterized=True)
           plt.text(order.x.mean(), 1.1, str(i+1))
         else:
           plt.plot(order.x, order.y, ls)
@@ -58,4 +58,9 @@ if __name__ == "__main__":
         plt.title("Order %i" %i)
         plt.show()
   if not byorder:    
+    plt.xlabel("Wavelength (nm)", fontsize=15)
+    if normalize:
+      plt.ylabel("Normalized Flux", fontsize=15)
+    else:
+      plt.ylabel("Flux", fontsize=15)
     plt.show()

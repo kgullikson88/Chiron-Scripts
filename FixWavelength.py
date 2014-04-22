@@ -11,29 +11,35 @@ import HelperFunctions
 if __name__ == "__main__":
   fileList = []
   single_template = False
-  find_template=False
+  find_template=True
   skip = 7
   for arg in sys.argv[1:]:
     if '-template' in arg:
       template = arg.split("=")[-1]
       single_template = True
-    elif "-find" in arg:
-      find_template=True
-      ach_files =[f for f in os.listdir("./") if f.startswith("achi") and f.endswith("-0.fits")]
-      objects = {}
-      for fname in ach_files:
-        header = pyfits.getheader(fname)
-        objects[header['object']] = fname
+      find_template = False
     elif "-skip" in arg:
       skip = int(arg.split("=")[-1])
     else:
       fileList.append(arg)
 
+  if find_template:
+    ach_files =[f for f in os.listdir("./") if f.startswith("achi") and f.endswith("-0.fits")]
+    objects = {}
+    for fname in ach_files:
+      header = pyfits.getheader(fname)
+      objects[header['object']] = fname
 
   if single_template:
     native = FitsUtils.MakeXYpoints(template, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
 
   for fname in fileList:
+    hdulist = pyfits.open(fname)
+    if all("WaveFixed" in hdu.header.keys() for hdu in hdulist[1:]):
+      print "Wavelength calibration already done. Skipping file %s" %fname
+      continue
+
+
     if not single_template and not find_template:
       if fname.startswith("a"):
         native = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
@@ -68,6 +74,8 @@ if __name__ == "__main__":
       right = left + native[i].size()
       
       order = order[left:right]
+      
+
       columns = {"wavelength": order.x,
                  "flux": order.y,
                  "continuum": order.cont,
