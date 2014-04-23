@@ -11,6 +11,7 @@ import Units
 from astropy import units, constants
 import HelperFunctions
 import FittingUtilities
+import MakeModel
 
 homedir = os.environ["HOME"]
 
@@ -138,8 +139,10 @@ if __name__ == "__main__":
       dew = dew[sorter]
       
       #Convert dew point temperature to ppmv
-      Pw = 6.116441 * 10**(7.591386*dew/(dew + 240.7263))
-      h2o = Pw / (Pres) * 1e6
+      Pw = numpy.zeros(dew.size)
+      for i, T in enumerate(dew):
+        Pw[i] = MakeModel.VaporPressure(T+273.15)
+      h2o = Pw / (Pres-Pw) * 1e6
       
       height /= 1000.0
       Temp += 273.15
