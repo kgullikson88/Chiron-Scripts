@@ -1,5 +1,4 @@
 import numpy
-#import FitsUtils
 import FittingUtilities
 import HelperFunctions
 import matplotlib.pyplot as plt
@@ -13,7 +12,7 @@ import HelperFunctions
 from collections import Counter
 from sklearn.gaussian_process import GaussianProcess
 
-plot = False
+plot = True
 
 def SmoothData(order, windowsize=91, smoothorder=5, lowreject=3, highreject=3, numiters=10, normalize=True):
   denoised = HelperFunctions.Denoise(order.copy())
@@ -21,6 +20,128 @@ def SmoothData(order, windowsize=91, smoothorder=5, lowreject=3, highreject=3, n
   if normalize:
     denoised.y /= denoised.y.max()
   return denoised
+
+
+
+def roundodd(num):
+  rounded = round(num)
+  if rounded%2 != 0:
+    return rounded
+  else:
+    if rounded > num:
+      return rounded - 1
+    else:
+      return rounded + 1
+
+
+
+def CrossValidation(order, smoothorder=5, lowreject=3, highreject=3, numiters=10, normalize=True):
+  """
+    Determine the best window size with cross-validation
+  """
+  
+  #plt.plot(order.x, order.y)
+  # First, find outliers by doing a guess smooth
+  smoothed = SmoothData(order, windowsize=41, normalize=False)
+  temp = smoothed.copy()
+  temp.y = order.y/smoothed.y
+  temp.cont = FittingUtilities.Continuum(temp.x, temp.y, lowreject=2, highreject=2, fitorder=3)
+  outliers = HelperFunctions.FindOutliers(temp, numsiglow=6, numsighigh=6, expand=10)
+  data = order.copy()
+  if len(outliers) > 0:
+    #order.y[outliers] = order.cont[outliers]
+    order.y[outliers] = smoothed.y[outliers]
+  
+  #plt.plot(order.x, order.y)
+  #plt.plot(order.x, order.cont)
+  #plt.show()
+
+
+  # First, split the data into a training sample and validation sample
+  # Use every 10th point for the validation sample
+  cv_indices = range(6, order.size()-1, 6)
+
+  training = DataStructures.xypoint(size=order.size()-len(cv_indices))
+  validation = DataStructures.xypoint(size=len(cv_indices))
+  cv_idx = 0
+  tr_idx = 0
+  for i in range(order.size()):
+    if i in cv_indices:
+      validation.x[cv_idx] = order.x[i]
+      validation.y[cv_idx] = order.y[i]
+      validation.cont[cv_idx] = order.cont[i]
+      validation.err[cv_idx] = order.err[i]
+      cv_idx += 1
+    else:
+      training.x[tr_idx] = order.x[i]
+      training.y[tr_idx] = order.y[i]
+      training.cont[tr_idx] = order.cont[i]
+      training.err[tr_idx] = order.err[i]
+      tr_idx += 1
+
+  #Rebin the training set to constant wavelength spacing
+  xgrid = numpy.linspace(training.x[0], training.x[-1], training.size())
+  training = FittingUtilities.RebinData(training, xgrid)
+  dx = training.x[1] - training.x[0]
+
+  #Find the rough location of the best window size
+  windowsizes = numpy.logspace(-1.5, 1.0, num=20)
+  chisq = []
+  for i, windowsize in enumerate(windowsizes):
+    npixels = roundodd(windowsize/dx)
+    if npixels > training.size:
+      windowsizes = windowsizes[:i]
+      break
+    smoothed = FittingUtilities.Iterative_SV(training.y, npixels, smoothorder, lowreject, highreject, numiters)
+    smooth_fcn = interp(training.x, smoothed)
+    predict = smooth_fcn(validation.x)
+    sig = validation.err
+    chisq.append(numpy.sum((predict - validation.y)**2/sig**2)/float(predict.size))
+  #plt.loglog(windowsizes, chisq)
+  #plt.show()
+
+  chisq = numpy.array(chisq)
+  idx = numpy.argmin(abs(chisq-1.0))
+  left, right = HelperFunctions.GetSurrounding(chisq, 1, return_index=True)
+  if left > right:
+    temp = left
+    left = right
+    right = temp
+
+  #Refine the window size to get more accurate
+  windowsizes = numpy.logspace(numpy.log10(windowsizes[left]), numpy.log10(windowsizes[right]), num=10)
+  chisq = []
+  for i, windowsize in enumerate(windowsizes):
+    npixels = roundodd(windowsize/dx)
+    if npixels > training.size:
+      windowsizes = windowsizes[:i]
+      break
+    smoothed = FittingUtilities.Iterative_SV(training.y, npixels, smoothorder, lowreject, highreject, numiters)
+    smooth_fcn = interp(training.x, smoothed)
+    predict = smooth_fcn(validation.x)
+    sig = validation.err
+    chisq.append(numpy.sum((predict - validation.y)**2/sig**2)/float(predict.size))
+
+  chisq = numpy.array(chisq)
+  idx = numpy.argmin(abs(chisq-1.0))
+
+  windowsize = windowsizes[idx]
+  npixels = roundodd(windowsize/dx)
+  smoothed = order.copy()
+  smoothed.y = FittingUtilities.Iterative_SV(order.y, npixels, smoothorder, lowreject, highreject, numiters)
+
+  #plt.plot(data.x, data.y)
+  #plt.plot(smoothed.x, smoothed.y)
+  #plt.show()
+
+  if normalize:
+    smoothed.y /= smoothed.y.max()
+  return smoothed, windowsize
+
+
+
+
+
 
 
 
@@ -74,6 +195,7 @@ if __name__ == "__main__":
     orders = HelperFunctions.ReadFits(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
     column_list = []
     header_list = []
+
     for i, order in enumerate(orders):
       print "Smoothing order %i/%i" %(i+1, len(orders))
       #Fix errors
@@ -84,7 +206,20 @@ if __name__ == "__main__":
       order = FittingUtilities.RebinData(order, xgrid)
       
       #denoised = SmoothData(order, 101, 5, 2, 2, 10)
-      denoised, theta = GPSmooth(order.copy())
+      #denoised, theta = GPSmooth(order.copy())
+      denoised, theta = CrossValidation(order.copy(), 5, 2, 2, 10)
+      #if i == 0:
+      #  denoised, theta = CrossValidation(order, 5, 2, 2, 10)
+      #else:
+      #  dx = order.x[1] - order.x[0]
+      #  npixels = roundodd(theta/dx)
+      #  denoised = SmoothData(order, npixels, 5, 2, 2, 10)
+      print "Window size = %.4f nm" %theta
+      #smoothed, lmbd = scikits.datasmooth.smooth_data(order.x, order.y, weights=order.err)
+      #plt.plot(order.x, order.y)
+      #plt.plot(order.x, smoothed)
+      #plt.show()
+      #sys.exit()
 
       column = {"wavelength": denoised.x,
                 "flux": order.y / denoised.y,
@@ -99,7 +234,7 @@ if __name__ == "__main__":
         plt.figure(2)
         plt.plot(order.x, order.y/denoised.y)
         plt.plot(order.x, (order.y-denoised.y)/numpy.median(order.y))
-        plt.show()
+        #plt.show()
     if plot:
       plt.show()
     outfilename = "%s_smoothed.fits" %(fname.split(".fits")[0])

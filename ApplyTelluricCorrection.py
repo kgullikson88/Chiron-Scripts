@@ -11,7 +11,7 @@ import numpy
 import HelperFunctions
 import MakeModel
 
-plot = True
+plot = False
 
 def ReadCorrectedFile(fname, yaxis="model"):
   orders = []

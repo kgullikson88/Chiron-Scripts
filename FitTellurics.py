@@ -12,6 +12,7 @@ from astropy import units, constants
 import HelperFunctions
 import FittingUtilities
 import MakeModel
+import GetAtmosphere
 
 homedir = os.environ["HOME"]
 
@@ -38,33 +39,6 @@ namedict = {"pressure": ["PRESFIT", "PRESVAL", "Pressure"],
                   "nh3": ["NH3FIT", "NH3VAL", "NH3 abundance"],
                   "hno3": ["HNO3FIT", "HNO3VAL", "HNO3 abundance"]}  
 
-
-
-def GetAtmosphereFile(header):
-  fnames = [f for f in os.listdir("./") if "GDAS_atmosphere" in f]
-  datestr = header["DATE-OBS"]
-  year = int(datestr.split("-")[0])
-  month = int(datestr.split("-")[1])
-  day = int(datestr.split("-")[2].split("T")[0])
-  hour = int(datestr.split("T")[1].split(":")[0])
-  minute = int(datestr.split("T")[1].split(":")[1])
-  obstime = year + (month*30 + day)/365.0 + (hour*60 + minute)/(365.0*24.0*60.0)
-  #obstime = hour + minute/60.0
-  filename = ""
-  mindiff = 9e12
-  for fname in fnames:
-    datestr = fname.split("_")[2]
-    year = int(datestr.split("-")[0])
-    month = int(datestr.split("-")[1])
-    day = int(datestr.split("-")[2])
-    hour = (float(fname.split("_")[3]) + float(fname.split("_")[4].split(".")[0]))/2.0
-    hour = float(fname.split("_")[3])
-    atmos_time = year + (month*30 + day)/365.0 + hour/(365.0*24.0)
-    #atmos_time = hour
-    if abs(atmos_time - obstime) < mindiff:
-      mindiff = abs(atmos_time - obstime)
-      filename = fname
-  return filename
 
 
 def FindOrderNums(orders, wavelengths):
@@ -125,27 +99,9 @@ if __name__ == "__main__":
     temperature = header["OUTTEMP"] + 273.15
 
     if edit_atmosphere:
-      #Find the appropriate filename
-      atmosphere_fname = GetAtmosphereFile(header)
-      
-      #Read in GDAS atmosphere profile information
-      Pres,height,Temp,dew = numpy.loadtxt(atmosphere_fname,
-                                           usecols=(0,1,2,3), 
-                                           unpack=True)
-      sorter = numpy.argsort(height)
-      height = height[sorter]
-      Pres = Pres[sorter]
-      Temp = Temp[sorter]
-      dew = dew[sorter]
-      
-      #Convert dew point temperature to ppmv
-      Pw = numpy.zeros(dew.size)
-      for i, T in enumerate(dew):
-        Pw[i] = MakeModel.VaporPressure(T+273.15)
-      h2o = Pw / (Pres-Pw) * 1e6
-      
-      height /= 1000.0
-      Temp += 273.15
+      filenames = [f for f in os.listdir("./") if "GDAS" in f]      
+      height, Pres, Temp, h2o = GetAtmosphere.GetProfile(filenames, header['date-obs'].split("T")[0], header['ut'])
+
       fitter.EditAtmosphereProfile("Temperature", height, Temp)
       fitter.EditAtmosphereProfile("Pressure", height, Pres)
       fitter.EditAtmosphereProfile("H2O", height, h2o)
@@ -168,6 +124,7 @@ if __name__ == "__main__":
     #Ignore the interstellar sodium D lines and parts of the O2 bands
     fitter.IgnoreRegions(badregions)
     models = []
+    
     
     # Determine the H2O abundance
     resolution = []
@@ -260,10 +217,12 @@ if __name__ == "__main__":
     logfile.write("Best fit velocity shift = %g km/s\n" %vel)
     """
     
-    o2 = 224773
-    humidity = 42.8873
-    resolution = 88472.7266
-    vel = 4.8
+    o2 = 225494
+    humidity = 20.9806
+    resolution = 78959.6
+    vel = 4.4297
+    wave0 = orders[0].x.mean()
+    fitter.shift = vel/(constants.c.cgs.value*units.cm.to(units.km)) * wave0
     """
 
     # Finally, apply these parameters to all orders in the data
