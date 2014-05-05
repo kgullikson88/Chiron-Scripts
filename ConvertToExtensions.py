@@ -1,5 +1,5 @@
 import FitsUtils
-import FindContinuum
+import FittingUtilities
 from astropy.io import fits as pyfits
 import sys
 import os
@@ -7,6 +7,7 @@ import numpy
 import pylab
 import HelperFunctions
 
+minsnr = 10.0
 
 if __name__ == "__main__":
   fileList = []
@@ -39,6 +40,7 @@ if __name__ == "__main__":
         print "Not converting file %s" %fname
         continue
     column_list = []
+    maxsnr = 0
     for i, order in enumerate(orders):
       #Blaze correction
       if blazecorrect:
@@ -48,13 +50,19 @@ if __name__ == "__main__":
       zeros = numpy.where(order.y < 0)[0]
       order.y[zeros] = 0.0
         
-      order.cont = FindContinuum.Continuum(order.x, order.y, fitorder=3, lowreject=2, highreject=4)
+      order.cont = FittingUtilities.Continuum(order.x, order.y, fitorder=3, lowreject=2, highreject=4)
       columns = columns = {"wavelength": order.x,
                            "flux": order.y,
                            "continuum": order.cont,
                            "error": order.err}
       column_list.append(columns)
-      
-    HelperFunctions.OutputFitsFileExtensions(column_list, fname, outfilename, mode="new")
+      snr = 1.0 / numpy.std(order.y/order.cont)
+      if snr > maxsnr:
+        maxsnr = snr
 
+    print "Maximum S/N ratio = %g" %maxsnr
+    if maxsnr > minsnr:  
+      HelperFunctions.OutputFitsFileExtensions(column_list, fname, outfilename, mode="new")
+    else:
+      print "\nSkipping file %s (Very low S/N ratio)\n" %(fname)
       

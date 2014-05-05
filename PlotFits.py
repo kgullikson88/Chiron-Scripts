@@ -49,7 +49,7 @@ if __name__ == "__main__":
         plt.plot(order.x, model[i].y, 'r-', rasterized=True)
       else:
         if normalize:
-          plt.plot(order.x, order.y/order.cont, rasterized=True)
+          plt.plot(order.x, order.y/order.cont, ls, rasterized=True)
           plt.text(order.x.mean(), 1.1, str(i+1))
         else:
           plt.plot(order.x, order.y, ls)

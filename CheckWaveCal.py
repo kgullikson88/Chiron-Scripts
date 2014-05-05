@@ -10,6 +10,8 @@ import HelperFunctions
 import os
 import sys
 import matplotlib.pyplot as plt
+import astropy.time
+
 
 
 if __name__ == "__main__":
@@ -20,6 +22,7 @@ if __name__ == "__main__":
                                              and len(f.split("_")) == 2 
                                              and f.endswith(".fits") 
                                              and "-" not in f]
+    object_files = [f for f in os.listdir(d) if f.startswith("achi") and f.endswith("-0.fits")]
     print d
     for f in object_files:
       data = HelperFunctions.ReadExtensionFits("%s/%s" %(d,f))
@@ -31,6 +34,7 @@ if __name__ == "__main__":
         for i, order in enumerate(data):
           orders[i][d] = order.x
 
+  """
   start, end = 999, 1001
   for i, order in enumerate(orders):
     for date in sorted(order.keys()):
@@ -40,4 +44,15 @@ if __name__ == "__main__":
     plt.xlabel("Pixel number")
     plt.ylabel("Wavelength (nm)")
     #plt.legend(loc='best')
+    plt.show()
+  """
+
+  pixel = 1000
+  for i, order in enumerate(orders):
+    for date in sorted(order.keys()):
+      date2 = "%s-%s-%s" %(date[:4], date[4:6], date[6:])
+      jd = astropy.time.Time(date2, scale='utc', format='iso').jd
+      plt.plot(jd, order[date][pixel], 'ro')
+    plt.xlabel("Date")
+    plt.ylabel("Wavelength at pixel %i" %(pixel))
     plt.show()

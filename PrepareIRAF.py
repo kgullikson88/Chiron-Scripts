@@ -70,6 +70,9 @@ if __name__ == "__main__":
   FileDict = defaultdict(list)
 
   for fname in allcalib:
+    if "slicer" in fname:
+      cmd = "cp %s%s ." %(caldir, fname)
+      subprocess.check_call(cmd, shell=True)
     header = pyfits.getheader(caldir + "/" + fname)
     if not "OBJECT" in header:
       print "Header of %s had no 'object' keyword!" %fname
@@ -108,7 +111,7 @@ if __name__ == "__main__":
   subprocess.check_call(cmd, shell=True)
 
   achi_files = [f for f in os.listdir("./") if f.startswith("achi")]
-  convert.Convert(achi_files, False, False)
+  convert.Convert(achi_files, True, False)
 
   
 

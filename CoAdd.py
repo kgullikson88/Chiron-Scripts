@@ -45,9 +45,9 @@ def MedianAdd(fileList, outfilename="Total.fits"):
       total[j] = flux(x)
       norm += medians[j][i]
 
-    pylab.figure(2)
-    for j in range(total.shape[0]):
-      pylab.plot(x, total[j])
+    #pylab.figure(2)
+    #for j in range(total.shape[0]):
+      #pylab.(x, total[j])
     flux = numpy.median(total, axis=0)*norm
     cont = FittingUtilities.Continuum(x, flux, fitorder=3, lowreject=1.5, highreject=5)
     #Set up data structures for OutputFitsFile
@@ -57,12 +57,12 @@ def MedianAdd(fileList, outfilename="Total.fits"):
                "error": numpy.sqrt(error)}
     column_list.append(columns)
 
-    pylab.figure(1)
-    pylab.plot(x, flux/cont)
+    #pylab.figure(1)
+    #pylab.plot(x, flux/cont)
     #pylab.plot(total.x, total.cont)
 
   print "Outputting to %s" %outfilename
-  pylab.show()
+  #pylab.show()
   FitsUtils.OutputFitsFileExtensions(column_list, fileList[0], outfilename, mode="new")
   
   #Add the files used to the primary header of the new file
@@ -119,11 +119,11 @@ def Add(fileList, outfilename=None):
                "error": total.err}
     column_list.append(columns)
 
-    pylab.plot(total.x, total.y/total.cont)
+    #pylab.plot(total.x, total.y/total.cont)
     #pylab.plot(total.x, total.cont)
 
   print "Outputting to %s" %outfilename
-  pylab.show()
+  #pylab.show()
   HelperFunctions.OutputFitsFileExtensions(column_list, fileList[0], outfilename, mode="new")
   
   #Add the files used to the primary header of the new file
