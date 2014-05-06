@@ -96,16 +96,26 @@ def Add(fileList, outfilename=None):
     outfilename = "Total.fits"
   column_list = []
   for i in range(numorders):
-    total = all_data[0][i].copy()
-    total.y[total.y < 0.0] = 0.0
-    total.err = total.err**2
-    for observation in all_data[1:]:
+    #Determine the x-axis
+    dx = 0
+    left = 0
+    right = 9e9
+    for observation in all_data:
+      dx += (observation[i].x[-1] - observation[i].x[0]) / float(observation[i].size()-1)
+      if observation[i].x[0] > left:
+        left = observation[i].x[0]
+      if observation[i].x[-1] < right:
+        right = observation[i].x[-1]
+    dx /= float(len(all_data))
+    xgrid = numpy.arange(left, right+dx, dx)
+    total = DataStructures.xypoint(x=xgrid)
+    total.y = numpy.zeros(total.size())
+    total.err = numpy.zeros(total.size())
+
+    #Add the data
+    for observation in all_data:
       observation[i].y[observation[i].y < 0.0] = 0.0
-      #flux = interp(observation[i].x, observation[i].y)
-      #error = interp(observation[i].x, observation[i].err**2, k=1)
       rebinned = FittingUtilities.RebinData(observation[i], total.x)
-      #total.y += flux(total.x)
-      #total.err += error(total.x)
       total.y += rebinned.y
       total.err += rebinned.err**2
       
@@ -119,11 +129,11 @@ def Add(fileList, outfilename=None):
                "error": total.err}
     column_list.append(columns)
 
-    #pylab.plot(total.x, total.y/total.cont)
+    pylab.plot(total.x, total.y/total.cont)
     #pylab.plot(total.x, total.cont)
 
   print "Outputting to %s" %outfilename
-  #pylab.show()
+  pylab.show()
   HelperFunctions.OutputFitsFileExtensions(column_list, fileList[0], outfilename, mode="new")
   
   #Add the files used to the primary header of the new file
