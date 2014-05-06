@@ -13,7 +13,9 @@ import HelperFunctions
 import FittingUtilities
 import MakeModel
 import GetAtmosphere
+import time
 
+sleep = True
 homedir = os.environ["HOME"]
 
 badregions = [[588.98, 589.037],   #Na D line 1
@@ -191,4 +193,5 @@ if __name__ == "__main__":
       else:
         HelperFunctions.OutputFitsFileExtensions(columns, outfilename, outfilename, headers_info=[header_info,], mode="append")
       
-      
+      if sleep:
+        time.sleep(30)
