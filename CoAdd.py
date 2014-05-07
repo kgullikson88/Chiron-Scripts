@@ -122,6 +122,18 @@ def Add(fileList, outfilename=None):
     total.err = numpy.sqrt(total.err)
     total.cont = FittingUtilities.Continuum(total.x, total.y, fitorder=3, lowreject=1.5, highreject=5)
 
+    #Check if there is a dip in flux on either side of the order
+    std = numpy.median(total.err/total.cont)
+    #print std
+    left = 0
+    right = total.size()
+    for i in range(4):
+      if abs(total.y[i+1]/total.cont[i+1] - total.y[i]/total.cont[i]) > 10*std:
+        left = i+1
+      if abs(total.y[-(i+2)]/total.cont[-(i+2)] - total.y[-(i+1)]/total.cont[-(i+1)]) > 10*std:
+        right = total.size() - (i+1)
+    total = total[left:right]
+
      #Set up data structures for OutputFitsFile
     columns = {"wavelength": total.x,
                "flux": total.y,
@@ -129,11 +141,11 @@ def Add(fileList, outfilename=None):
                "error": total.err}
     column_list.append(columns)
 
-    pylab.plot(total.x, total.y/total.cont)
+    #pylab.plot(total.x, total.y/total.cont)
     #pylab.plot(total.x, total.cont)
 
   print "Outputting to %s" %outfilename
-  pylab.show()
+  #pylab.show()
   HelperFunctions.OutputFitsFileExtensions(column_list, fileList[0], outfilename, mode="new")
   
   #Add the files used to the primary header of the new file

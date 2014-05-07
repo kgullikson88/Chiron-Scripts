@@ -14,6 +14,7 @@ if __name__ == "__main__":
   single_template = False
   find_template=True
   skip = 7
+  plot = False
   for arg in sys.argv[1:]:
     if '-template' in arg:
       template = arg.split("=")[-1]
@@ -21,6 +22,8 @@ if __name__ == "__main__":
       find_template = False
     elif "-skip" in arg:
       skip = int(arg.split("=")[-1])
+    elif "-p" in arg:
+      plot = True
     else:
       fileList.append(arg)
 
@@ -78,6 +81,12 @@ if __name__ == "__main__":
     header_list = []
     for i, order in enumerate(mine[skip:]):
 
+      #Smooth both orders so large scale things (Like H beta) don't mess it up
+      s = FittingUtilities.Iterative_SV(native[i].y.copy(), 201, 5, lowreject=2, highreject=5, numiters=10)
+      native[i].y /= s
+      s = FittingUtilities.Iterative_SV(order.y.copy(), 201, 5, lowreject=2, highreject=5, numiters=10)
+      order.y /= s
+
       # Get an estimate for the best pixel shift
       shift, corr = FittingUtilities.CCImprove(native[i], order, debug=True, be_safe=False)
       pixelshift = shift*(native[i].x[-1] - native[i].x[0])/float(native[i].x.size)
@@ -96,29 +105,39 @@ if __name__ == "__main__":
       # Find the best pixel shift to make the data line up
       bestchisq = 9e9
       bestshift = 0
-      order2.y /= order2.y.mean()
-      native2.y /= native2.y.mean()
+      order2.y /= numpy.median(order2.y)
+      native2.y /= numpy.median(native2.y)
       size = native2.size()
       sizediff = order2.size() - native2.size()
-      for shift in range(pixelshift - 10, pixelshift+10):
+      searchsize = min(sizediff, 100)
+      if i == 49 and plot:
+        plt.figure(2)
+        print native[i].x
+      for shift in range(pixelshift - searchsize, pixelshift + searchsize):
         chisq = numpy.sum((order2.y[shift:size+shift] - native2.y)**2)
+        if i == 49 and plot:
+          plt.plot(shift, chisq, 'ro')
+        #print shift
         if chisq < bestchisq:
           bestchisq = chisq
           bestshift = shift
       order = order[bestshift:size+bestshift]
-      #plt.plot(order.x, order.y/order.y.mean(), 'k-')
+      print "Best shift = ", bestshift, pixelshift
       order.x = native[i].x
-      #plt.plot(order.x, order.y/order.y.mean(), 'k-')
-      #plt.plot(native[i].x, native[i].y/native[i].y.mean(), 'r-')
+      if plot:
+        plt.figure(1)
+        plt.plot(order.x, order.y/numpy.median(order.y), 'k-')
+        plt.plot(native[i].x, native[i].y/numpy.median(native[i].y), 'r-')
 
       columns = {"wavelength": order.x,
-                 "flux": order.y,
+                 "flux": order.y*s[bestshift:size+bestshift],
                  "continuum": order.cont,
                  "error": order.err}
       column_list.append(columns)
       header_list.append((("WaveFixed", True, "Wavelength calibration taken from native reductions"),))
     
-    #plt.show()
+    if plot:
+      plt.show()
     
     HelperFunctions.OutputFitsFileExtensions(column_list, fname, fname, mode='new', headers_info = header_list)
 

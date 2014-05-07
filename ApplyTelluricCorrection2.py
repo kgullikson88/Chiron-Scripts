@@ -21,10 +21,14 @@ if __name__ == "__main__":
     else:
       fileList.append(arg)
 
+  allfiles = os.listdir("./")
   for fname in fileList:
     good = HelperFunctions.ReadFits(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
     hdulist = pyfits.open(fname)
     fname2 = fname.replace("echi", "Corrected_echi")
+    if fname2 not in allfiles:
+      warnings.warn("Correction file for %s not found! Skipping!" %fname)
+      continue
     bad = HelperFunctions.ReadFits(fname2, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
     modelorders = HelperFunctions.ReadFits(fname2, extensions=True, x="wavelength", y="model", cont="continuum", errors="error")
    
@@ -47,13 +51,16 @@ if __name__ == "__main__":
       size = goodorder.size()
       left = size/2
       right = left+20
-      for shift in range(-20, 20):
+      for shift in range(-50, 50):
         chisq = numpy.sum((goodorder.y[left:right] - badorder.y[left+shift:right+shift])**2)
         if chisq < bestchisq:
           bestchisq = chisq
           bestshift = shift
 
       # Reduce the size of the original and model files, if necessary
+      print "Best shift = ", bestshift
+      if abs(bestshift) > 45:
+        warnings.warn("Very high shift on order %i (%i pixels)" %(i, bestshift))
       if bestshift < 0:
         order = order[abs(bestshift):]
         bad[i] = bad[i][:bestshift]
@@ -69,9 +76,9 @@ if __name__ == "__main__":
 
       if plot:
         plt.figure(1)
-        plt.plot(order.x, order.y/order.cont)
-        plt.plot(bad[i].x, bad[i].y/bad[i].cont)
-        plt.plot(model.x, model.y)
+        plt.plot(order.x, order.y, 'k-')
+        plt.plot(bad[i].x, bad[i].y, 'r-')
+        #plt.plot(model.x, model.y, 'g-')
         plt.figure(2)
         plt.plot(order.x, order.y/(order.cont*model.y))
       

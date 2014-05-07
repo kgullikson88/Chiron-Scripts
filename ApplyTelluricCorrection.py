@@ -10,8 +10,9 @@ import FittingUtilities
 import numpy
 import HelperFunctions
 import MakeModel
+import warnings
 
-plot = True
+plot = False
 
 def ReadCorrectedFile(fname, yaxis="model"):
   orders = []
@@ -56,7 +57,10 @@ def Correct(original, corrected, offset=None, get_primary=False):
       header = corrected_headers[i-offset]
       if get_primary:
         primary = primary_orders[i-offset]
-      print "Order = %i\nHumidity: %g\nO2 concentration: %g\n" %(i, header['h2oval'], header['o2val'])
+      try:
+        print "Order = %i\nHumidity: %g\nO2 concentration: %g\n" %(i, header['h2oval'], header['o2val'])
+      except KeyError:
+        warnings.warn("Atmospheric parameters not found in the header!")
     except IndexError:
       model = DataStructures.xypoint(x=data.x, y=numpy.ones(data.x.size))
       print "Warning!!! Telluric Model not found for order %i" %i
@@ -138,6 +142,9 @@ def main1():
 
     for corrected in corrected_files:
       original = corrected.split("Corrected_")[-1] #.split("-")[0] + ".fits"
+      if original not in allfiles:
+        warnings.warn("File %s not found. Skipping!" %original)
+        continue
       #original = [f for f in allfiles if (f in corrected and f != corrected)]
       #if len(original) == 1:
       #  original = original[0]

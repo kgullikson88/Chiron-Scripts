@@ -12,7 +12,6 @@ import HelperFunctions
 from collections import Counter
 from sklearn.gaussian_process import GaussianProcess
 
-plot = True
 
 def SmoothData(order, windowsize=91, smoothorder=5, lowreject=3, highreject=3, numiters=10, normalize=True):
   denoised = HelperFunctions.Denoise(order.copy())
@@ -187,8 +186,12 @@ def GPSmooth(data, low=0.1, high=10, debug=False):
 
 if __name__ == "__main__":
   fileList = []
+  plot = False
   for arg in sys.argv[1:]:
-    fileList.append(arg)
+    if "-p" in arg:
+      plot = True
+    else:
+      fileList.append(arg)
   if len(fileList) == 0:
     fileList = [f for f in os.listdir("./") if f.endswith("telluric_corrected.fits")]
   for fname in fileList:
@@ -208,18 +211,8 @@ if __name__ == "__main__":
       #denoised = SmoothData(order, 101, 5, 2, 2, 10)
       #denoised, theta = GPSmooth(order.copy())
       denoised, theta = CrossValidation(order.copy(), 5, 2, 2, 10)
-      #if i == 0:
-      #  denoised, theta = CrossValidation(order, 5, 2, 2, 10)
-      #else:
-      #  dx = order.x[1] - order.x[0]
-      #  npixels = roundodd(theta/dx)
-      #  denoised = SmoothData(order, npixels, 5, 2, 2, 10)
       print "Window size = %.4f nm" %theta
-      #smoothed, lmbd = scikits.datasmooth.smooth_data(order.x, order.y, weights=order.err)
-      #plt.plot(order.x, order.y)
-      #plt.plot(order.x, smoothed)
-      #plt.show()
-      #sys.exit()
+
 
       column = {"wavelength": denoised.x,
                 "flux": order.y / denoised.y,
