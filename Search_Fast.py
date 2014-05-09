@@ -137,7 +137,6 @@ model_list = [ modeldir + "lte30-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.s
 modeldict = defaultdict( lambda: defaultdict( lambda: defaultdict( lambda: defaultdict(DataStructures.xypoint))))
 processed = defaultdict( lambda: defaultdict( lambda: defaultdict( lambda: defaultdict(bool))))
 
-
 model_data = []
 for fname in model_list:
   if "PHOENIX2004" in fname:
@@ -205,7 +204,7 @@ def Process_Data(fname, extensions=True):
     else:
       # Find outliers from e.g. bad telluric line or stellar spectrum removal.
       order.cont = FittingUtilities.Continuum(order.x, order.y, lowreject=3, highreject=3)
-      outliers = HelperFunctions.FindOutliers(order, expand=5)
+      outliers = HelperFunctions.FindOutliers(order, expand=10, lowreject=5, highreject=5)
       if len(outliers) > 0:
         order.y[outliers] = 1.0
         order.cont = FittingUtilities.Continuum(order.x, order.y, lowreject=3, highreject=3)
@@ -258,7 +257,7 @@ if __name__ == "__main__":
             pflag = not processed[temp][gravity][metallicity][vsini]
             retdict = Correlate.GetCCF(orders, 
                                        model,
-                                       resolution=60000.0,
+                                       resolution=80000.0,
                                        vsini=vsini, 
                                        rebin_data=True,
                                        process_model=pflag,

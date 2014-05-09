@@ -22,7 +22,7 @@ if __name__ == "__main__":
                                              and len(f.split("_")) == 2 
                                              and f.endswith(".fits") 
                                              and "-" not in f]
-    object_files = [f for f in os.listdir(d) if f.startswith("achi") and f.endswith("-0.fits")]
+    #object_files = [f for f in os.listdir(d) if f.startswith("achi") and f.endswith("-0.fits")]
     print d
     for f in object_files:
       data = HelperFunctions.ReadExtensionFits("%s/%s" %(d,f))
@@ -52,7 +52,11 @@ if __name__ == "__main__":
     for date in sorted(order.keys()):
       date2 = "%s-%s-%s" %(date[:4], date[4:6], date[6:])
       jd = astropy.time.Time(date2, scale='utc', format='iso').jd
+      dx = order[date][pixel+1] - order[date][pixel]
       plt.plot(jd, order[date][pixel], 'ro')
-    plt.xlabel("Date")
-    plt.ylabel("Wavelength at pixel %i" %(pixel))
+    plt.xlabel("Julian Date")
+    #plt.ylabel("Delta - Wavelength at pixel %i (nm)" %(pixel))
+    plt.ylabel("Wavelength at pixel %i (nm)" %(pixel))
+    ax = plt.gca()
+    ax.ticklabel_format(style = 'sci', useOffset=False)
     plt.show()
