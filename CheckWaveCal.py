@@ -16,7 +16,7 @@ import astropy.time
 
 if __name__ == "__main__":
   orders = []
-  dirs = [d for d in os.listdir("./") if d.startswith("201") and len(d) == 8]
+  dirs = [d for d in os.listdir("./") if d.startswith("2014") and len(d) == 8]
   for d in dirs:
     object_files = [f for f in os.listdir(d) if f.startswith("H") 
                                              and len(f.split("_")) == 2 
@@ -53,10 +53,11 @@ if __name__ == "__main__":
       date2 = "%s-%s-%s" %(date[:4], date[4:6], date[6:])
       jd = astropy.time.Time(date2, scale='utc', format='iso').jd
       dx = order[date][pixel+1] - order[date][pixel]
-      plt.plot(jd, order[date][pixel], 'ro')
+      plt.plot(jd, dx, 'ro')
+      #plt.plot(jd, order[date][pixel], 'ro')
     plt.xlabel("Julian Date")
-    #plt.ylabel("Delta - Wavelength at pixel %i (nm)" %(pixel))
-    plt.ylabel("Wavelength at pixel %i (nm)" %(pixel))
+    plt.ylabel("Delta - Wavelength at pixel %i (nm)" %(pixel))
+    #plt.ylabel("Wavelength at pixel %i (nm)" %(pixel))
     ax = plt.gca()
     ax.ticklabel_format(style = 'sci', useOffset=False)
     plt.show()

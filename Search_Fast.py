@@ -137,27 +137,28 @@ model_list = [ modeldir + "lte30-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.s
 modeldict = defaultdict( lambda: defaultdict( lambda: defaultdict( lambda: defaultdict(DataStructures.xypoint))))
 processed = defaultdict( lambda: defaultdict( lambda: defaultdict( lambda: defaultdict(bool))))
 
-model_data = []
-for fname in model_list:
-  if "PHOENIX2004" in fname:
-    temp = int(fname.split("lte")[-1][:2])*100
-    gravity = float(fname.split("lte")[-1][3:6])
-    metallicity = float(fname.split("lte")[-1][6:10])
-  elif "PHOENIX-ACES" in fname:
-    temp = int(fname.split("lte")[-1][:2])*100
-    gravity = float(fname.split("lte")[-1][3:7])
-    metallicity = float(fname.split("lte")[-1][7:11])
-  print "Reading in file %s" %fname
-  x,y = numpy.loadtxt(fname, usecols=(0,1), unpack=True)
-  model = DataStructures.xypoint(x=x*units.angstrom.to(units.nm), y=10**y)
-  for vsini in vsini_values:
-    modeldict[temp][gravity][metallicity][vsini] = model
-    processed[temp][gravity][metallicity][vsini] = False
+if __name__ == "__main__":
+  model_data = []
+  for fname in model_list:
+    if "PHOENIX2004" in fname:
+      temp = int(fname.split("lte")[-1][:2])*100
+      gravity = float(fname.split("lte")[-1][3:6])
+      metallicity = float(fname.split("lte")[-1][6:10])
+    elif "PHOENIX-ACES" in fname:
+      temp = int(fname.split("lte")[-1][:2])*100
+      gravity = float(fname.split("lte")[-1][3:7])
+      metallicity = float(fname.split("lte")[-1][7:11])
+    print "Reading in file %s" %fname
+    x,y = numpy.loadtxt(fname, usecols=(0,1), unpack=True)
+    model = DataStructures.xypoint(x=x*units.angstrom.to(units.nm), y=10**y)
+    for vsini in vsini_values:
+      modeldict[temp][gravity][metallicity][vsini] = model
+      processed[temp][gravity][metallicity][vsini] = False
   
 
 
 
-def Process_Data(fname, extensions=True):
+def Process_Data(fname, extensions=True, trimsize=100):
   if extensions:
     orders = HelperFunctions.ReadExtensionFits(fname)
           
@@ -204,7 +205,7 @@ def Process_Data(fname, extensions=True):
     else:
       # Find outliers from e.g. bad telluric line or stellar spectrum removal.
       order.cont = FittingUtilities.Continuum(order.x, order.y, lowreject=3, highreject=3)
-      outliers = HelperFunctions.FindOutliers(order, expand=10, lowreject=5, highreject=5)
+      outliers = HelperFunctions.FindOutliers(order, expand=10, numsiglow=5, numsighigh=5)
       if len(outliers) > 0:
         order.y[outliers] = 1.0
         order.cont = FittingUtilities.Continuum(order.x, order.y, lowreject=3, highreject=3)
