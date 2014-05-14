@@ -262,7 +262,7 @@ if __name__ == "__main__":
                                        vsini=vsini, 
                                        rebin_data=True,
                                        process_model=pflag,
-                                       debug=True,
+                                       debug=False,
                                        outputdir=output_dir.split("Cross_corr")[0])
             corr = retdict["CCF"]
             if pflag:
