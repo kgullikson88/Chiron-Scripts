@@ -204,7 +204,7 @@ def Process_Data(fname, extensions=True):
     else:
       # Find outliers from e.g. bad telluric line or stellar spectrum removal.
       order.cont = FittingUtilities.Continuum(order.x, order.y, lowreject=3, highreject=3)
-      outliers = HelperFunctions.FindOutliers(order, expand=10, lowreject=5, highreject=5)
+      outliers = HelperFunctions.FindOutliers(order, expand=10, numsiglow=5, numsighigh=5)
       if len(outliers) > 0:
         order.y[outliers] = 1.0
         order.cont = FittingUtilities.Continuum(order.x, order.y, lowreject=3, highreject=3)
@@ -261,7 +261,7 @@ if __name__ == "__main__":
                                        vsini=vsini, 
                                        rebin_data=True,
                                        process_model=pflag,
-                                       debug=True,
+                                       debug=False,
                                        outputdir=output_dir.split("Cross_corr")[0])
             corr = retdict["CCF"]
             if pflag:
