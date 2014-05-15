@@ -344,7 +344,7 @@ if __name__ == "__main__":
         vmax = corr.x[idx] - 2.0 #There is a systematic offset for some reason!
         fit = FittingUtilities.Continuum(corr.x, corr.y, fitorder=2, lowreject=3, highreject=2.5)
         corr.y -= fit
-        goodindices = numpy.where(numpy.abs(corr.x - rv) > 20)[0]
+        goodindices = numpy.where(numpy.abs(corr.x - rv) > 100)[0]
         mean = corr.y[goodindices].mean()
         std = corr.y[goodindices].std()
         significance = (corr.y[idx] - mean)/std
