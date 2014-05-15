@@ -269,12 +269,12 @@ if __name__ == "__main__":
       known_stars =  []
       if starname in companions.field(0):
         row = companions[companions.field(0) == starname]
-        known_stars.append(row['col1'].item())
-        ncompanions = int(row['col4'].item())
+	known_stars.append(row['col2'].item())
+        ncompanions = int(row['col5'].item())
         for comp in range(ncompanions):
-          spt = row["col%i" %(6 + 4*comp)].item()
+          spt = row["col%i" %(7 + 4*comp)].item()
           if not "?" in spt and (spt[0] == "O" or spt[0] == "B" or spt[0] == "A" or spt[0] == "F"):
-            sep = row["col%i" %(7 + 4*comp)].item()
+            sep = row["col%i" %(8 + 4*comp)].item()
             if (not "?" in sep) and float(sep) < 4.0:
               known_stars.append(spt)
       else:
