@@ -112,11 +112,11 @@ def GetFluxRatio(sptlist, Tsec, xgrid, age=None):
     end = search("[0-9]", spt).end()
     T = MS.Interpolate(MS.Temperature, spt[:end])
     R = PMS2.GetFromTemperature(age, T, key="Radius")
-    prim_flux += Planck(T, xgrid*units.nm.to(units.cm)) * R**2
+    prim_flux += Planck(xgrid*units.nm.to(units.cm), T) * R**2
 
   #Determine the secondary star flux
   R = PMS.GetFromTemperature(age, Tsec, key="Radius")
-  sec_flux = Planck(Tsec, xgrid*units.nm.to(units.cm)) * R**2
+  sec_flux = Planck(xgrid*units.nm.to(units.cm), Tsec) * R**2
 
   return sec_flux / prim_flux
 
