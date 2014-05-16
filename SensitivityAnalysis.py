@@ -156,6 +156,7 @@ def GetAge(sptlist):
     idx = MS.SpT_To_Number(spt[:end])
     if idx < lowidx:
       lowidx = idx
+
   spt = MS.Number_To_SpT(lowidx)
   Tprim = MS.Interpolate(MS.Temperature, spt)
   age = PMS2.GetMainSequenceAge(Tprim, key="Temperature")
@@ -236,6 +237,7 @@ if __name__ == "__main__":
       metallicity = float(modelfile.split("lte")[-1][7:11])
     print "Reading in file %s" %modelfile
     x,y = numpy.loadtxt(modelfile, usecols=(0,1), unpack=True)
+    print "Processing file..."
     c = FittingUtilities.Continuum(x, y, fitorder=int(fitorders[modelnum+firstmodel]), lowreject=2, highreject=7)
     model = DataStructures.xypoint(x=x*units.angstrom.to(units.nm)/1.00026, y=10**y, cont=10**c)
     model = FittingUtilities.RebinData(model, numpy.linspace(model.x[0], model.x[-1], model.size()))
@@ -247,12 +249,12 @@ if __name__ == "__main__":
     # Now that we have a spline function for the broadened data,
     # begin looping over the files
     for fname in fileList:
+      print fname
       output_dir = output_directories[fname]
       outfile = open(logfilenames[fname], "a")
 
       # Read in and process the data like I am about to look for a companion
       orders_original = Process_Data(fname)
-      
 
       #Find the vsini of the primary star with my spreadsheet
       starname = pyfits.getheader(fname)["object"]
@@ -269,7 +271,7 @@ if __name__ == "__main__":
       known_stars =  []
       if starname in companions.field(0):
         row = companions[companions.field(0) == starname]
-	known_stars.append(row['col2'].item())
+        known_stars.append(row['col2'].item())
         ncompanions = int(row['col5'].item())
         for comp in range(ncompanions):
           spt = row["col%i" %(7 + 4*comp)].item()
@@ -292,6 +294,7 @@ if __name__ == "__main__":
 
 
       for rv in vel_list:
+        print "Testing model with rv = ", rv
         orders = [order.copy() for order in orders_original]   #Make a copy of orders
         model_orders = []
         for ordernum, order in enumerate(orders):
@@ -302,6 +305,7 @@ if __name__ == "__main__":
           #Add the model to the data
           model = (modelfcn(order.x*(1.0+rv/lightspeed)) - 1.0) * scale
           order.y += model*order.cont
+
 
           #Smooth data using the vsini of the primary star
           dx = order.x[1] - order.x[0]
@@ -319,7 +323,6 @@ if __name__ == "__main__":
           # log-space the data
           start = numpy.log(order.x[0])
           end = numpy.log(order.x[-1])
-          neworder = order.copy()
           xgrid = numpy.logspace(start, end, order.size(), base=numpy.e)
           logspacing = numpy.log(xgrid[1]/xgrid[0])
           order = FittingUtilities.RebinData(order, xgrid)
@@ -334,9 +337,10 @@ if __name__ == "__main__":
 
           # Save model order
           model_orders.append(model)
-          orders[ordernum] = order.copy()
+          #orders[ordernum] = order.copy()
 
         #Do the actual cross-correlation
+        print "Cross-correlating..."
         corr = Correlate.Correlate(orders, model_orders, debug=debug, outputdir="Sensitivity_Testing/")
 
         # Check if we found the companion
@@ -358,7 +362,7 @@ if __name__ == "__main__":
         else:
           #Not found
           outfile.write("%s\t%i\t\t\t%i\t\t\t\t%.2f\t\t%.4f\t\t%i\t\tno\t\tN/A\n" %(fname, primary_temp, temp, secondary_mass, massratio, rv) )
-        
+        print "Done with rv ", rv
       outfile.close()
 
 
