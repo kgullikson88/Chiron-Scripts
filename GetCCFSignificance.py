@@ -15,39 +15,121 @@ Inputs:
       ignore=-210to-150,-10to20 (nm wavelengths
       ranges separated by commas, NO SPACES)
 """
+import sys
+sys.path.insert(0, '/home/kgullikson/.local/lib/python2.7/site-packages')
 import numpy
 #import HelperFunctions
-import sys
+
 from sklearn.gaussian_process import GaussianProcess
+import matplotlib.pyplot as plt
 
 
-def rational_quadratic(x1, x2, pars):
+def rational_quadratic(pars, d):
   """
   Rational quadratic correlation function.
   This allows a range of scale lengths,
   which is useful for CCF noise.
   """
+  if len(pars.shape) > 1:
+    pars = pars[0]
+  print pars.shape, "\t", len(pars.shape), "\t", pars
   l, alpha = pars[0], pars[1]
-  return (1.0 + (x1 - x2)**2 / (2*alpha*l**2))**(-alpha)
+  r = (1.0 + numpy.sum(d**2, axis=1) / (2*alpha*l**2))**(-alpha)
+  return r
+
+def squared_exponential(theta, d):
+  theta = numpy.asarray(theta, dtype=numpy.float)
+  d = numpy.asarray(d, dtype=numpy.float)
+
+  #print numpy.sum(d**2), numpy.sum(d**2, axis=1).shape, d.shape
+  return numpy.exp(-theta[0] * numpy.sum(d**2, axis=1))
+
+
+def squared_exponential2(theta, d):
+    theta = numpy.asarray(theta, dtype=numpy.float)
+    d = numpy.asarray(d, dtype=numpy.float)
+
+    if d.ndim > 1:
+        n_features = d.shape[1]
+    else:
+        n_features = 1
+    
+    print theta.size, "\t", theta, "\t", d.shape
+    return numpy.exp(-theta[0] * numpy.sum(d ** 2, axis=1))
+#    if theta.size == 1:
+#        return numpy.exp(-theta[0] * numpy.sum(d ** 2, axis=1))
+#    elif theta.size != n_features:
+#        raise ValueError("Length of theta must be 1 or %s" % n_features)
+#    else:
+#        return numpy.exp(-numpy.sum(theta.reshape(1, n_features) * d ** 2, axis=1))
+
 
 
 if __name__ == "__main__":
-	#Parse command-line arguments
-	ignore_regions = []
-	for arg in sys.argv[1:]:
-		if "ignore" in arg:
-			ig = arg.split("=")[1]
-			segments = ig.split(",")
-			for seg in segments:
-				r = seg.split("to")
-				left = float(r[0])
-				right = float(r[1])
-				ignore_regions.append((left, right))
-		else:
-			filename = arg
-	print ignore_regions
+  #Parse command-line arguments
+  ignore_regions = []
+  for arg in sys.argv[1:]:
+    if "ignore" in arg:
+      ig = arg.split("=")[1]
+      segments = ig.split(",")
+      for seg in segments:
+        r = seg.split("to")
+        left = float(r[0])
+        right = float(r[1])
+        ignore_regions.append((left, right))
+    else:
+      filename = arg
+  print ignore_regions
 
-	#Read in the correlation function
-	vel, corr = numpy.loadtxt(filename, usecols=(0,1), unpack=True)
+  #Read in the correlation function
+  vel_original, corr_original = numpy.loadtxt(filename, usecols=(0,1), unpack=True)
+  print "Original: ", vel_original.size
+  #corr_original /= corr_original.mean()
 
-	
+  #Remove the requested regions in velocity space 
+  vel = vel_original.copy()
+  corr = corr_original.copy()
+  for region in ignore_regions:
+    left = numpy.searchsorted(vel, region[0])
+    right = numpy.searchsorted(vel, region[1])
+    indices = numpy.r_[numpy.arange(left), numpy.arange(right, len(vel))]
+    vel = vel[indices]
+    corr = corr[indices]
+  print "Processed: ", vel.size
+
+  #Plot
+  fig = plt.figure()
+  ax = fig.add_subplot(111)
+  ax.plot(vel_original, corr_original, 'k-')
+  ax.plot(vel, corr, 'g-')
+  
+  #Generate the gaussian process fit
+  f = 2.0
+  gp = GaussianProcess(corr=rational_quadratic,
+                       theta0=numpy.array((3e-3, 1e-2)),
+                       thetaL=numpy.array((1e-3, 1e-3)),
+                       thetaU=numpy.array((1e-1, 1e-1)),
+                       nugget=(numpy.std(corr)*f/corr)**2)
+  #gp = GaussianProcess(corr='squared_exponential',
+  #                     theta0=1e3,
+  #                     thetaL=10,
+  #                     thetaU=1e4,
+  #                     nugget=(numpy.std(corr)*f/corr)**2)
+  
+  gp.fit(vel[:,None], corr)
+  prediction, error = gp.predict(vel_original[:,None], eval_MSE=True)
+
+  error = numpy.sqrt(error)
+  print "Best theta = ", gp.theta_
+  ax.plot(vel_original, prediction, 'r-')
+  ax.fill_between(vel_original, prediction - 3 * error, prediction + 3 * error, color='red', alpha=0.4)
+
+  mu = numpy.mean(corr)
+  std = numpy.std(corr)
+  ax.fill_between(vel_original, mu-3*std, mu+3*std, color='green', alpha=0.3)
+
+
+
+
+  plt.show()
+
