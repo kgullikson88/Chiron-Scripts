@@ -27,9 +27,14 @@ def ensure_dir(f):
         os.makedirs(d)
         
 
-homedir = os.environ["HOME"]
-modeldir = homedir + "/School/Research/Models/Sorted/Stellar/Vband/"
-
+if "darwin" in sys.platform:
+  modeldir = "/Volumes/DATADRIVE/Stellar_Models/PHOENIX/Stellar/Vband/"
+elif "linux" in sys.platform:
+  modeldir = "/media/FreeAgent_Drive/SyntheticSpectra/Sorted/Stellar/Vband/"
+else:
+  modeldir = raw_input("sys.platform not recognized. Please enter model directory below: ")
+  if not modeldir.endswith("/"):
+    modeldir = modeldir + "/"
 
 #Define regions contaminated by telluric residuals or other defects. We will not use those regions in the cross-correlation
 badregions = [[567.5, 575.5],
@@ -41,49 +46,38 @@ badregions = [[567.5, 575.5],
               [759, 9e9]]
 
 #Set up model list
-model_list = [ modeldir + "lte30-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte32-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte34-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte35-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte36-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte37-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte38-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte39-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte40-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte42-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte44-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte46-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte48-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte50-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte51-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+model_list = [ modeldir + "lte30-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte31-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte32-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte33-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte34-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte35-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte36-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte37-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte38-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte39-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte40-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte41-4.5-0.0.Cond.PHOENIX2004.tab.7.sorted",
+               modeldir + "lte42-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte43-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte44-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte45-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte46-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte47-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte48-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte49-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte50-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte51-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
                modeldir + "lte52-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
                modeldir + "lte53-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
                modeldir + "lte54-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
                modeldir + "lte55-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
                modeldir + "lte56-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte57-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
+               modeldir + "lte57-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
                modeldir + "lte58-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
                modeldir + "lte59-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
                modeldir + "lte60-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted"]
-""",
-               modeldir + "lte61-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte62-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte63-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte64-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte65-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte66-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte67-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte68-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte69-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte69-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte70-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte70-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte72-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte74-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte74-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte76-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted",
-               modeldir + "lte78-4.50-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted"]"""
-   
+               
               
 
 MS = SpectralTypeRelations.MainSequence()
@@ -160,7 +154,8 @@ def GetAge(sptlist):
   spt = MS.Number_To_SpT(lowidx)
   Tprim = MS.Interpolate(MS.Temperature, spt)
   age = PMS2.GetMainSequenceAge(Tprim, key="Temperature")
-  return age
+  #return age
+  return 15e6   #For Sco-Cen only!
 
   
 
@@ -216,6 +211,7 @@ if __name__ == "__main__":
     logfile.close()
     logfilenames[fname] = output_dir + "logfile.dat"
 
+  
   # Read in the companion file
   companions = ascii.read(companion_file)[20:]
 
@@ -271,6 +267,8 @@ if __name__ == "__main__":
       known_stars =  []
       if starname in companions.field(0):
         row = companions[companions.field(0) == starname]
+        print row
+        print row['col2']
         known_stars.append(row['col2'].item())
         ncompanions = int(row['col5'].item())
         for comp in range(ncompanions):
@@ -299,7 +297,7 @@ if __name__ == "__main__":
         model_orders = []
         for ordernum, order in enumerate(orders):
           #Get the flux ratio
-          scale = GetFluxRatio(known_stars, temp, order.x)
+          scale = GetFluxRatio(known_stars, temp, order.x, age=age)
           print "Scale factor for order %i is %.3g" %(ordernum, scale.mean())
 
           #Add the model to the data
