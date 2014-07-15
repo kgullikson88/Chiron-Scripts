@@ -58,7 +58,8 @@ def Correct(original, corrected, offset=None, get_primary=False):
       if get_primary:
         primary = primary_orders[i-offset]
       try:
-        print "Order = %i\nHumidity: %g\nO2 concentration: %g\n" %(i, header['h2oval'], header['o2val'])
+        if i == 3:
+          print "Order = %i\nHumidity: %g\nO2 concentration: %g\n" %(i, header['h2oval'], header['o2val'])
       except KeyError:
         warnings.warn("Atmospheric parameters not found in the header!")
     except IndexError:

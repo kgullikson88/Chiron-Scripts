@@ -38,6 +38,7 @@ def Convert(fileList, blazecorrect=True, plotresult=False):
         plt.plot(order.x, order.y)
       #Blaze correction
       if blazecorrect:
+        blaze_orders[i][blaze_orders[i] < 1e-5] = 1.0
         order.y /= blaze_orders[i]
 
       if plotresult:

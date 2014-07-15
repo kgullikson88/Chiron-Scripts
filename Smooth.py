@@ -301,7 +301,7 @@ def GPSmooth(data, low=0.1, high=10, debug=False):
 
 if __name__ == "__main__":
   fileList = []
-  plot = False
+  plot = True
   vsini_file = "%s/School/Research/Useful_Datafiles/Vsini.csv" %(os.environ["HOME"])
   for arg in sys.argv[1:]:
     if "-p" in arg:

@@ -23,7 +23,7 @@ if __name__ == "__main__":
     if header["IMAGETYP"] != "object":
       print "Image type is %s. Skipping" %header["IMAGETYP"]
       continue
-    orders = FitsUtils.MakeXYpoints(fname, errors=2)
+    orders = HelperFunctions.ReadFits(fname, errors=2)
     orders = orders[::-1]    #Reverse order so the bluest order is first
     if blazecorrect:
       blazefile = [f for f in os.listdir("./") if "eblaze" in f]
@@ -33,7 +33,7 @@ if __name__ == "__main__":
         blazefile = blazefile[0]
       
       try:
-        blaze = FitsUtils.MakeXYpoints(blazefile, errors=2)
+        blaze = HelperFunctions.ReadFits(blazefile, errors=2)
         blaze = blaze[::-1]
       except IOError:
         print "Error! blaze file %s does not exist!" %blazefile

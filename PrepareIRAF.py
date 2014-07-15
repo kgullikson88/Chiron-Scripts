@@ -9,7 +9,8 @@ import ConvertToExtensions_NativeReductions as convert
 
 
 if __name__ == "__main__":
-  outdir = "files_%s/" %(os.getcwd().split("/")[-1])
+  date = os.getcwd().split("/")[-1]
+  outdir = "files_%s/" %(date)
   tarfiles = [f for f in os.listdir("./") if ".tgz" in f]
   caldir = [f.split(".tgz")[0] for f in tarfiles if "cals" in f][0] + "/"
   datadir = [f.split(".tgz")[0] for f in tarfiles if "planid" in f][0] + "/"
@@ -78,7 +79,7 @@ if __name__ == "__main__":
       print "Header of %s had no 'object' keyword!" %fname
       continue
     otype = header["OBJECT"].lower()
-    if header["ccdsum"].strip() == ccdsum and abs(header['deckpos'] - decker) < 0.001 and otype != "thar":
+    if header["ccdsum"].strip() == ccdsum and abs(header['deckpos'] - decker) < 0.001: # and otype != "thar":
       #Copy to output directory
       cmd = "cp %s%s %s" %(caldir, fname, outdir)
       subprocess.check_call(cmd, shell=True)
@@ -96,6 +97,11 @@ if __name__ == "__main__":
         hdulist[0].header['IMAGETYP'] = 'flat'
         hdulist.flush()
         hdulist.close()
+      if otype.lower() == 'thar':
+        hdulist = pyfits.open(outdir + fname, mode='update')
+        hdulist[0].header['IMAGETYP'] = 'comp'
+        hdulist.flush()
+        hdulist.close()
       
       FileDict[otype].append(fname)
 
@@ -106,12 +112,24 @@ if __name__ == "__main__":
     for fname in files:
       print "\t", fname
   
-  #Finally, copy all achi* files from the science directory to this directory
+  #copy all achi* files from the science directory to this directory
   cmd = "cp %sachi* ." %(datadir)
   subprocess.check_call(cmd, shell=True)
 
   achi_files = [f for f in os.listdir("./") if f.startswith("achi")]
   convert.Convert(achi_files, True, False)
+
+  #Copy the files to kepler
+  outdir = outdir.strip("/")
+  subprocess.check_call(["scp", "-r", outdir, "kgulliks@kepler:~/"])
+
+  #tar.gz the useful files
+  archive_dir = "/Volumes/DATADRIVE/CHIRON_data/Adam_Data/%s/" %date
+  subprocess.check_call(["tar", "czvf", "%s%s.tar.gz" %(archive_dir, outdir), outdir])
+
+  #Remove the unnecessary files
+  cmd = "rm -r 14* files*"
+  subprocess.check_call(cmd, shell=True)
 
   
 

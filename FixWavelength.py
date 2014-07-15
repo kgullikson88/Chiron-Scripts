@@ -88,9 +88,10 @@ if __name__ == "__main__":
       order.y /= s
 
       # Get an estimate for the best pixel shift
-      shift, corr = FittingUtilities.CCImprove(native[i], order, debug=True, be_safe=False)
-      pixelshift = shift*(native[i].x[-1] - native[i].x[0])/float(native[i].x.size)
-      pixelshift = int(numpy.searchsorted(order.x, native[i].x[0]) + pixelshift + 0.5)
+      #shift, corr = FittingUtilities.CCImprove(native[i], order, debug=True, be_safe=False)
+      #pixelshift = shift*(native[i].x[-1] - native[i].x[0])/float(native[i].x.size)
+      #pixelshift = int(numpy.searchsorted(order.x, native[i].x[0]) + pixelshift + 0.5)
+      pixelshift = 601
 
       #Super-sample the data for more accuracy
       factor = 1.0
@@ -103,6 +104,7 @@ if __name__ == "__main__":
       native2 = FittingUtilities.RebinData(native2, xgrid)
 
       # Find the best pixel shift to make the data line up
+      
       bestchisq = 9e9
       bestshift = 0
       order2.y /= numpy.median(order2.y)
@@ -113,6 +115,7 @@ if __name__ == "__main__":
       if i == 49 and plot:
         plt.figure(2)
         print native[i].x
+      
       for shift in range(pixelshift - searchsize, pixelshift + searchsize):
         chisq = numpy.sum((order2.y[shift:size+shift] - native2.y)**2)
         if i == 49 and plot:
@@ -121,6 +124,10 @@ if __name__ == "__main__":
         if chisq < bestchisq:
           bestchisq = chisq
           bestshift = shift
+      
+      
+
+      bestshift = 601
       order = order[bestshift:size+bestshift]
       print "Best shift = ", bestshift, pixelshift
       order.x = native[i].x

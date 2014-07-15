@@ -11,6 +11,7 @@ import os
 import HelperFunctions
 import FittingUtilities
 
+plot = True
 
 def MedianAdd(fileList, outfilename="Total.fits"):
   all_data = []
@@ -141,11 +142,13 @@ def Add(fileList, outfilename=None):
                "error": total.err}
     column_list.append(columns)
 
-    #pylab.plot(total.x, total.y/total.cont)
+    if plot:
+      pylab.plot(total.x, total.y/total.cont)
     #pylab.plot(total.x, total.cont)
 
   print "Outputting to %s" %outfilename
-  #pylab.show()
+  if plot:
+    pylab.show()
   HelperFunctions.OutputFitsFileExtensions(column_list, fileList[0], outfilename, mode="new")
   
   #Add the files used to the primary header of the new file

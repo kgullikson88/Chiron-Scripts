@@ -146,12 +146,16 @@ def MakePlot(infilename):
     infile.close()
     print "Reading file %s" %infilename
     current_temp = float(lines[4].split()[2])
+    starname = lines[4].split()[0].split("/")[-1].split("_smoothed")[0]
     detections =  0.0
     numsamples = 0.0
     significance = []
     for iternum, line in enumerate(lines[4:]):
       segments = line.split()
-      if float(segments[2]) != current_temp or iternum == 0:
+      #print segments[2], current_temp
+      #print starname, segments[0]
+      #print iternum, numsamples, '\n'
+      if float(segments[2]) != current_temp or starname not in segments[0] or iternum == 0:
         if iternum != 0:
           #We are on to the next temperature. Save info!
           s_spt[starname].append(s_spectype)
@@ -166,6 +170,7 @@ def MakePlot(infilename):
 
           #Reset things
           current_temp = float(segments[2])
+          starname = segments[0].split("/")[-1].split("_smoothed")[0]
           numsamples = 0.0
           detections = 0.0
           significance = []
@@ -180,7 +185,7 @@ def MakePlot(infilename):
         fluxratio = (PlotBlackbodies.Planck(vband, T1)/PlotBlackbodies.Planck(vband, T2)).mean()*(R1/R2)**2
 
       else:
-        starname = segments[0].split(".fits")[0]
+        #starname = segments[0].split("/")[-1].split("_smoothed")[0]
         sec_mass = float(segments[3])
         massratio = float(segments[4])
         if "y" in segments[6]:

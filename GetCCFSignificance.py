@@ -37,32 +37,6 @@ def rational_quadratic(pars, d):
   r = (1.0 + numpy.sum(d**2, axis=1) / (2*alpha*l**2))**(-alpha)
   return r
 
-def squared_exponential(theta, d):
-  theta = numpy.asarray(theta, dtype=numpy.float)
-  d = numpy.asarray(d, dtype=numpy.float)
-
-  #print numpy.sum(d**2), numpy.sum(d**2, axis=1).shape, d.shape
-  return numpy.exp(-theta[0] * numpy.sum(d**2, axis=1))
-
-
-def squared_exponential2(theta, d):
-    theta = numpy.asarray(theta, dtype=numpy.float)
-    d = numpy.asarray(d, dtype=numpy.float)
-
-    if d.ndim > 1:
-        n_features = d.shape[1]
-    else:
-        n_features = 1
-    
-    print theta.size, "\t", theta, "\t", d.shape
-    return numpy.exp(-theta[0] * numpy.sum(d ** 2, axis=1))
-#    if theta.size == 1:
-#        return numpy.exp(-theta[0] * numpy.sum(d ** 2, axis=1))
-#    elif theta.size != n_features:
-#        raise ValueError("Length of theta must be 1 or %s" % n_features)
-#    else:
-#        return numpy.exp(-numpy.sum(theta.reshape(1, n_features) * d ** 2, axis=1))
-
 
 
 if __name__ == "__main__":
@@ -98,17 +72,21 @@ if __name__ == "__main__":
   print "Processed: ", vel.size
 
   #Plot
+  f = 0.03
   fig = plt.figure()
   ax = fig.add_subplot(111)
   ax.plot(vel_original, corr_original, 'k-')
   ax.plot(vel, corr, 'g-')
+  ax.errorbar(vel, corr, yerr=numpy.std(corr)*f)
+  #plt.show(); sys.exit()
   
   #Generate the gaussian process fit
-  f = 2.0
+  #f = 1
   gp = GaussianProcess(corr=rational_quadratic,
-                       theta0=numpy.array((3e-3, 1e-2)),
-                       thetaL=numpy.array((1e-3, 1e-3)),
-                       thetaU=numpy.array((1e-1, 1e-1)),
+                       theta0=numpy.array((0.01, 1e5)),
+                       thetaL=numpy.array((1e-3, 0.1)),
+                       thetaU=numpy.array((1e2, 1e7)),
+                       normalize=True,
                        nugget=(numpy.std(corr)*f/corr)**2)
   #gp = GaussianProcess(corr='squared_exponential',
   #                     theta0=1e3,
@@ -116,7 +94,16 @@ if __name__ == "__main__":
   #                     thetaU=1e4,
   #                     nugget=(numpy.std(corr)*f/corr)**2)
   
+  #Fit the theta parameters, with the data excluded
   gp.fit(vel[:,None], corr)
+
+  #Now, use those parameters to fit the whole GP. Can it reproduce the peaks?
+  gp2 = GaussianProcess(corr=rational_quadratic,
+                        theta0=gp.theta_,
+                        nugget=(numpy.std(corr_original)*f/corr_original)**2)
+  gp2.fit(vel_original[:,None], corr_original)
+
+  #prediction, error = gp2.predict(vel_original[:,None], eval_MSE=True)
   prediction, error = gp.predict(vel_original[:,None], eval_MSE=True)
 
   error = numpy.sqrt(error)
@@ -127,7 +114,8 @@ if __name__ == "__main__":
   mu = numpy.mean(corr)
   std = numpy.std(corr)
   ax.fill_between(vel_original, mu-3*std, mu+3*std, color='green', alpha=0.3)
-
+  ax.set_xlabel("Velocity (km/s)")
+  ax.set_ylabel("CCF")
 
 
 
