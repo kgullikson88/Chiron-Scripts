@@ -103,7 +103,7 @@ def GetModel(Temperature):
 
 if __name__ == "__main__":
     MS = SpectralTypeRelations.MainSequence()
-    multiplicity_file = "/Users/kgulliks/Dropbox/School/Research/AstarStuff/TargetLists/Multiplicity.csv"
+    multiplicity_file = "%s/Dropbox/School/Research/AstarStuff/TargetLists/Multiplicity.csv" %(os.environ['HOME'])
     infile = open(multiplicity_file)
     multiplicity = infile.readlines()
     infile.close()
@@ -177,9 +177,10 @@ if __name__ == "__main__":
         all_orders = HelperFunctions.ReadExtensionFits(fname)
         orders = []
         for i, o in enumerate(all_orders):
-            #if i not in H_orders and i not in tell_orders:
-            #    orders.append(o)
-            if i in good_orders:
+            if i not in H_orders and i not in tell_orders:
+                orders.append(o)
+            """
+	    if i in good_orders:
                 #o.cont = FittingUtilities.Continuum(o.x, o.y, fitorder=1, lowreject=2, highreject=20)
                 o.cont = np.mean(o.y) * np.ones(o.size())
                 left = np.searchsorted(model.x, o.x[0]-10)
@@ -202,6 +203,7 @@ if __name__ == "__main__":
                 #plt.figure(3)
                 #plt.plot(o.x, o.y/o2.cont)
                 #plt.plot(o2.x, o2.cont)
+	    """
         #plt.show()
 
         if first:
