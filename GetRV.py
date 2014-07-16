@@ -14,6 +14,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline as spline
 from astrolib import helcorr
 import SpectralTypeRelations
 from collections import defaultdict
+import os
 
 modelfile = "/Volumes/DATADRIVE/Stellar_Models/PHOENIX/Stellar/Vband/lte98-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted"
 
@@ -23,6 +24,8 @@ good_orders = [6,7,13,32,35, 37,50]
 good_orders = [6,7,37,50]
 good_orders = [6,7,37]
 good_orders = [6,7]
+hightemp_orders = [2,3,8,10,13,14,16,17,19,26,28,31,34,38,43,50,51]
+lowtemp_orders = [0,1,2,3,4,5,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,27,28,29,30,31,32,33,34,35,36,43,44,45,46,47,48,49,50,51,52]
 c = 3e5
 
 Grid_Temperatures = [6750,
@@ -83,8 +86,7 @@ def getJD(header, rootdir="./"):
 
 
 
-def GetModel(Temperature):
-    grid = "/Volumes/DATADRIVE/Stellar_Models/Coelho14/s_coelho14_highres/"
+def GetModel(Temperature, grid):
     filename = "%st%.5i_g+4.0_p00p00_hr.fits" %(grid, Temperature)
     print "Model file name: ", filename
     hdu = fits.open(filename)[0]
@@ -103,31 +105,23 @@ def GetModel(Temperature):
 
 if __name__ == "__main__":
     MS = SpectralTypeRelations.MainSequence()
+    
     multiplicity_file = "%s/Dropbox/School/Research/AstarStuff/TargetLists/Multiplicity.csv" %(os.environ['HOME'])
     infile = open(multiplicity_file)
     multiplicity = infile.readlines()
     infile.close()
+
+    if "darwin" in sys.platform:
+        modeldir = "/Volumes/DATADRIVE/Stellar_Models/Coelho14/s_coelho14_highres/"
+    elif "linux" in sys.platform:
+        modeldir = "/media/FreeAgent_Drive/SyntheticSpectra/Stellar/Coelho14/s_coelho14_highres/"
+    else:
+        modeldir = raw_input("sys.platform not recognized. Please enter model directory below: ")
+    if not modeldir.endswith("/"):
+        modeldir = modeldir + "/"
+
     logfile = open("Measured_RVs.csv", "w")
-    """
-    hdulist = fits.open("/Volumes/DATADRIVE/Stellar_Models/Coelho14/s_coelho14_highres/t09750_g+4.0_p00p00_hr.fits")
-    data = hdulist[0].data
-    header = hdulist[0].header
-    wave_A = np.arange(data.size)*header['CDELT1'] + header['CRVAL1']
-    x = wave_A*units.angstrom.to(units.nm)
-    n = 1.0 + 2.735182e-4 + 131.4182/wave_A**2 + 2.76249e8/wave_A**4
-    #x /= n
-    y = data
     
-    wave_A, y = np.loadtxt(modelfile, usecols=(0,1), unpack=True)
-    x = wave_A*units.angstrom.to(units.nm)
-    n = 1.0 + 2.735182e-4 + 131.4182/wave_A**2 + 2.76249e8/wave_A**4
-    x /= n
-    y = 10**y
-    
-    left = np.searchsorted(x, 450)
-    right = np.searchsorted(x, 900)
-    model = DataStructures.xypoint(x=x[left:right], y=y[left:right])
-    """
     first = True
     models = defaultdict(str)
     for fnum, fname in enumerate(sys.argv[1:]):
@@ -151,14 +145,19 @@ if __name__ == "__main__":
         if skip:
             continue
 
+        # Get the appropriate model for this temperature
         data = StarData.GetData(starname)
         spt = data.spectype[:2]
         Teff = MS.Interpolate(MS.Temperature, spt)
         idx = np.argmin(abs(Grid_Temperatures - Teff))
         Tgrid = Grid_Temperatures[idx]
         if models[Tgrid] == "":
-            models[Tgrid] = GetModel(Tgrid)
+            models[Tgrid] = GetModel(Tgrid, modeldir)
         model = models[Tgrid]
+        if Teff > 9000:
+            good_orders = hightemp_orders
+        else:
+            good_orders = lowtemp_orders
         
 
         # Get the heliocentric correction
@@ -177,10 +176,10 @@ if __name__ == "__main__":
         all_orders = HelperFunctions.ReadExtensionFits(fname)
         orders = []
         for i, o in enumerate(all_orders):
-            if i not in H_orders and i not in tell_orders:
+            if i in good_orders and i not in tell_orders:
                 orders.append(o)
             """
-	    if i in good_orders:
+            if i in good_orders:
                 #o.cont = FittingUtilities.Continuum(o.x, o.y, fitorder=1, lowreject=2, highreject=20)
                 o.cont = np.mean(o.y) * np.ones(o.size())
                 left = np.searchsorted(model.x, o.x[0]-10)
@@ -203,7 +202,7 @@ if __name__ == "__main__":
                 #plt.figure(3)
                 #plt.plot(o.x, o.y/o2.cont)
                 #plt.plot(o2.x, o2.cont)
-	    """
+            """
         #plt.show()
 
         if first:
@@ -214,7 +213,9 @@ if __name__ == "__main__":
             retdict = Correlate.GetCCF(orders, model_orders, vsini=0.0, resolution=3000, addmode='simple', process_model=False, oversample=1)
         ccf = retdict['CCF']
         gauss = lambda x, a, b, amp, mu, sig: a + b*x + amp*np.exp(-(x-mu)**2/(2*sig**2))
-        idx = np.argmax(ccf.y)
+        left = np.searchsorted(ccf.x, -200)
+        right = np.searchsorted(ccf.x, 200)
+        idx = np.argmax(ccf.y[left:right])+left
         y1 = np.median(ccf.y[:50])
         y2 = np.median(ccf.y[-50:])
         m = (y2 - y1) / (ccf.x[-25] - ccf.x[25])
