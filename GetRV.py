@@ -14,6 +14,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline as spline
 from astrolib import helcorr
 import SpectralTypeRelations
 from collections import defaultdict
+import os
 
 modelfile = "/Volumes/DATADRIVE/Stellar_Models/PHOENIX/Stellar/Vband/lte98-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted"
 
