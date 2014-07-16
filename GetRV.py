@@ -102,6 +102,17 @@ def GetModel(Temperature, grid):
 
 
 
+def profile(x, a, b, amp, mu, sig, vsini):
+    a2 = 1.0   #Limb darkening parameter
+    b2 = -0.1  #Limb darkening parameter
+    c = 3e5
+    gauss = a + b*x + amp*np.exp(-(x-mu)**2/(2*sig**2))
+    broadening_kernel = a2*np.sqrt(1-(x/vsini)**2) + b2*np.pi/4.0 * (1-(x/vsini)**2)
+    keep = -np.isnan(broadening_kernel)
+    broadening_kernel = broadening_kernel[keep]
+    return np.convolve(gauss, broadening_kernel/broadening_kernel.sum(), mode='same')
+
+
 
 if __name__ == "__main__":
     MS = SpectralTypeRelations.MainSequence()
@@ -224,9 +235,10 @@ if __name__ == "__main__":
         amp = ccf.y[idx] - a
         mu = ccf.x[idx]
         sig = 10.0
-        pars = [a,b,amp, mu, sig]
+        vsini = 100.0
+        pars = [a,b,amp, mu, sig, vsini]
         try:
-            popt, pcov = curve_fit(gauss, ccf.x, ccf.y, p0=(pars))
+            popt, pcov = curve_fit(profile, ccf.x, ccf.y, p0=(pars))
         except RuntimeError:
             continue
 
@@ -250,14 +262,17 @@ if __name__ == "__main__":
 
         rv = -popt[3]
         rv_err = np.sqrt(pcov[3][3])
-        vsini = A*np.sqrt(popt[4]**2 - sig0**2)
-        vsini_err = A*np.sqrt(pcov[4][4]) /  np.sqrt(popt[4]**2 - sig0**2)
+        #vsini = A*np.sqrt(popt[4]**2 - sig0**2)
+        #vsini_err = A*np.sqrt(pcov[4][4]) /  np.sqrt(popt[4]**2 - sig0**2)
+        vsini = popt[5]
+        vsini_err = np.sqrt(pcov[5][5])
         print "rv = %g km/s" %rv
         print "centroid = %g km/s" %centroid
         print "vsini = %g km/s" %vsini
 
+        ccf.output(fname.replace(".fits", "_CCF.txt"))
         plt.plot(ccf.x, ccf.y)
-        plt.plot(ccf.x, gauss(ccf.x, *popt))
+        plt.plot(ccf.x, profile(ccf.x, *popt))
         plt.plot((-centroid, -centroid), (ccf.y[idx]+0.05, ccf.y[idx]+0.15), 'k-')
         plt.savefig("Figures/%s" %(fname.split("/")[-1].replace("fits", "pdf")))
         plt.clf()
