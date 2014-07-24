@@ -3,13 +3,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+badnums = [17457,26126,46283,52678,85537,77635,68520,66249,93805,
+           101589,105140,109139,23362,23916,28910,52736,60009,
+           79387,80815,92855,29735,31362,37297,52736,71865,72104]
+#badnums = []
+bad_names = ["HIP %i" %num for num in badnums]
 
 if __name__ == "__main__":
     known_file = open("Known_RVs.csv")
     known = known_file.readlines()
     known_file.close()
 
-    measured_file = open("Measured_RVs.csv")
+    measured_file = open("Measured_RVs.backup.csv")
+    #measured_file = open("Known_RVs.backup.csv")
     measured = measured_file.readlines()
     measured_file.close()
 
@@ -21,10 +27,14 @@ if __name__ == "__main__":
     for i, line in enumerate(measured):
         segments = line.split("|")
         starname = segments[0].strip()
+        if starname in bad_names:
+            print "Skipping ", starname
+            continue
         mrv = float(segments[1])  #measured rv
         mrv_err = float(segments[2])
 
         vsini = float(segments[4])
+        #vsini = 1
 
         #Get the known rv
         for line2 in known:
@@ -36,8 +46,11 @@ if __name__ == "__main__":
         #segments = known[i].split("|")
         #krv = float(segments[1])  
         #krv_err = float(segments[2])
+
+        #if abs(mrv - krv) > 1:
+        #    print "Large difference for %s: %g km/s" %(starname, mrv-krv)
         
-        if abs(mrv - krv) > 80:
+        if abs(mrv - krv) > 20:
             continue
         
         known_vels.append(krv)
