@@ -10,11 +10,13 @@ import FittingUtilities
 import DataStructures
 from scipy.optimize import curve_fit
 from astropy.io import fits
+from astropy.time import Time
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
 from astrolib import helcorr
 import SpectralTypeRelations
 from collections import defaultdict
 import os
+import pyraf
 
 modelfile = "/Volumes/DATADRIVE/Stellar_Models/PHOENIX/Stellar/Vband/lte98-4.00-0.0.AGS.Cond.PHOENIX-ACES-2009.HighRes.7.sorted"
 
@@ -25,6 +27,7 @@ good_orders = [6,7,37,50]
 good_orders = [6,7,37]
 good_orders = [6,7]
 hightemp_orders = [2,3,8,10,13,14,16,17,19,26,28,31,34,38,43,50,51]
+hightemp_orders = [17,28,31,34,50]
 lowtemp_orders = [0,1,2,3,4,5,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,27,28,29,30,31,32,33,34,35,36,43,44,45,46,47,48,49,50,51,52]
 c = 3e5
 
@@ -110,8 +113,18 @@ def profile(x, a, b, amp, mu, sig, vsini):
     broadening_kernel = a2*np.sqrt(1-(x/vsini)**2) + b2*np.pi/4.0 * (1-(x/vsini)**2)
     keep = -np.isnan(broadening_kernel)
     broadening_kernel = broadening_kernel[keep]
+    if broadening_kernel.size < 10:
+        print "Vsini too small! ", vsini
+        return gauss
     return np.convolve(gauss, broadening_kernel/broadening_kernel.sum(), mode='same')
 
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 
 def is_number(s):
@@ -124,6 +137,9 @@ def is_number(s):
 
 if __name__ == "__main__":
     MS = SpectralTypeRelations.MainSequence()
+    pyraf.iraf.noao()
+    pyraf.iraf.noao.rv()
+
     
     multiplicity_file = "%s/Dropbox/School/Research/AstarStuff/TargetLists/Multiplicity.csv" %(os.environ['HOME'])
     infile = open(multiplicity_file)
@@ -171,7 +187,6 @@ if __name__ == "__main__":
         spt = data.spectype[:2]
         if not is_number(spt[1]):
             spt = spt[0] + "5"
-
         Teff = MS.Interpolate(MS.Temperature, spt)
         idx = np.argmin(abs(Grid_Temperatures - Teff))
         print starname, " | ", spt, " | ", Teff
@@ -189,10 +204,26 @@ if __name__ == "__main__":
         ra = convert(header['RA'])
         dec = convert(header['DEC'])
         jd = getJD(header, rootdir=rootdir)
+        t = Time(jd, format='jd', scale='utc')
+        dt = t.datetime
+        year = dt.year
+        month = dt.month
+        day = dt.day
+        time = dt.isoformat().split("T")[-1]
+        output = pyraf.iraf.noao.rv.rvcorrect(epoch=2000.0, 
+                                              observatory='CTIO', 
+                                              year=dt.year, 
+                                              month=dt.month, 
+                                              day=dt.day, 
+                                              ut=header['ut'], 
+                                              ra=header['ra'], 
+                                              dec=header['dec'],
+                                              Stdout=1)
+        vbary = float(output[-1].split()[2])
         longitude = 70.8065
         latitude = -30.1697
         altitude = 2200.0
-        vbary = helcorr(longitude, latitude, altitude, ra, dec, jd)[0]
+        #vbary = helcorr(longitude, latitude, altitude, ra, dec, jd)[0]
         print "Heliocentric velocity correction: ", vbary
 
 
@@ -200,6 +231,7 @@ if __name__ == "__main__":
         sig0 = 0.6
         all_orders = HelperFunctions.ReadExtensionFits(fname)
         orders = []
+        #good_orders = H_orders
         for i, o in enumerate(all_orders):
             if i in good_orders and i not in tell_orders:
                 orders.append(o)
@@ -273,7 +305,11 @@ if __name__ == "__main__":
         
 
 
-
+        if isinstance(pcov, float):
+            continue
+        print popt
+        print pcov
+        print pcov.shape
         rv = -popt[3]
         rv_err = np.sqrt(pcov[3][3])
         #vsini = A*np.sqrt(popt[4]**2 - sig0**2)
