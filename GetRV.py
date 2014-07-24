@@ -114,6 +114,14 @@ def profile(x, a, b, amp, mu, sig, vsini):
 
 
 
+def is_number(s):
+    try:
+        i = int(s)
+        return True
+    except ValueError:
+        return False
+
+
 if __name__ == "__main__":
     MS = SpectralTypeRelations.MainSequence()
     
@@ -142,9 +150,10 @@ if __name__ == "__main__":
             rootdir = rootdir + d + "/"
         header = fits.getheader(fname)
         starname = header['OBJECT']
-        print starname
+        #print starname
 
         #Make sure this is not a multiple star
+        """
         skip = False
         for star in multiplicity:
             segments = star.split("|")
@@ -155,12 +164,17 @@ if __name__ == "__main__":
                     skip = True
         if skip:
             continue
+        """
 
         # Get the appropriate model for this temperature
         data = StarData.GetData(starname)
         spt = data.spectype[:2]
+        if not is_number(spt[1]):
+            spt = spt[0] + "5"
+
         Teff = MS.Interpolate(MS.Temperature, spt)
         idx = np.argmin(abs(Grid_Temperatures - Teff))
+        print starname, " | ", spt, " | ", Teff
         Tgrid = Grid_Temperatures[idx]
         if models[Tgrid] == "":
             models[Tgrid] = GetModel(Tgrid, modeldir)

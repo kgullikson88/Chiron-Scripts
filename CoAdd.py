@@ -11,7 +11,7 @@ import os
 import HelperFunctions
 import FittingUtilities
 
-plot = True
+plot = False
 
 def MedianAdd(fileList, outfilename="Total.fits"):
   all_data = []

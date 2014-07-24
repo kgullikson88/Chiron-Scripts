@@ -107,6 +107,7 @@ def main1():
   if len(sys.argv) > 2:
     original = sys.argv[1]
     corrected = sys.argv[2]
+    #plot = True
     if len(sys.argv) > 3 and "prim" in sys.argv[3]:
       primary=True
   
