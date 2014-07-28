@@ -1,6 +1,6 @@
 import FitsUtils
 import matplotlib.pyplot as plt
-import numpy
+import numpy as np
 import FittingUtilities
 import os
 import sys
@@ -90,25 +90,25 @@ if __name__ == "__main__":
       # Get an estimate for the best pixel shift
       #shift, corr = FittingUtilities.CCImprove(native[i], order, debug=True, be_safe=False)
       #pixelshift = shift*(native[i].x[-1] - native[i].x[0])/float(native[i].x.size)
-      #pixelshift = int(numpy.searchsorted(order.x, native[i].x[0]) + pixelshift + 0.5)
+      #pixelshift = int(np.searchsorted(order.x, native[i].x[0]) + pixelshift + 0.5)
       pixelshift = 601
 
       #Super-sample the data for more accuracy
       factor = 1.0
-      order.x = numpy.arange(1, order.size()+1)
-      xgrid = numpy.arange(1, order.size()+1, 1.0/factor)
+      order.x = np.arange(1, order.size()+1)
+      xgrid = np.arange(1, order.size()+1, 1.0/factor)
       order2 = FittingUtilities.RebinData(order, xgrid)
-      xgrid = numpy.arange(1, native[i].size()+1, 1.0/factor)
+      xgrid = np.arange(1, native[i].size()+1, 1.0/factor)
       native2 = native[i].copy()
-      native2.x = numpy.arange(1, native2.size()+1)
+      native2.x = np.arange(1, native2.size()+1)
       native2 = FittingUtilities.RebinData(native2, xgrid)
 
       # Find the best pixel shift to make the data line up
       
       bestchisq = 9e9
       bestshift = 0
-      order2.y /= numpy.median(order2.y)
-      native2.y /= numpy.median(native2.y)
+      order2.y /= np.median(order2.y)
+      native2.y /= np.median(native2.y)
       size = native2.size()
       sizediff = order2.size() - native2.size()
       searchsize = min(sizediff, 100)
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         print native[i].x
       
       for shift in range(pixelshift - searchsize, pixelshift + searchsize):
-        chisq = numpy.sum((order2.y[shift:size+shift] - native2.y)**2)
+        chisq = np.sum((order2.y[shift:size+shift] - native2.y)**2)
         if i == 49 and plot:
           plt.plot(shift, chisq, 'ro')
         #print shift
@@ -133,8 +133,8 @@ if __name__ == "__main__":
       order.x = native[i].x
       if plot:
         plt.figure(1)
-        plt.plot(order.x, order.y/numpy.median(order.y), 'k-')
-        plt.plot(native[i].x, native[i].y/numpy.median(native[i].y), 'r-')
+        plt.plot(order.x, order.y/np.median(order.y), 'k-')
+        plt.plot(native[i].x, native[i].y/np.median(native[i].y), 'r-')
 
       columns = {"wavelength": order.x,
                  "flux": order.y*s[bestshift:size+bestshift],

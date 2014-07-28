@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import sys
 import os
 import matplotlib.pyplot as plt
@@ -22,7 +22,7 @@ if __name__ == "__main__":
   #Initialize fitter
   fitter = TelluricFitter.TelluricFitter()
   fitter.SetTelluricLineListFile(linelist)
-  LineList = numpy.loadtxt(linelist)
+  LineList = np.loadtxt(linelist)
   logfile = open("fitlog.txt", "w")
  
   fileList = []
@@ -89,13 +89,13 @@ if __name__ == "__main__":
         order.y -= lowpoint
         
       order.cont = FindContinuum.Continuum(order.x, order.y, fitorder=3, lowreject=2, highreject=10)
-      primary = DataStructures.xypoint(x=order.x, y=numpy.ones(order.x.size))
+      primary = DataStructures.xypoint(x=order.x, y=np.ones(order.x.size))
       
       fitter.ImportData(order)
 
       #Determine how to fit the data from the initial model guess
-      left = numpy.searchsorted(test_model.x, order.x[0])
-      right = numpy.searchsorted(test_model.x, order.x[-1])
+      left = np.searchsorted(test_model.x, order.x[0])
+      right = np.searchsorted(test_model.x, order.x[-1])
       
       model = DataStructures.xypoint(x=test_model.x[left:right], y=test_model.y[left:right])
       model_amplitude = 1.0 - min(model.y)
@@ -113,9 +113,9 @@ if __name__ == "__main__":
         try:
           primary, model = fitter.Fit(resolution_fit_mode="gauss", fit_primary=True, adjust_wave="model")
         except ValueError:
-          model = DataStructures.xypoint(x=order.x.copy(), y=numpy.ones(order.x.size))
+          model = DataStructures.xypoint(x=order.x.copy(), y=np.ones(order.x.size))
           primary = model.copy()
-          primary.y = numpy.ones(primary.size())
+          primary.y = np.ones(primary.size())
         
         models.append(model)
         data = fitter.data
@@ -125,9 +125,9 @@ if __name__ == "__main__":
         try:
           primary, model = fitter.Fit(resolution_fit_mode="SVD", fit_primary=True, adjust_wave="model")
         except ValueError:
-          model = DataStructures.xypoint(x=order.x.copy(), y=numpy.ones(order.x.size))
+          model = DataStructures.xypoint(x=order.x.copy(), y=np.ones(order.x.size))
           primary = model.copy()
-          primary.y = numpy.ones(primary.size())
+          primary.y = np.ones(primary.size())
 
         models.append(model)
         data = fitter.data

@@ -1,6 +1,6 @@
 
 import matplotlib.pyplot as plt
-import numpy
+import numpy as np
 import FittingUtilities
 import os
 import sys
@@ -40,9 +40,9 @@ if __name__ == "__main__":
       #Super-sample the data for more accuracy
       factor = 1.0
       goodorder = order.copy()
-      goodorder.x = numpy.arange(1, order.size()+1)
+      goodorder.x = np.arange(1, order.size()+1)
       badorder = bad[i].copy()
-      badorder.x = numpy.arange(1, badorder.size()+1)
+      badorder.x = np.arange(1, badorder.size()+1)
 
 
       # Find the best pixel shift to make the data line up
@@ -52,7 +52,7 @@ if __name__ == "__main__":
       left = size/2
       right = left+20
       for shift in range(-50, 50):
-        chisq = numpy.sum((goodorder.y[left:right] - badorder.y[left+shift:right+shift])**2)
+        chisq = np.sum((goodorder.y[left:right] - badorder.y[left+shift:right+shift])**2)
         if chisq < bestchisq:
           bestchisq = chisq
           bestshift = shift
@@ -84,7 +84,7 @@ if __name__ == "__main__":
       
       #Change the model when it is very low
       order.y[order.y/order.cont < 1e-5] = 1e-5*order.cont[order.y/order.cont < 1e-5]
-      badindices = numpy.where(numpy.logical_or(order.y <= 0, model.y < 0.05))[0]
+      badindices = np.where(np.logical_or(order.y <= 0, model.y < 0.05))[0]
       model.y[badindices] = order.y[badindices]/order.cont[badindices]
       model.y[model.y < 1e-5] = 1e-5
 

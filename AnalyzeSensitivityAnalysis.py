@@ -1,7 +1,7 @@
 import os
 import sys
 import matplotlib.pyplot as plt
-import numpy
+import numpy as np
 from collections import defaultdict
 import SpectralTypeRelations
 from astropy.io import fits as pyfits
@@ -58,15 +58,15 @@ def MakeSummaryFile(directory, prefix, outfilename="Sensitivity/logfile.dat", to
     q = secondary_mass / primary_mass
 
     #Find the maximum in the cross-correlation function
-    vel, corr = numpy.loadtxt(directory + fname, unpack=True)
-    idx = numpy.argmax(corr)
+    vel, corr = np.loadtxt(directory + fname, unpack=True)
+    idx = np.argmax(corr)
     vmax = vel[idx]
     fit = FittingUtilities.Continuum(vel, corr, fitorder=2, lowreject=3, highreject=3)
     corr -= fit
     mean = corr.mean()
     std = corr.std()
     significance = (corr[idx] - mean)/std
-    if numpy.abs(vmax - v) <= tolerance:
+    if np.abs(vmax - v) <= tolerance:
       #Signal found!
       outfile.write("%s\t%i\t\t\t%i\t\t\t\t%.2f\t\t%.4f\t\t%i\t\tyes\t\t%.2f\n" %(prefix, primary_temp, T, secondary_mass, q, v, significance) )
     else:
@@ -136,7 +136,7 @@ def MakePlot(infilename):
     sys.exit()
 
   MS = SpectralTypeRelations.MainSequence()
-  vband = numpy.arange(500, 600, 1)*units.nm.to(units.cm)
+  vband = np.arange(500, 600, 1)*units.nm.to(units.cm)
 
   
   #Read in file/files  WARNING! ASSUMES A CERTAIN FORMAT. MUST CHANGE THIS IF THE FORMAT CHANGES!
@@ -165,8 +165,8 @@ def MakePlot(infilename):
           s_mass[starname].append(sec_mass)
           q[starname].append(massratio)
           det_rate[starname].append(detections/numsamples)
-          sig[starname].append(numpy.mean(significance))
-          magdiff[starname].append(2.5*numpy.log10(fluxratio))
+          sig[starname].append(np.mean(significance))
+          magdiff[starname].append(2.5*np.log10(fluxratio))
 
           #Reset things
           current_temp = float(segments[2])

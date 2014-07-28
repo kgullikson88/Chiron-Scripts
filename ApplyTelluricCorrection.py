@@ -7,7 +7,7 @@ import DataStructures
 import os
 import FindContinuum
 import FittingUtilities
-import numpy
+import numpy as np
 import HelperFunctions
 import MakeModel
 import warnings
@@ -63,7 +63,7 @@ def Correct(original, corrected, offset=None, get_primary=False):
       except KeyError:
         warnings.warn("Atmospheric parameters not found in the header!")
     except IndexError:
-      model = DataStructures.xypoint(x=data.x, y=numpy.ones(data.x.size))
+      model = DataStructures.xypoint(x=data.x, y=np.ones(data.x.size))
       print "Warning!!! Telluric Model not found for order %i" %i
 
     if plot:
@@ -72,19 +72,19 @@ def Correct(original, corrected, offset=None, get_primary=False):
       plt.plot(model.x, model.y)
     
     if model.size() < data.size():
-      left = numpy.searchsorted(data.x, model.x[0])
-      right = numpy.searchsorted(data.x, model.x[-1])
+      left = np.searchsorted(data.x, model.x[0])
+      right = np.searchsorted(data.x, model.x[-1])
       if right < data.size():
         right += 1
       data = data[left:right]
     elif model.size() > data.size():
       sys.exit("Error! Model size (%i) is larger than data size (%i)" %(model.size(), data.size()))
 
-    #if numpy.sum((model.x-data.x)**2) > 1e-8:
+    #if np.sum((model.x-data.x)**2) > 1e-8:
     #  model = FittingUtilities.RebinData(model, data.x)
       
     data.y[data.y/data.cont < 1e-5] = 1e-5*data.cont[data.y/data.cont < 1e-5]
-    badindices = numpy.where(numpy.logical_or(data.y <= 0, model.y < 0.05))[0]
+    badindices = np.where(np.logical_or(data.y <= 0, model.y < 0.05))[0]
     model.y[badindices] = data.y[badindices]/data.cont[badindices]
     model.y[model.y < 1e-5] = 1e-5
 

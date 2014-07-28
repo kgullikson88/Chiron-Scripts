@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import FittingUtilities
 import HelperFunctions
 import matplotlib.pyplot as plt
@@ -39,14 +39,14 @@ def roundodd(num):
 
 
 def cost(data, prediction, scale = 1, dx=1):
-  retval = numpy.sum((prediction - data)**2/scale**2)/float(prediction.size)
-  #retval = gmean(data/prediction) / numpy.mean(data/prediction)
-  #idx = numpy.argmax(abs(data - prediction))
-  #std = numpy.std(data - prediction)
+  retval = np.sum((prediction - data)**2/scale**2)/float(prediction.size)
+  #retval = gmean(data/prediction) / np.mean(data/prediction)
+  #idx = np.argmax(abs(data - prediction))
+  #std = np.std(data - prediction)
   #retval = abs(data[idx] - prediction[idx]) / std
-  #retval = numpy.std(data/(prediction/prediction.sum())) / scale
-  #retval = numpy.std(data - prediction)/numpy.mean(scale)
-  return retval# + 1e-10*numpy.mean(numpy.gradient(numpy.gradient(prediction, dx), dx)**2)
+  #retval = np.std(data/(prediction/prediction.sum())) / scale
+  #retval = np.std(data - prediction)/np.mean(scale)
+  return retval# + 1e-10*np.mean(np.gradient(np.gradient(prediction, dx), dx)**2)
 
 
 
@@ -72,18 +72,18 @@ def OptimalSmooth(order, normalize=True):
     order.err[outliers] = 9e9
 
   #Make cross-validation sets
-  inp = numpy.transpose((order.x, order.err, order.cont))
+  inp = np.transpose((order.x, order.err, order.cont))
   X_train, X_test, y_train, y_test = cross_validation.train_test_split(inp, order.y, test_size=0.2)
   X_train = X_train.transpose()
   X_test = X_test.transpose()
-  sorter_train = numpy.argsort(X_train[0])
-  sorter_test = numpy.argsort(X_test[0])
+  sorter_train = np.argsort(X_train[0])
+  sorter_test = np.argsort(X_test[0])
   training = DataStructures.xypoint(x=X_train[0][sorter_train], y=y_train[sorter_train], err=X_train[1][sorter_train], cont=X_train[2][sorter_train])
   validation = DataStructures.xypoint(x=X_test[0][sorter_test], y=y_test[sorter_test], err=X_test[1][sorter_test], cont=X_test[2][sorter_test])
 
   """
   #Try each smoothing parameter
-  s_array = numpy.logspace(-3, 1, 100)
+  s_array = np.logspace(-3, 1, 100)
   chisq = []
   for s in s_array:
     fcn = smooth(training.x, training.y, w=1.0/training.err, s=s)
@@ -92,7 +92,7 @@ def OptimalSmooth(order, normalize=True):
     print s, chisq[-1]
 
 
-  idx = numpy.argmin(numpy.array(chisq) - 1.0)
+  idx = np.argmin(np.array(chisq) - 1.0)
   s = s_array[idx]
   """
 
@@ -162,14 +162,14 @@ def CrossValidation(order, smoothorder=5, lowreject=3, highreject=3, numiters=10
       tr_idx += 1
 
   #Rebin the training set to constant wavelength spacing
-  xgrid = numpy.linspace(training.x[0], training.x[-1], training.size())
+  xgrid = np.linspace(training.x[0], training.x[-1], training.size())
   training = FittingUtilities.RebinData(training, xgrid)
   dx = training.x[1] - training.x[0]
   size = 40
   left = xgrid.size/2 - size
   right = left + size*2
-  func = numpy.poly1d(numpy.polyfit(training.x[left:right]-training.x[left+size], training.y[left:right], 5))
-  sig = numpy.std(training.y[left:right] - func(training.x[left:right]-training.x[left+size]))
+  func = np.poly1d(np.polyfit(training.x[left:right]-training.x[left+size], training.y[left:right], 5))
+  sig = np.std(training.y[left:right] - func(training.x[left:right]-training.x[left+size]))
   sig = validation.err*0.8
   #print "New std = ", sig
   #plt.figure(3)
@@ -179,7 +179,7 @@ def CrossValidation(order, smoothorder=5, lowreject=3, highreject=3, numiters=10
   #plt.figure(1)
 
   #Find the rough location of the best window size
-  windowsizes = numpy.logspace(-1.3, 0.5, num=20)
+  windowsizes = np.logspace(-1.3, 0.5, num=20)
   chisq = []
   skip = 0
   for i, windowsize in enumerate(windowsizes):
@@ -196,17 +196,17 @@ def CrossValidation(order, smoothorder=5, lowreject=3, highreject=3, numiters=10
     #sig = validation.err
     #chisq.append(cost(training.y, smoothed, training.err))
     chisq.append(cost(validation.y, predict, sig, validation.x[1] - validation.x[0]))
-    #chisq.append(numpy.sum((predict - validation.y)**2/sig**2)/float(predict.size))
-    #sig = numpy.std(smoothed / training.y)
-    #chisq.append(numpy.std(predict/validation.y) / sig)
+    #chisq.append(np.sum((predict - validation.y)**2/sig**2)/float(predict.size))
+    #sig = np.std(smoothed / training.y)
+    #chisq.append(np.std(predict/validation.y) / sig)
     print "\t", windowsize, chisq[-1]
   #plt.loglog(windowsizes, chisq)
   #plt.show()
   
   windowsizes = windowsizes[skip:]
-  chisq = numpy.array(chisq)
-  idx = numpy.argmin(abs(chisq-1.0))
-  sorter = numpy.argsort(chisq)
+  chisq = np.array(chisq)
+  idx = np.argmin(abs(chisq-1.0))
+  sorter = np.argsort(chisq)
   chisq = chisq[sorter]
   windowsizes = windowsizes[sorter]
   left, right = HelperFunctions.GetSurrounding(chisq, 1, return_index=True)
@@ -218,7 +218,7 @@ def CrossValidation(order, smoothorder=5, lowreject=3, highreject=3, numiters=10
   print windowsizes[left], windowsizes[right]
 
   #Refine the window size to get more accurate
-  windowsizes = numpy.logspace(numpy.log10(windowsizes[left]), numpy.log10(windowsizes[right]), num=10)
+  windowsizes = np.logspace(np.log10(windowsizes[left]), np.log10(windowsizes[right]), num=10)
   chisq = []
   for i, windowsize in enumerate(windowsizes):
     npixels = roundodd(windowsize/dx)
@@ -231,13 +231,13 @@ def CrossValidation(order, smoothorder=5, lowreject=3, highreject=3, numiters=10
     #sig = validation.err
     #chisq.append(cost(training.y, smoothed, training.err))
     chisq.append(cost(validation.y, predict, sig, validation.x[1] - validation.x[0]))
-    #chisq.append(numpy.sum((predict - validation.y)**2/sig**2)/float(predict.size))
-    #sig = numpy.std(smoothed / training.y)
-    #chisq.append(numpy.std(predict/validation.y) / sig)
+    #chisq.append(np.sum((predict - validation.y)**2/sig**2)/float(predict.size))
+    #sig = np.std(smoothed / training.y)
+    #chisq.append(np.std(predict/validation.y) / sig)
     print "\t", windowsize, chisq[-1]
 
-  chisq = numpy.array(chisq)
-  idx = numpy.argmin(abs(chisq-1.0))
+  chisq = np.array(chisq)
+  idx = np.argmin(abs(chisq-1.0))
 
   windowsize = windowsizes[idx]
   npixels = roundodd(windowsize/dx)
@@ -281,7 +281,7 @@ def GPSmooth(data, low=0.1, high=10, debug=False):
     data.y[outliers] = smoothed.y[outliers]
     
   gp = GaussianProcess(corr='squared_exponential',
-                       theta0 = numpy.sqrt(low*high),
+                       theta0 = np.sqrt(low*high),
                        thetaL = low,
                        thetaU = high,
                        normalize = False,
@@ -338,10 +338,10 @@ if __name__ == "__main__":
     for i, order in enumerate(orders):
       print "Smoothing order %i/%i" %(i+1, len(orders))
       #Fix errors
-      order.err[order.err > 1e8] = numpy.sqrt(order.y[order.err > 1e8])
+      order.err[order.err > 1e8] = np.sqrt(order.y[order.err > 1e8])
 
       #Linearize
-      xgrid = numpy.linspace(order.x[0], order.x[-1], order.x.size)
+      xgrid = np.linspace(order.x[0], order.x[-1], order.x.size)
       order = FittingUtilities.RebinData(order, xgrid)
       
       dx = order.x[1] - order.x[0]
@@ -375,7 +375,7 @@ if __name__ == "__main__":
         plt.figure(2)
         plt.plot(order.x, order.y/denoised.y)
         plt.title(starname)
-        #plt.plot(order.x, (order.y-denoised.y)/numpy.median(order.y))
+        #plt.plot(order.x, (order.y-denoised.y)/np.median(order.y))
         #plt.show()
     if plot:
       plt.show()

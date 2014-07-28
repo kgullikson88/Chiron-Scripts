@@ -3,7 +3,7 @@ import DataStructures
 import FindContinuum
 import sys
 from scipy.interpolate import InterpolatedUnivariateSpline as interp
-import numpy
+import numpy as np
 import pylab
 from astropy.io import fits as pyfits
 from collections import defaultdict
@@ -21,7 +21,7 @@ def MedianAdd(fileList, outfilename="Total.fits"):
     observation = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
     all_data.append(observation)
     numorders.append(len(observation))
-    medians.append([numpy.median(order.y) for order in observation])
+    medians.append([np.median(order.y) for order in observation])
 
   if any(n != numorders[0] for n in numorders):
     print "Error! Some of the files had different numbers of orders!"
@@ -36,8 +36,8 @@ def MedianAdd(fileList, outfilename="Total.fits"):
   column_list = []
   for i in range(numorders):
     x = all_data[0][i].x
-    total = numpy.zeros((len(all_data), x.size))
-    error = numpy.zeros(x.size)
+    total = np.zeros((len(all_data), x.size))
+    error = np.zeros(x.size)
     norm = 0.0
     for j, observation in enumerate(all_data):
       observation[i].y[observation[i].y < 0.0] = 0.0
@@ -49,13 +49,13 @@ def MedianAdd(fileList, outfilename="Total.fits"):
     #pylab.figure(2)
     #for j in range(total.shape[0]):
       #pylab.(x, total[j])
-    flux = numpy.median(total, axis=0)*norm
+    flux = np.median(total, axis=0)*norm
     cont = FittingUtilities.Continuum(x, flux, fitorder=3, lowreject=1.5, highreject=5)
     #Set up data structures for OutputFitsFile
     columns = {"wavelength": x,
                "flux": flux,
                "continuum": cont,
-               "error": numpy.sqrt(error)}
+               "error": np.sqrt(error)}
     column_list.append(columns)
 
     #pylab.figure(1)
@@ -108,10 +108,10 @@ def Add(fileList, outfilename=None):
       if observation[i].x[-1] < right:
         right = observation[i].x[-1]
     dx /= float(len(all_data))
-    xgrid = numpy.arange(left, right+dx, dx)
+    xgrid = np.arange(left, right+dx, dx)
     total = DataStructures.xypoint(x=xgrid)
-    total.y = numpy.zeros(total.size())
-    total.err = numpy.zeros(total.size())
+    total.y = np.zeros(total.size())
+    total.err = np.zeros(total.size())
 
     #Add the data
     for observation in all_data:
@@ -120,11 +120,11 @@ def Add(fileList, outfilename=None):
       total.y += rebinned.y
       total.err += rebinned.err**2
       
-    total.err = numpy.sqrt(total.err)
+    total.err = np.sqrt(total.err)
     total.cont = FittingUtilities.Continuum(total.x, total.y, fitorder=3, lowreject=1.5, highreject=5)
 
     #Check if there is a dip in flux on either side of the order
-    std = numpy.median(total.err/total.cont)
+    std = np.median(total.err/total.cont)
     #print std
     left = 0
     right = total.size()

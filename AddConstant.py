@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import FitsUtils
 import sys
 
@@ -28,8 +28,8 @@ if __name__ == "__main__":
     orders = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", cont="continuum", errors="error")
     lowest = 9e30
     for order in orders:
-      if numpy.min(order.y) < lowest:
-        lowest = numpy.min(order.y)
+      if np.min(order.y) < lowest:
+        lowest = np.min(order.y)
 
     if lowest < 0:
       column_list = []

@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import numpy
+import numpy as np
 import os
 import HelperFunctions
 
@@ -27,7 +27,7 @@ if __name__ == "__main__":
                                           logg,
                                           metal)
         print rootfile, T, metal
-        vel, corr = numpy.loadtxt(corrfile, unpack=True)
+        vel, corr = np.loadtxt(corrfile, unpack=True)
         plt.plot(vel, corr, 'k-', lw=2)
         plt.xlabel("Velocity (km/s)")
         plt.ylabel("CCF")

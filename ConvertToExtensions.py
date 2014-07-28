@@ -3,7 +3,7 @@ import FittingUtilities
 from astropy.io import fits as pyfits
 import sys
 import os
-import numpy
+import numpy as np
 import pylab
 import HelperFunctions
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         order.y /= blaze[i].y
         order.err /= blaze[i].y
 
-      zeros = numpy.where(order.y < 0)[0]
+      zeros = np.where(order.y < 0)[0]
       order.y[zeros] = 0.0
         
       order.cont = FittingUtilities.Continuum(order.x, order.y, fitorder=3, lowreject=2, highreject=4)
@@ -56,7 +56,7 @@ if __name__ == "__main__":
                            "continuum": order.cont,
                            "error": order.err}
       column_list.append(columns)
-      snr = 1.0 / numpy.std(order.y/order.cont)
+      snr = 1.0 / np.std(order.y/order.cont)
       if snr > maxsnr:
         maxsnr = snr
 

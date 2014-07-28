@@ -12,7 +12,7 @@ from matplotlib import rc
 #rc('font',**{'family':'serif','serif':['Palatino']})
 #rc('text', usetex=True)
 import matplotlib.pyplot as plt
-import numpy
+import numpy as np
 import HelperFunctions
 import SpectralTypeRelations
 from astropy.io import fits as pyfits
@@ -95,7 +95,7 @@ def GetSB9Companions(starname, MS=None):
   elif companion["K1"] != "Unknown":
     K1 = companion["K1"]
     P = companion["Period"]
-    mass_fcn = (K1*units.km.to(units.cm))**3 * (P*units.day.to(units.second)) / (2*numpy.pi*constants.G.cgs.value)
+    mass_fcn = (K1*units.km.to(units.cm))**3 * (P*units.day.to(units.second)) / (2*np.pi*constants.G.cgs.value)
     return 2, mass_fcn * units.gram.to(units.solMass)
 
 
@@ -177,35 +177,35 @@ if __name__ == "__main__":
   #Make some plots
   mass_ratios = [min(q, 1.0) for q in mass_ratios]
   print "Multiplicity fraction = %g" %(multiplicity/numstars)
-  bins = numpy.arange(0.0, 1.1, 0.1)
+  bins = np.arange(0.0, 1.1, 0.1)
   print bins.size, '\t', bins
   plt.figure(1)
   if len(new_massratios) > 0:
     print "Found new entries!"
     mass_ratios = [mass_ratios, new_massratios]
   print len(mass_ratios)
-  #nums, bins = numpy.histogram(mass_ratios[0], bins=bins)
+  #nums, bins = np.histogram(mass_ratios[0], bins=bins)
   plt.hist(mass_ratios, bins=bins, color=['0.25','0.5'], histtype='barstacked', label=["Known companions", "Candidate companions"])
   plt.legend(loc='best')
   #Make error bars
-  nums = numpy.zeros(bins.size-1)
+  nums = np.zeros(bins.size-1)
   for i in range(len(mass_ratios)):
-    nums += numpy.histogram(mass_ratios[i], bins=bins)[0]
+    nums += np.histogram(mass_ratios[i], bins=bins)[0]
   lower = []
   upper = []
   for n in nums:
     pl, pu = HelperFunctions.BinomialErrors(n, numstars)
-    lower.append(pl*numpy.sqrt(nums.sum()))
-    upper.append(pu*numpy.sqrt(nums.sum()))
+    lower.append(pl*np.sqrt(nums.sum()))
+    upper.append(pu*np.sqrt(nums.sum()))
   #p = nums/nums.sum()
   #errors = nums*p*(1.0-p)
   plt.errorbar(bins[:-1] + 0.05, nums, yerr=[lower,upper], fmt=None, ecolor='0.0', elinewidth=2, capsize=5)
   """
   if len(new_massratios) > 0:
-    y,edges = numpy.histogram(new_massratios, bins=bins)
+    y,edges = np.histogram(new_massratios, bins=bins)
     print y
     print edges
-    plt.bar(bins[:-1], y, bottom=numpy.array(height), color='green', align='edge')
+    plt.bar(bins[:-1], y, bottom=np.array(height), color='green', align='edge')
     #plt.hist(new_massratios, bins=bins, bottom=height, color='green')
   """
   plt.xlabel(r"$\rm M_s/M_p$")

@@ -1,5 +1,5 @@
 import Correlate
-import numpy
+import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as interp
 import os
 import sys
@@ -160,7 +160,7 @@ if __name__ == "__main__":
       gravity = float(fname.split("lte")[-1][3:7])
       metallicity = float(fname.split("lte")[-1][7:11])
     print "Reading in file %s" %fname
-    x,y = numpy.loadtxt(fname, usecols=(0,1), unpack=True)
+    x,y = np.loadtxt(fname, usecols=(0,1), unpack=True)
     model = DataStructures.xypoint(x=x*units.angstrom.to(units.nm), y=10**y)
     for vsini in vsini_values:
       modeldict[temp][gravity][metallicity][vsini] = model
@@ -182,24 +182,24 @@ def Process_Data(fname, extensions=True, trimsize=100):
     DATA = interp(order.x, order.y)
     CONT = interp(order.x, order.cont)
     ERROR = interp(order.x, order.err)
-    order.x = numpy.linspace(order.x[trimsize], order.x[-trimsize], order.size() - 2*trimsize)
+    order.x = np.linspace(order.x[trimsize], order.x[-trimsize], order.size() - 2*trimsize)
     order.y = DATA(order.x)
     order.cont = CONT(order.x)
     order.err = ERROR(order.x)
       
     #Remove bad regions from the data
     for region in badregions:
-      left = numpy.searchsorted(order.x, region[0])
-      right = numpy.searchsorted(order.x, region[1])
+      left = np.searchsorted(order.x, region[0])
+      right = np.searchsorted(order.x, region[1])
       if left > 0 and right < order.size():
         print "Warning! Bad region covers the middle of order %i" %i
         print "Removing full order!"
         left = 0
         right = order.size()
-      order.x = numpy.delete(order.x, numpy.arange(left, right))
-      order.y = numpy.delete(order.y, numpy.arange(left, right))
-      order.cont = numpy.delete(order.cont, numpy.arange(left, right))
-      order.err = numpy.delete(order.err, numpy.arange(left, right))
+      order.x = np.delete(order.x, np.arange(left, right))
+      order.y = np.delete(order.y, np.arange(left, right))
+      order.cont = np.delete(order.cont, np.arange(left, right))
+      order.err = np.delete(order.err, np.arange(left, right))
 
 
     #Remove whole order if it is too small
@@ -207,7 +207,7 @@ def Process_Data(fname, extensions=True, trimsize=100):
     if order.x.size <= 1:
       remove = True
     else:
-      velrange = 3e5 * (numpy.median(order.x) - order.x[0]) / numpy.median(order.x)
+      velrange = 3e5 * (np.median(order.x) - order.x[0]) / np.median(order.x)
       if velrange <= 1050.0:
         remove = True
     if remove:
@@ -282,7 +282,7 @@ if __name__ == "__main__":
       
             outfilename = "%s%s.%.0fkps_%sK%+.1f%+.1f" %(output_dir, outfilebase, vsini, temp, gravity, metallicity)
             print "Outputting to ", outfilename, "\n"
-            numpy.savetxt(outfilename, numpy.transpose((corr.x, corr.y)), fmt="%.10g")
+            np.savetxt(outfilename, np.transpose((corr.x, corr.y)), fmt="%.10g")
         
         
           #Delete the model. We don't need it anymore and it just takes up ram.

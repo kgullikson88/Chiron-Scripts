@@ -1,6 +1,6 @@
 from astropy.io import fits as pyfits
-import numpy
-from numpy.polynomial import chebyshev
+import numpy as np
+from np.polynomial import chebyshev
 import DataStructures
 #import Units
 from astropy import units, constants
@@ -23,9 +23,9 @@ def Chebyshev(pvals, coefficients):
   pmid = pvals[pvals.size/2]
   prange = pvals[-1] - pvals[0]
   nvals = (pvals - pmid)/(prange/2.0)
-  wave = numpy.zeros(pvals.size)
+  wave = np.zeros(pvals.size)
   x = []
-  x.append(numpy.ones(pvals.size))
+  x.append(np.ones(pvals.size))
   x.append(nvals)
   for i in range(2,order):
     x.append(2.0*nvals*x[i-1] - x[i-2])
@@ -129,8 +129,8 @@ def MakeXYpoints(datafile, errors=False, extensions=False, x=None, y=None, cont=
       wave = retdict['wavelen'][i]*wave_factor
       if errors == False:
         flux = retdict['flux'][i]
-        err = numpy.ones(flux.size)*1e9
-        err[flux > 0] = numpy.sqrt(flux[flux > 0])
+        err = np.ones(flux.size)*1e9
+        err[flux > 0] = np.sqrt(flux[flux > 0])
       else:
         if type(errors) != int:
           errors = int(raw_input("Enter the band number (in C-numbering) of the error/sigma band: "))
@@ -184,7 +184,7 @@ def OutputFitsFile(template, orders, func_order=None, outfilename=None, errors=F
     z = float(segments[6])  #Dopplar correction: 1/(1+z)
     
     xypt = DataStructures.xypoint(size)
-    pvals = (numpy.arange(size) - ltv)/ltm
+    pvals = (np.arange(size) - ltv)/ltm
 
     wlen0 = 0.0
     func_type = int(float(segments[11]))
@@ -413,7 +413,7 @@ def CopyWaveCal(copyfrom, copyto, order=None, scale=1.0):
 """
   Function to output a fits file
   column_dict is a dictionary where the key is the name of the column
-     and the value is a numpy array with the data. Example of a column
+     and the value is a np array with the data. Example of a column
      would be the wavelength or flux at each pixel
   template is the filename of the template fits file. The header will
      be taken from this file and used as the main header

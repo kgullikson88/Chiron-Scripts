@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as interp
 import scipy.signal
 import os
@@ -88,14 +88,14 @@ def GetFluxRatio(sptlist, Tsec, xgrid, age=None):
     Returns the flux ratio between the secondary star of temperature Tsec
     and the (possibly multiple) primary star(s) given in the 
     'sptlist' list (given as spectral types)
-    xgrid is a numpy.ndarray containing the x-coordinates to find the 
+    xgrid is a np.ndarray containing the x-coordinates to find the 
       flux ratio at (in nm)
 
     The age of the system is found from the main-sequence age of the 
       earliest spectral type in sptlist, if it is not given
   """
-  prim_flux = numpy.zeros(xgrid.size)
-  sec_flux = numpy.zeros(xgrid.size)
+  prim_flux = np.zeros(xgrid.size)
+  sec_flux = np.zeros(xgrid.size)
 
   #First, get the age of the system
   if age is None:
@@ -232,11 +232,11 @@ if __name__ == "__main__":
       gravity = float(modelfile.split("lte")[-1][3:7])
       metallicity = float(modelfile.split("lte")[-1][7:11])
     print "Reading in file %s" %modelfile
-    x,y = numpy.loadtxt(modelfile, usecols=(0,1), unpack=True)
+    x,y = np.loadtxt(modelfile, usecols=(0,1), unpack=True)
     print "Processing file..."
     c = FittingUtilities.Continuum(x, y, fitorder=int(fitorders[modelnum+firstmodel]), lowreject=2, highreject=7)
     model = DataStructures.xypoint(x=x*units.angstrom.to(units.nm)/1.00026, y=10**y, cont=10**c)
-    model = FittingUtilities.RebinData(model, numpy.linspace(model.x[0], model.x[-1], model.size()))
+    model = FittingUtilities.RebinData(model, np.linspace(model.x[0], model.x[-1], model.size()))
     model = Broaden.RotBroad(model, vsini_secondary)
     model = Broaden.ReduceResolution2(model, resolution)
     modelfcn = interp(model.x, model.y/model.cont)
@@ -319,18 +319,18 @@ if __name__ == "__main__":
           order.y /= smoothed.y
 
           # log-space the data
-          start = numpy.log(order.x[0])
-          end = numpy.log(order.x[-1])
-          xgrid = numpy.logspace(start, end, order.size(), base=numpy.e)
-          logspacing = numpy.log(xgrid[1]/xgrid[0])
+          start = np.log(order.x[0])
+          end = np.log(order.x[-1])
+          xgrid = np.logspace(start, end, order.size(), base=np.e)
+          logspacing = np.log(xgrid[1]/xgrid[0])
           order = FittingUtilities.RebinData(order, xgrid)
 
           # Generate a model with the same log-spacing (and no rv shift)
           dlambda = order.x[order.size()/2] * 1000*1.5/lightspeed
-          start = numpy.log(order.x[0] - dlambda)
-          end = numpy.log(order.x[-1] + dlambda)
-          xgrid = numpy.exp(numpy.arange(start, end+logspacing, logspacing))
-          model = DataStructures.xypoint(x=xgrid, cont=numpy.ones(xgrid.size))
+          start = np.log(order.x[0] - dlambda)
+          end = np.log(order.x[-1] + dlambda)
+          xgrid = np.exp(np.arange(start, end+logspacing, logspacing))
+          model = DataStructures.xypoint(x=xgrid, cont=np.ones(xgrid.size))
           model.y = modelfcn(xgrid)
 
           # Save model order
@@ -342,18 +342,18 @@ if __name__ == "__main__":
         corr = Correlate.Correlate(orders, model_orders, debug=debug, outputdir="Sensitivity_Testing/")
 
         # Check if we found the companion
-        idx = numpy.argmax(corr.y)
+        idx = np.argmax(corr.y)
         vmax = corr.x[idx] - 2.0 #There is a systematic offset for some reason!
         fit = FittingUtilities.Continuum(corr.x, corr.y, fitorder=2, lowreject=3, highreject=2.5)
         corr.y -= fit
-        goodindices = numpy.where(numpy.abs(corr.x - rv) > 100)[0]
+        goodindices = np.where(np.abs(corr.x - rv) > 100)[0]
         mean = corr.y[goodindices].mean()
         std = corr.y[goodindices].std()
         significance = (corr.y[idx] - mean)/std
         if debug:
           corrfile = "%s%s_t%i_v%i" %(output_dir, fname.split("/")[-1].split(".fits")[0], temp, rv)
           print "Outputting CCF to %s" %corrfile
-          numpy.savetxt(corrfile, numpy.transpose((corr.x, corr.y-mean, numpy.ones(corr.size())*std)), fmt="%.10g")
+          np.savetxt(corrfile, np.transpose((corr.x, corr.y-mean, np.ones(corr.size())*std)), fmt="%.10g")
         if abs(vmax - rv) <= tolerance:
           #Found
           outfile.write("%s\t%i\t\t\t%i\t\t\t\t%.2f\t\t%.4f\t\t%i\t\tyes\t\t%.2f\n" %(fname, primary_temp, temp, secondary_mass, massratio, rv, significance) )

@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import HelperFunctions
 import s4
 import sys
@@ -9,13 +9,13 @@ from astropy import units
 def main2():
   vsini=250
   fname = "/Users/kgulliks/t15000g40a00p00_w300_700_r1.dat"
-  x,y,c = numpy.loadtxt(fname, usecols=(0,1,2), unpack=True)
+  x,y,c = np.loadtxt(fname, usecols=(0,1,2), unpack=True)
   import DataStructures
   import Broaden
   order = DataStructures.xypoint(x=x, y=y, cont=c)
   order = Broaden.RotBroad(order, vsini*units.km.to(units.cm))
-  left = numpy.searchsorted(order.x, 4780)
-  right = numpy.searchsorted(order.x, 4960)
+  left = np.searchsorted(order.x, 4780)
+  right = np.searchsorted(order.x, 4960)
   arr = order[left:right].toarray(norm=True)
   syn = s4.synthesis.Synplot(15000, 
                              4.0, 

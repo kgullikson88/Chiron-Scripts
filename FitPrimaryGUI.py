@@ -1,5 +1,5 @@
 import FitsUtils
-import numpy
+import numpy as np
 from scipy.interpolate import UnivariateSpline
 import matplotlib
 matplotlib.rcParams['axes.color_cycle'] = ['b', 'r', 'g']
@@ -31,11 +31,11 @@ class LineFitter:
     
     if telluric:
       print "Reading telluric model from database"
-      x,y = numpy.loadtxt(telluricfile, unpack=True)
+      x,y = np.loadtxt(telluricfile, unpack=True)
       self.model = DataStructures.xypoint(x=x[::-1], y=y[::-1])
     else:
-      x = numpy.arange(self.orders[0].x[0] - 20.0, self.orders[-1].x[-1] + 20.0, 0.001)
-      y = numpy.ones(x.size)
+      x = np.arange(self.orders[0].x[0] - 20.0, self.orders[-1].x[-1] + 20.0, 0.001)
+      y = np.ones(x.size)
       self.model = DataStructures.xypoint(x=x, y=y)
 
     #Make outfilename
@@ -69,13 +69,13 @@ class LineFitter:
       
       #Remove low frequency components
       self.current_order = order.copy()
-      if numpy.min(order.y/order.cont) > 0.15:
+      if np.min(order.y/order.cont) > 0.15:
         x,y = HelperFunctions.IterativeLowPass(order.copy(), 250*units.km.to(units.cm), linearize=True, lowreject=2.0, highreject=10)
         smoothed = UnivariateSpline(x,y, s=0)
         self.current_order.y *= self.current_order.cont / smoothed(self.current_order.x)
       
-      left = numpy.searchsorted(self.model.x, order.x[0]-10.0)
-      right = numpy.searchsorted(self.model.x, order.x[-1]+10.0)
+      left = np.searchsorted(self.model.x, order.x[0]-10.0)
+      right = np.searchsorted(self.model.x, order.x[-1]+10.0)
       current_model = DataStructures.xypoint(x=self.model.x[left:right], y=self.model.y[left:right])
       current_model = FittingUtilities.ReduceResolution(current_model, 60000)
       self.current_model = FittingUtilities.RebinData(current_model, order.x)
@@ -173,8 +173,8 @@ class LineFitter:
         smoothed = self.ConvolveSmooth()
         smoothed.y *= self.current_order.cont/self.current_order.cont.mean()
       self.smoothing_data.y /= smoothed.y
-      left = numpy.searchsorted(self.current_order.x, self.smoothing_data.x[0])
-      right = numpy.searchsorted(self.current_order.x, self.smoothing_data.x[-1])
+      left = np.searchsorted(self.current_order.x, self.smoothing_data.x[0])
+      right = np.searchsorted(self.current_order.x, self.smoothing_data.x[-1])
       if right < self.current_order.x.size:
         right += 1
       
@@ -198,20 +198,20 @@ class LineFitter:
       x2, y2 = self.clicks[1]    #Right-hand continuum
       #x3, y3 = self.clicks[2]    #Line depth
       self.clicks = []
-      left = numpy.searchsorted(self.current_order.x, x1)
-      right = numpy.searchsorted(self.current_order.x, x2)
-      y1 = numpy.median(self.current_order.y[max(0, left-2):min(self.current_order.size(), left+2)])
-      y2 = numpy.median(self.current_order.y[max(0, right-2):min(self.current_order.size(), right+2)])
-      cont = numpy.poly1d(numpy.polyfit((x1, x2), (y1, y2), 1) )
+      left = np.searchsorted(self.current_order.x, x1)
+      right = np.searchsorted(self.current_order.x, x2)
+      y1 = np.median(self.current_order.y[max(0, left-2):min(self.current_order.size(), left+2)])
+      y2 = np.median(self.current_order.y[max(0, right-2):min(self.current_order.size(), right+2)])
+      cont = np.poly1d(np.polyfit((x1, x2), (y1, y2), 1) )
       self.smoothing_data = DataStructures.xypoint(x=self.current_order.x[left:right],
                                                    y=self.current_order.y[left:right],
       cont=cont(self.current_order.x[left:right]) )
       self.smoothing_factor *= self.smoothing_data.size()
       smoothed = self.SmoothData()
-      #smoothed = UnivariateSpline(data.x, data.y/data.cont, s=6e-4 ) #numpy.median(data.y)/10000.0)
+      #smoothed = UnivariateSpline(data.x, data.y/data.cont, s=6e-4 ) #np.median(data.y)/10000.0)
       #mean = data.x.mean()
       mean = 0.0
-      #smoothed = numpy.poly1d(numpy.polyfit(data.x - mean, data.y/data.cont, 7) )
+      #smoothed = np.poly1d(np.polyfit(data.x - mean, data.y/data.cont, 7) )
 
       self.PlotArrays(((self.smoothing_data.x, self.smoothing_data.y/self.smoothing_data.cont, "Data"), (smoothed.x, smoothed.y, "Smoothed")), self.fitaxis)
       #plt.show()
@@ -230,18 +230,18 @@ class LineFitter:
       smoothed = DataStructures.xypoint(x=data.x)
       smoothed.y = smoother(smoothed.x)
       resid = data.y/data.cont - smoothed.y
-      std = numpy.std(resid)
-      badindices = numpy.where(numpy.logical_or(resid < -lowreject*std, resid > highreject*std))[0]
+      std = np.std(resid)
+      badindices = np.where(np.logical_or(resid < -lowreject*std, resid > highreject*std))[0]
       #plt.figure(2)
       #plt.plot(data.x, resid, 'ro')
-      #plt.plot(data.x, -lowreject*std*numpy.ones(data.x.size), 'b-')
-      #plt.plot(data.x, highreject*std*numpy.ones(data.x.size), 'b-')
+      #plt.plot(data.x, -lowreject*std*np.ones(data.x.size), 'b-')
+      #plt.plot(data.x, highreject*std*np.ones(data.x.size), 'b-')
       #plt.show()
       if badindices.size > 0 and data.size() - badindices.size > 10:
         done = False
-        data.x = numpy.delete(data.x, badindices)
-        data.y = numpy.delete(data.y, badindices)
-        data.cont = numpy.delete(data.cont, badindices)
+        data.x = np.delete(data.x, badindices)
+        data.y = np.delete(data.y, badindices)
+        data.cont = np.delete(data.cont, badindices)
       
     return DataStructures.xypoint(x=self.smoothing_data.x, y=smoother(self.smoothing_data.x))
     
@@ -252,18 +252,18 @@ class LineFitter:
     data = self.smoothing_data.copy()
     #data.y /= data.cont
     iterations = 0
-    window = numpy.hanning(self.window_size)
+    window = np.hanning(self.window_size)
     
     while not done and iterations < numiters:
       iterations += 1
       done = True
-      s = numpy.r_[data.y[self.window_size/2:0:-1], data.y, data.y[-1:-self.window_size/2:-1]]
-      y = numpy.convolve(window/window.sum(), s, mode='valid')
+      s = np.r_[data.y[self.window_size/2:0:-1], data.y, data.y[-1:-self.window_size/2:-1]]
+      y = np.convolve(window/window.sum(), s, mode='valid')
       
       reduced = data.y/y
-      sigma = numpy.std(reduced)
-      mean = numpy.mean(reduced)
-      badindices = numpy.where(numpy.logical_or((reduced - mean)/sigma < -lowreject, (reduced - mean)/sigma > highreject))[0]
+      sigma = np.std(reduced)
+      mean = np.mean(reduced)
+      badindices = np.where(np.logical_or((reduced - mean)/sigma < -lowreject, (reduced - mean)/sigma > highreject))[0]
       if badindices.size > 0:
         done = False
         data.y[badindices] = y[badindices]
@@ -286,13 +286,13 @@ class LineFitter:
       iterations += 1
       done = True
       y = FittingUtilities.savitzky_golay(data.y, self.window_size, 5)
-      #s = numpy.r_[data.y[self.window_size/2:0:-1], data.y, data.y[-1:-self.window_size/2:-1]]
-      #y = numpy.convolve(window/window.sum(), s, mode='valid')
+      #s = np.r_[data.y[self.window_size/2:0:-1], data.y, data.y[-1:-self.window_size/2:-1]]
+      #y = np.convolve(window/window.sum(), s, mode='valid')
       
       reduced = data.y/y
-      sigma = numpy.std(reduced)
-      mean = numpy.mean(reduced)
-      badindices = numpy.where(numpy.logical_or((reduced - mean)/sigma < -lowreject, (reduced - mean)/sigma > highreject))[0]
+      sigma = np.std(reduced)
+      mean = np.mean(reduced)
+      badindices = np.where(np.logical_or((reduced - mean)/sigma < -lowreject, (reduced - mean)/sigma > highreject))[0]
       if badindices.size > 0:
         done = False
         data.y[badindices] = y[badindices]
@@ -314,15 +314,15 @@ class LineFitter:
 
 
   def CCImprove(self, data, model, be_safe=True, tol=0.5):
-    ycorr = numpy.correlate(data.y/data.cont-1.0, model.y-1.0, mode="full")
-    xcorr = numpy.arange(ycorr.size)
+    ycorr = np.correlate(data.y/data.cont-1.0, model.y-1.0, mode="full")
+    xcorr = np.arange(ycorr.size)
     maxindex = ycorr.argmax()
     lags = xcorr - (data.y.size-1)
     distancePerLag = (data.x[-1] - data.x[0])/float(data.x.size)
     offsets = -lags*distancePerLag
     print "maximum offset: ", offsets[maxindex], " nm"
 
-    if numpy.abs(offsets[maxindex]) < tol or not be_safe:
+    if np.abs(offsets[maxindex]) < tol or not be_safe:
       #Apply offset
       print "Applying offset"
       return offsets[maxindex]
@@ -333,7 +333,7 @@ class LineFitter:
   """
     Function to output a fits file
     column_dict is a dictionary where the key is the name of the column
-       and the value is a numpy array with the data. Example of a column
+       and the value is a np array with the data. Example of a column
        would be the wavelength or flux at each pixel
     filename is the name of the file to edit
     extension is the extension number

@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import InterpolatedUnivariateSpline as interp
 from scipy.optimize import leastsq, brute
@@ -26,7 +26,7 @@ def Smooth(fname, window_size=91, numiters=100, lowreject=3, highreject=3, smoot
     done = False
     x = order.x.copy()
     y = order.y.copy()
-    indices = numpy.array([True]*x.size)
+    indices = np.array([True]*x.size)
     iteration = 0
     while not done and iteration < numiters:
       done = True
@@ -41,19 +41,19 @@ def Smooth(fname, window_size=91, numiters=100, lowreject=3, highreject=3, smoot
       print residuals.size, x.size, y.size
       #plt.plot((residuals - mean)/std)
       #plt.show()
-      badindices = numpy.where( numpy.logical_or( (residuals-mean)/std > highreject, (residuals-mean)/std < -lowreject ) )[0]
+      badindices = np.where( np.logical_or( (residuals-mean)/std > highreject, (residuals-mean)/std < -lowreject ) )[0]
       if badindices.size > 1 and y.size - badindices.size > 2*window_size and iteration < numiters:
         done = False
-        x = numpy.delete(x, badindices)
-        y = numpy.delete(y, badindices)
+        x = np.delete(x, badindices)
+        y = np.delete(y, badindices)
 
     print "iter = %i" %iteration
     if x[0] > order.x[0]:
-      x = numpy.append(numpy.array([order.x[0]]), x)
-      smoothed = numpy.append(numpy.array([first]), smoothed)
+      x = np.append(np.array([order.x[0]]), x)
+      smoothed = np.append(np.array([first]), smoothed)
     if x[-1] < order.x[-1]:
-      x = numpy.append(x, numpy.array([order.x[-1]]))
-      smoothed = numpy.append(smoothed, numpy.array([last]))
+      x = np.append(x, np.array([order.x[-1]]))
+      smoothed = np.append(smoothed, np.array([last]))
     print x.size, y.size, smoothed.size
     smooth_fcn = interp(x, smoothed, k=1)
     smoothed = smooth_fcn(order.x)
@@ -68,7 +68,7 @@ def Smooth(fname, window_size=91, numiters=100, lowreject=3, highreject=3, smoot
     #orders[i].y /= smoothed
     column = {"wavelength": order.x,
               "flux": order.y/smoothed,
-              "continuum": numpy.ones(order.x.size),
+              "continuum": np.ones(order.x.size),
               "error": order.err}
     column_list.append(column)
   plt.show()
@@ -91,7 +91,7 @@ def Filter(fname, vsini=100, numiters=100, lowreject=3, highreject=3):
     done = False
     x = order.x.copy()
     y = order.y.copy()
-    indices = numpy.array([True]*x.size)
+    indices = np.array([True]*x.size)
     iteration = 0
     while not done and iteration < numiters:
       done = True
@@ -106,19 +106,19 @@ def Filter(fname, vsini=100, numiters=100, lowreject=3, highreject=3):
       print residuals.size, x.size, y.size
       #plt.plot((residuals - mean)/std)
       #plt.show()
-      badindices = numpy.where( numpy.logical_or( (residuals-mean)/std > highreject, (residuals-mean)/std < -lowreject ) )[0]
+      badindices = np.where( np.logical_or( (residuals-mean)/std > highreject, (residuals-mean)/std < -lowreject ) )[0]
       if badindices.size > 1 and y.size - badindices.size > 2*window_size and iteration < numiters:
         done = False
-        x = numpy.delete(x, badindices)
-        y = numpy.delete(y, badindices)
+        x = np.delete(x, badindices)
+        y = np.delete(y, badindices)
 
     print "iter = %i" %iteration
     if x[0] > order.x[0]:
-      x = numpy.append(numpy.array([order.x[0]]), x)
-      smoothed = numpy.append(numpy.array([first]), smoothed)
+      x = np.append(np.array([order.x[0]]), x)
+      smoothed = np.append(np.array([first]), smoothed)
     if x[-1] < order.x[-1]:
-      x = numpy.append(x, numpy.array([order.x[-1]]))
-      smoothed = numpy.append(smoothed, numpy.array([last]))
+      x = np.append(x, np.array([order.x[-1]]))
+      smoothed = np.append(smoothed, np.array([last]))
     print x.size, y.size, smoothed.size
     smooth_fcn = interp(x, smoothed, k=1)
     smoothed = smooth_fcn(order.x)
@@ -133,7 +133,7 @@ def Filter(fname, vsini=100, numiters=100, lowreject=3, highreject=3):
     #orders[i].y /= smoothed
     column = {"wavelength": order.x,
               "flux": order.y/smoothed,
-              "continuum": numpy.ones(order.x.size),
+              "continuum": np.ones(order.x.size),
               "error": order.err}
     column_list.append(column)
   plt.show()

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import sys
 import FitsUtils
 import FittingUtilities
-import numpy
+import numpy as np
 
 
 if __name__ == "__main__":
@@ -44,9 +44,9 @@ if __name__ == "__main__":
     for i, order in enumerate(orders):
       
       order.cont = FittingUtilities.Continuum(order.x, order.y, fitorder=1, lowreject=3, highreject=3)
-      #order.cont = numpy.median(order.y)*numpy.ones(order.size())
+      #order.cont = np.median(order.y)*np.ones(order.size())
       if pixelscale:
-        order.x = numpy.arange(order.size())
+        order.x = np.arange(order.size())
       
       if normalize:
         plt.plot(order.x, order.y/order.cont, ls, rasterized=True)

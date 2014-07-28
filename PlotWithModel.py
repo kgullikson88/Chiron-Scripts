@@ -1,6 +1,6 @@
 #import Correlate
 import FitsUtils
-import numpy
+import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline as interp
 import scipy.signal
 import os
@@ -104,7 +104,7 @@ for fname in model_list:
     gravity = float(fname.split("lte")[-1][3:7])
     metallicity = float(fname.split("lte")[-1][7:11])
   print "Reading in file %s" %fname
-  x,y = numpy.loadtxt(fname, usecols=(0,1), unpack=True)
+  x,y = np.loadtxt(fname, usecols=(0,1), unpack=True)
   model_data.append( DataStructures.xypoint(x=x*units.angstrom.to(units.nm)/1.00026, y=10**y) )
   star_list.append(str(temp))
   temp_list.append(temp)
@@ -142,7 +142,7 @@ if __name__ == "__main__":
       CONT = interp(order.x, order.cont)
       ERROR = interp(order.x, order.err)
       left, right = 20, -20
-      order.x = numpy.linspace(order.x[left], order.x[right], order.size())
+      order.x = np.linspace(order.x[left], order.x[right], order.size())
       order.y = DATA(order.x)
       order.cont = CONT(order.x)
       order.err = ERROR(order.x)
@@ -156,13 +156,13 @@ if __name__ == "__main__":
       
       #Remove bad regions from the data
       for region in badregions:
-        left = numpy.searchsorted(order.x, region[0])
-        right = numpy.searchsorted(order.x, region[1])
+        left = np.searchsorted(order.x, region[0])
+        right = np.searchsorted(order.x, region[1])
         if left == 0 or right == order.size():
-          order.x = numpy.delete(order.x, numpy.arange(left, right))
-          order.y = numpy.delete(order.y, numpy.arange(left, right))
-          order.cont = numpy.delete(order.cont, numpy.arange(left, right))
-          order.err = numpy.delete(order.err, numpy.arange(left, right))
+          order.x = np.delete(order.x, np.arange(left, right))
+          order.y = np.delete(order.y, np.arange(left, right))
+          order.cont = np.delete(order.cont, np.arange(left, right))
+          order.err = np.delete(order.err, np.arange(left, right))
         else:
           print "Warning! Bad region covers the middle of order %i" %i
           print "Interpolating rather than removing"
@@ -174,7 +174,7 @@ if __name__ == "__main__":
       if order.x.size <= 10:
         remove = True
       else:
-        velrange = 3e5 * (numpy.median(order.x) - order.x[0]) / numpy.median(order.x)
+        velrange = 3e5 * (np.median(order.x) - order.x[0]) / np.median(order.x)
         if velrange <= 1000.0:
           remove = True
       if remove:
@@ -212,7 +212,7 @@ if __name__ == "__main__":
 
     #Begin processing the model
     print "Best model is %s" %model_list[bestindex]
-    x,y = numpy.loadtxt(model_list[bestindex], usecols=(0,1), unpack=True)
+    x,y = np.loadtxt(model_list[bestindex], usecols=(0,1), unpack=True)
     model = DataStructures.xypoint(x=x*units.angstrom.to(units.nm)/1.00026, y=10**y) 
     #Get info about the secondary star for this model temperature
     secondary_spt = MS.GetSpectralType(MS.Temperature, besttemp)
@@ -221,8 +221,8 @@ if __name__ == "__main__":
     massratio = secondary_mass / primary_mass
 
     #Rotationally Broaden model
-    left = numpy.searchsorted(model.x, orders_original[0].x[0] - 10.0)
-    right = numpy.searchsorted(model.x, orders_original[-1].x[-1] + 10.0)
+    left = np.searchsorted(model.x, orders_original[0].x[0] - 10.0)
+    right = np.searchsorted(model.x, orders_original[-1].x[-1] + 10.0)
     model = RotBroad.Broaden(model[left:right], vsini, linear=False)
     MODEL = interp(model.x, model.y)
 
@@ -230,11 +230,11 @@ if __name__ == "__main__":
     orders = [order.copy() for order in orders_original]   #Make a copy of orders
     for i, order in enumerate(orders):
       #a: make a segment of the total model to work with
-      left = max(0, numpy.searchsorted(model.x, order.x[0] - 10)-1 )
-      right = min(model.size()-1, numpy.searchsorted(model.x, order.x[-1] + 10))
+      left = max(0, np.searchsorted(model.x, order.x[0] - 10)-1 )
+      right = min(model.size()-1, np.searchsorted(model.x, order.x[-1] + 10))
       
       model2 = DataStructures.xypoint(right - left + 1)
-      model2.x = numpy.linspace(model.x[left], model.x[right], right - left + 1)
+      model2.x = np.linspace(model.x[left], model.x[right], right - left + 1)
       model2.y = MODEL(model2.x*(1.0+vel/3e5))
       model2.cont = FittingUtilities.Continuum(model2.x, model2.y, fitorder=3, lowreject=1.5, highreject=10.0)
 
@@ -281,11 +281,11 @@ if __name__ == "__main__":
           order2 = order.copy()
           #Process the model
           #a: make a segment of the total model to work with
-          left = max(0, numpy.searchsorted(model.x, order2.x[0] - 10)-1 )
-          right = min(model.size()-1, numpy.searchsorted(model.x, order2.x[-1] + 10))
+          left = max(0, np.searchsorted(model.x, order2.x[0] - 10)-1 )
+          right = min(model.size()-1, np.searchsorted(model.x, order2.x[-1] + 10))
       
           model2 = DataStructures.xypoint(right - left + 1)
-          model2.x = numpy.linspace(model.x[left], model.x[right], right - left + 1)
+          model2.x = np.linspace(model.x[left], model.x[right], right - left + 1)
           model2.y = MODEL(model2.x*(1.0+vel/3e5))
           model2.cont = FittingUtilities.Continuum(model2.x, model2.y, fitorder=3, lowreject=1.5, highreject=10.0)
 
@@ -293,7 +293,7 @@ if __name__ == "__main__":
           model2 = FittingUtilities.ReduceResolution(model2.copy(), 60000, extend=False)
 
           #c: rebin to the same spacing as the data
-          xgrid = numpy.arange(model2.x[0], model2.x[-1], order2.x[1] - order2.x[0])
+          xgrid = np.arange(model2.x[0], model2.x[-1], order2.x[1] - order2.x[0])
           model2 = FittingUtilities.RebinData(model2.copy(), xgrid)
 
           #d: scale to be at the appropriate flux ratio
@@ -310,7 +310,7 @@ if __name__ == "__main__":
           secondary_flux = Planck(order2.x.mean()*units.nm.to(units.cm), temp_list[j])
           scale = secondary_flux / primary_flux * (secondary_radius/primary_radius)**2
           model2.y = (model2.y/model2.cont - 1.0)*scale
-          model2.cont = numpy.ones(model2.size())
+          model2.cont = np.ones(model2.size())
           model_fcn = interp(model2.x, model2.y)
           order2.y = (order2.y/order2.cont + model_fcn(order2.x))*order2.cont
 
@@ -327,10 +327,10 @@ if __name__ == "__main__":
         #output
         outfilename = "%s%s_t%i_v%i" %(outdir, fname.split(".fits")[0], temp_list[j], vel)
         print "Outputting CCF to %s" %outfilename
-        numpy.savetxt(outfilename, numpy.transpose((corr.x, corr.y)), fmt="%.10g")
+        np.savetxt(outfilename, np.transpose((corr.x, corr.y)), fmt="%.10g")
 
         #Write to logfile
-        idx = numpy.argmax(corr.y)
+        idx = np.argmax(corr.y)
         vmax = corr.x[idx]
         fit = FittingUtilities.Continuum(corr.x, corr.y, fitorder=2, lowreject=3, highreject=3)
         corr.y -= fit
@@ -338,7 +338,7 @@ if __name__ == "__main__":
         std = corr.y.std()
         significance = (corr.y[idx] - mean)/std
         tolerance = 10.0
-        if numpy.abs(vmax - vel) <= tolerance:
+        if np.abs(vmax - vel) <= tolerance:
           #Signal found!
           outfile.write("%s\t%i\t\t\t%i\t\t\t\t%.2f\t\t%.4f\t\t%i\t\tyes\t\t%.2f\n" %(fname, primary_temp, temp_list[j], secondary_mass, massratio, vel, significance) )
         else:

@@ -3,7 +3,7 @@ import FittingUtilities
 from astropy.io import fits as pyfits
 import sys
 import os
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units
 import HelperFunctions
@@ -34,7 +34,7 @@ def Convert(fileList, blazecorrect=True, plotresult=False):
       
       if plotresult:
         plt.figure(1)
-        plt.plot(order.x, blaze_orders[i] * numpy.max(order.y) / numpy.max(blaze_orders[i]))
+        plt.plot(order.x, blaze_orders[i] * np.max(order.y) / np.max(blaze_orders[i]))
         plt.plot(order.x, order.y)
       #Blaze correction
       if blazecorrect:
