@@ -1,13 +1,12 @@
-import sys
 import matplotlib.pyplot as plt
 import numpy as np
 
 
-badnums = [17457,26126,46283,52678,85537,77635,68520,66249,93805,
-           101589,105140,109139,23362,23916,28910,52736,60009,
-           79387,80815,92855,29735,31362,37297,52736,71865,72104]
-#badnums = []
-bad_names = ["HIP %i" %num for num in badnums]
+badnums = [17457, 26126, 46283, 52678, 85537, 77635, 68520, 66249, 93805,
+           101589, 105140, 109139, 23362, 23916, 28910, 52736, 60009,
+           79387, 80815, 92855, 29735, 31362, 37297, 52736, 71865, 72104]
+# badnums = []
+bad_names = ["HIP %i" % num for num in badnums]
 
 if __name__ == "__main__":
     known_file = open("Known_RVs.csv")
@@ -49,10 +48,10 @@ if __name__ == "__main__":
 
         #if abs(mrv - krv) > 1:
         #    print "Large difference for %s: %g km/s" %(starname, mrv-krv)
-        
+
         if abs(mrv - krv) > 20:
             continue
-        
+
         known_vels.append(krv)
         known_velerr.append(krv_err)
         measured_vels.append(mrv)
@@ -67,12 +66,12 @@ if __name__ == "__main__":
     lowv = np.where(vsini < np.median(vsini))[0]
     highv = np.where(vsini >= np.median(vsini))[0]
     #plt.errorbar(krv, mrv-krv, xerr=krv_err, yerr=mrv_err, fmt='ko')
-    plt.errorbar(krv[lowv], (mrv-krv)[lowv], xerr=krv_err[lowv], yerr=mrv_err[lowv], fmt='bo')
-    plt.errorbar(krv[highv], (mrv-krv)[highv], xerr=krv_err[highv], yerr=mrv_err[highv], fmt='ro')
+    plt.errorbar(krv[lowv], (mrv - krv)[lowv], xerr=krv_err[lowv], yerr=mrv_err[lowv], fmt='bo')
+    plt.errorbar(krv[highv], (mrv - krv)[highv], xerr=krv_err[highv], yerr=mrv_err[highv], fmt='ro')
     #plt.hist((mrv-krv)[lowv], cumulative=True, bins=50)
     #plt.hist((mrv-krv)[highv], cumulative=True, bins=50)
-    print "Deviation = %g km/s" %np.std(mrv-krv)
-    print "Offset = %g km/s" %np.mean(mrv - krv)
+    print "Deviation = %g km/s" % np.std(mrv - krv)
+    print "Offset = %g km/s" % np.mean(mrv - krv)
     plt.xlabel("Known RV (km/s)")
     plt.ylabel("Measured - Known RV (km/s)")
     #plt.ylabel("Measured RV (km/s")
