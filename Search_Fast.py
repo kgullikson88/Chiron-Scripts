@@ -159,6 +159,8 @@ if __name__ == "__main__":
       temp = int(fname.split("lte")[-1][:2])*100
       gravity = float(fname.split("lte")[-1][3:7])
       metallicity = float(fname.split("lte")[-1][7:11])
+    if temp < 6300:
+      continue
     print "Reading in file %s" %fname
     x,y = numpy.loadtxt(fname, usecols=(0,1), unpack=True)
     model = DataStructures.xypoint(x=x*units.angstrom.to(units.nm), y=10**y)

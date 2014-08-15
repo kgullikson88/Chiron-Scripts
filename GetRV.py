@@ -98,7 +98,7 @@ def GetModel(Temperature, grid):
     wave_A = np.arange(data.size)*header['CDELT1'] + header['CRVAL1']
     x = wave_A*units.angstrom.to(units.nm)
     y = data
-    left = np.searchsorted(x, 450)
+    left = np.searchsorted(x, 400)
     right = np.searchsorted(x, 900)
     model = DataStructures.xypoint(x=x[left:right], y=y[left:right])
     return model
@@ -198,8 +198,8 @@ if __name__ == "__main__":
             good_orders = hightemp_orders
         else:
             good_orders = lowtemp_orders
-        
 
+       
         # Get the heliocentric correction
         ra = convert(header['RA'])
         dec = convert(header['DEC'])
@@ -261,6 +261,7 @@ if __name__ == "__main__":
                 #plt.plot(o2.x, o2.cont)
             """
         #plt.show()
+
 
         if first:
             retdict = Correlate.GetCCF(orders, model, vsini=0.0, resolution=900000, addmode="simple", debug=True, oversample=1)

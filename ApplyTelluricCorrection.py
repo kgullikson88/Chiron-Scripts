@@ -12,7 +12,7 @@ import HelperFunctions
 import MakeModel
 import warnings
 
-plot = False
+plot = True
 
 def ReadCorrectedFile(fname, yaxis="model"):
   orders = []

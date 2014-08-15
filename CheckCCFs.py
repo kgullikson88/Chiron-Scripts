@@ -11,15 +11,15 @@ if __name__ == "__main__":
   vsini = "20"
   Temperatures = [3300, 3500, 3700, 3900, 4200, 4500, 5000, 5500]
   metals = ["+0.5", "-0.5"]
-  logg = "+4.0"
+  logg = "+4.5"
   HelperFunctions.ensure_dir("Figures/")
   for rootfile in filenames:
-    for T in Temperatures:
+    for T in Temperatures[:-1]:
       for metal in metals:
-        if T == 5000 and metal == "-0.5":
-          logg = "+3.5"
-        else:
-          logg = "+4.0"
+        #if T == 5000 and metal == "-0.5":
+        #  logg = "+3.5"
+        #else:
+        #  logg = "+4.0"
         corrfile = "%s%s.%skps_%iK%s%s" %(corrdir, 
                                           rootfile.split(".fits")[0],
                                           vsini,

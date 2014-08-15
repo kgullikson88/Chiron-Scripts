@@ -299,20 +299,27 @@ def GPSmooth(data, low=0.1, high=10, debug=False):
   return smoothed, gp.theta_[0][0]
 
 
+
 if __name__ == "__main__":
   fileList = []
   plot = True
   vsini_file = "%s/School/Research/Useful_Datafiles/Vsini.csv" %(os.environ["HOME"])
+  vsini_skip = 10
+  vsini_idx = 1
   for arg in sys.argv[1:]:
     if "-p" in arg:
       plot = True
-    elif "-vsini" in arg:
+    elif "-vsinifile" in arg:
       vsini_file = arg.split("=")[-1]
+    elif "-vsiniskip" in arg:
+      vsini_skip = int(arg.split("=")[-1])
+    elif "-vsiniidx" in arg:
+      vsini_idx = int(arg.split("=")[-1])
     else:
       fileList.append(arg)
 
   #Read in the vsini table
-  vsini_data = ascii.read(vsini_file)[10:]
+  vsini_data = ascii.read(vsini_file)[vsini_skip:]
 
   if len(fileList) == 0:
     fileList = [f for f in os.listdir("./") if f.endswith("telluric_corrected.fits")]
@@ -323,12 +330,11 @@ if __name__ == "__main__":
     #Find the vsini of this star
     header = fits.getheader(fname)
     starname = header["object"]
-    found = False
     for data in vsini_data:
       if data[0] == starname:
-        vsini = float(data[1])
-        found = True
-    if not found:
+        vsini = abs(float(data[vsini_idx]))
+        break
+    else:
       sys.exit("Cannot find %s in the vsini data: %s" %(starname, vsini_file))
     print starname, vsini
     
@@ -346,7 +352,7 @@ if __name__ == "__main__":
       
       dx = order.x[1] - order.x[0]
       smooth_factor = 0.8
-      theta = roundodd(vsini/3e5 * order.x.mean()/dx * smooth_factor)
+      theta = max(21, roundodd(vsini/3e5 * order.x.mean()/dx * smooth_factor))
       denoised = SmoothData(order, 
                             windowsize=theta, 
                             smoothorder=3, 

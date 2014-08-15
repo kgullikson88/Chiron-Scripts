@@ -139,6 +139,8 @@ def GetAge(sptlist):
   of spectral types. It determines the age as the 
   main sequence lifetime of the earliest-type star
   """
+  return 15e6   #For Sco-Cen only!
+  """
   lowidx = 999
   for spt in sptlist:
     if "I" in spt:
@@ -154,8 +156,8 @@ def GetAge(sptlist):
   spt = MS.Number_To_SpT(lowidx)
   Tprim = MS.Interpolate(MS.Temperature, spt)
   age = PMS2.GetMainSequenceAge(Tprim, key="Temperature")
-  #return age
-  return 15e6   #For Sco-Cen only!
+  return age
+  """
 
   
 
@@ -178,6 +180,8 @@ if __name__ == "__main__":
   fileList = []
   tolerance = 5.0
   debug = False
+  vsini_skip = 10
+  vsini_idx = 1
   for arg in sys.argv[1:]:
     if "-m" in arg:
       companion_file = arg.split("=")[1]
@@ -185,6 +189,12 @@ if __name__ == "__main__":
       tolerance = float(arg.split("=")[1])
     elif "-d" in arg:
       debug = True
+    elif "-vsinifile" in arg:
+      vsini_file = arg.split("=")[-1]
+    elif "-vsiniskip" in arg:
+      vsini_skip = int(arg.split("=")[-1])
+    elif "-vsiniidx" in arg:
+      vsini_idx = int(arg.split("=")[-1])
     else:
       fileList.append(arg)
 
@@ -216,7 +226,7 @@ if __name__ == "__main__":
   companions = ascii.read(companion_file)[20:]
 
   # Read in the vsini file
-  vsini_data = ascii.read(vsini_file)[10:]
+  vsini_data = ascii.read(vsini_file)[vsini_skip:]
 
   # Now, start loop over the models:
   firstmodel = 0
@@ -257,7 +267,7 @@ if __name__ == "__main__":
       found = False
       for data in vsini_data:
         if data[0] == starname:
-          vsini = float(data[1])
+          vsini = abs(float(data[vsini_idx]))
           found = True
       if not found:
         sys.exit("Cannot find %s in the vsini data: %s" %(starname, vsini_file))
@@ -268,13 +278,13 @@ if __name__ == "__main__":
       if starname in companions.field(0):
         row = companions[companions.field(0) == starname]
         print row
-        print row['col2']
-        known_stars.append(row['col2'].item())
-        ncompanions = int(row['col5'].item())
+        print row['col1']
+        known_stars.append(row['col1'].item())
+        ncompanions = int(row['col4'].item())
         for comp in range(ncompanions):
-          spt = row["col%i" %(7 + 4*comp)].item()
+          spt = row["col%i" %(6 + 4*comp)].item()
           if not "?" in spt and (spt[0] == "O" or spt[0] == "B" or spt[0] == "A" or spt[0] == "F"):
-            sep = row["col%i" %(8 + 4*comp)].item()
+            sep = row["col%i" %(7 + 4*comp)].item()
             if (not "?" in sep) and float(sep) < 4.0:
               known_stars.append(spt)
       else:
@@ -304,10 +314,9 @@ if __name__ == "__main__":
           model = (modelfcn(order.x*(1.0+rv/lightspeed)) - 1.0) * scale
           order.y += model*order.cont
 
-
           #Smooth data using the vsini of the primary star
           dx = order.x[1] - order.x[0]
-          npixels = Smooth.roundodd(vsini/lightspeed * order.x.mean()/dx * smooth_factor)
+          npixels = max(21, Smooth.roundodd(vsini/lightspeed * order.x.mean()/dx * smooth_factor))
           smoothed = Smooth.SmoothData(order, 
                                        windowsize=npixels, 
                                        smoothorder=3, 
@@ -337,7 +346,7 @@ if __name__ == "__main__":
           model_orders.append(model)
           #orders[ordernum] = order.copy()
 
-        #Do the actual cross-correlation
+	#Do the actual cross-correlation
         print "Cross-correlating..."
         corr = Correlate.Correlate(orders, model_orders, debug=debug, outputdir="Sensitivity_Testing/")
 
