@@ -299,7 +299,6 @@ def GPSmooth(data, low=0.1, high=10, debug=False):
   return smoothed, gp.theta_[0][0]
 
 
-
 if __name__ == "__main__":
   fileList = []
   plot = True

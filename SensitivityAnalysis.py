@@ -314,6 +314,7 @@ if __name__ == "__main__":
           model = (modelfcn(order.x*(1.0+rv/lightspeed)) - 1.0) * scale
           order.y += model*order.cont
 
+
           #Smooth data using the vsini of the primary star
           dx = order.x[1] - order.x[0]
           npixels = max(21, Smooth.roundodd(vsini/lightspeed * order.x.mean()/dx * smooth_factor))

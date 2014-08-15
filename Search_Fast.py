@@ -149,26 +149,22 @@ modeldict = defaultdict( lambda: defaultdict( lambda: defaultdict( lambda: defau
 processed = defaultdict( lambda: defaultdict( lambda: defaultdict( lambda: defaultdict(bool))))
 
 if __name__ == "__main__":
-  model_data = []
-  for fname in model_list:
-    if "PHOENIX2004" in fname:
-      temp = int(fname.split("lte")[-1][:2])*100
-      gravity = float(fname.split("lte")[-1][3:6])
-      metallicity = float(fname.split("lte")[-1][6:10])
-    elif "PHOENIX-ACES" in fname:
-      temp = int(fname.split("lte")[-1][:2])*100
-      gravity = float(fname.split("lte")[-1][3:7])
-      metallicity = float(fname.split("lte")[-1][7:11])
-    if temp < 6300:
-      continue
-    print "Reading in file %s" %fname
-    x,y = numpy.loadtxt(fname, usecols=(0,1), unpack=True)
-    model = DataStructures.xypoint(x=x*units.angstrom.to(units.nm), y=10**y)
-    for vsini in vsini_values:
-      modeldict[temp][gravity][metallicity][vsini] = model
-      processed[temp][gravity][metallicity][vsini] = False
-  
-
+    model_data = []
+    for fname in model_list:
+        if "PHOENIX2004" in fname:
+            temp = int(fname.split("lte")[-1][:2]) * 100
+            gravity = float(fname.split("lte")[-1][3:6])
+            metallicity = float(fname.split("lte")[-1][6:10])
+        elif "PHOENIX-ACES" in fname:
+            temp = int(fname.split("lte")[-1][:2]) * 100
+            gravity = float(fname.split("lte")[-1][3:7])
+            metallicity = float(fname.split("lte")[-1][7:11])
+        print "Reading in file %s" % fname
+        x, y = np.loadtxt(fname, usecols=(0, 1), unpack=True)
+        model = DataStructures.xypoint(x=x * units.angstrom.to(units.nm), y=10 ** y)
+        for vsini in vsini_values:
+            modeldict[temp][gravity][metallicity][vsini] = model
+            processed[temp][gravity][metallicity][vsini] = False
 
 
 def Process_Data(fname, extensions=True, trimsize=100):

@@ -8,35 +8,31 @@
 
 import HelperFunctions
 import os
-import sys
+
 import matplotlib.pyplot as plt
 import astropy.time
-import time
-import numpy as np
 
 
 
 if __name__ == "__main__":
-  orders = []
-  dirs = [d for d in os.listdir("./") if d.startswith("2014") and len(d) == 8]
-  for d in dirs:
-    object_files = [f for f in os.listdir(d) if f.startswith("H") 
-                                             and len(f.split("_")) == 2 
-                                             and f.endswith(".fits") 
-                                             and "-" not in f]
-    #object_files = [f for f in os.listdir(d) if f.startswith("achi") and f.endswith("-0.fits")]
-    print d
-    for f in object_files:
-      data = HelperFunctions.ReadExtensionFits("%s/%s" %(d,f))
-      print "\t", f, len(data)
-      if len(data) != 58:
-        continue
-      if len(orders) < 1:
-        for order in data:
-          orders.append({d: order.x})
-      else:
-        for i, order in enumerate(data):
-          orders[i][d] = order.x
+    orders = []
+    dirs = [d for d in os.listdir("./") if d.startswith("201405") and len(d) == 8]
+    for d in dirs:
+        object_files = [f for f in os.listdir(d) if f.startswith("H")
+                        and len(f.split("_")) == 2
+                        and f.endswith(".fits")
+                        and "-" not in f]
+        # object_files = [f for f in os.listdir(d) if f.startswith("achi") and f.endswith("-0.fits")]
+        print d
+        for f in object_files:
+            data = HelperFunctions.ReadExtensionFits("%s/%s" % (d, f))
+            print "\t", f, len(data)
+            if len(orders) < 1:
+                for order in data:
+                    orders.append({d: order.x})
+            else:
+                for i, order in enumerate(data):
+                    orders[i][d] = order.x
 
   """
   start, end = 999, 1001
@@ -72,4 +68,3 @@ if __name__ == "__main__":
     ax = plt.gca()
     ax.ticklabel_format(style = 'sci', useOffset=False)
     plt.show()
-    #time.sleep(2)
