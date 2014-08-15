@@ -16,7 +16,7 @@ if __name__ == "__main__":
     logg = 4.5
     HelperFunctions.ensure_dir("Figures/")
 
-    for rootfile in filenames:
+    for rootfile in sorted(filenames):
         Tvals = []
         Zvals = []
         rotvals = []
@@ -24,12 +24,12 @@ if __name__ == "__main__":
         for T in Temperatures:
             for metal in metals:
                 for vsini in vsini_values:
-                    corrfile = "%s%s.%ikps_%iK%+.1f%+.1f" % (corrdir,
-                                                             rootfile.split(".fits")[0],
-                                                             vsini,
-                                                             T,
-                                                             logg,
-                                                             metal)
+                    corrfile = "{0:s}{1:s}.{2:d}kps_{3:d}K{4:+.1f}{5:+.1f}".format(corrdir,
+                                                                                   rootfile.split(".fits")[0],
+                                                                                   vsini,
+                                                                                   T,
+                                                                                   logg,
+                                                                                   metal)
                     print corrfile
                     try:
                         vel, corr = np.loadtxt(corrfile, unpack=True)
@@ -53,17 +53,17 @@ if __name__ == "__main__":
                         ax.plot(vel, corr, 'k-', lw=2)
                         ax.set_xlabel("Velocity (km/s)")
                         ax.set_ylabel("CCF")
-                        ax.set_title(r"%s:  $T_s$=%iK & [Fe/H]=%s" % (rootfile, T, metal))
+                        ax.set_title(r'{0:s}:  $T_s$={1:d}K & [Fe/H]={2:.1f}'.format(rootfile, T, metal))
                         ax.grid(True)
-                        fig.savefig("Figures/%s.pdf" % corrfile.split("/")[-1])
-                        fig.clf()
+                        fig.savefig(u"Figures/{0:s}.pdf".format(corrfile.split("/")[-1]))
+                        plt.close(fig)
 
                     Tvals.append(T)
                     Zvals.append(metal)
                     rotvals.append(vsini)
                     significance.append(sigma)
 
-        # Now, make a plot of the significance as a function of Temperature and metallicity for each vsini
+        #Now, make a plot of the significance as a function of Temperature and metallicity for each vsini
         Tvals = np.array(Tvals)
         Zvals = np.array(Zvals)
         rotvals = np.array(rotvals)

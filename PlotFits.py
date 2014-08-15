@@ -1,11 +1,10 @@
 import sys
 
-from astropy.io import fits as pyfits
 import matplotlib.pyplot as plt
 import FittingUtilities
 import numpy as np
 
-import FitsUtils
+import HelperFunctions
 
 
 if __name__ == "__main__":
@@ -37,8 +36,8 @@ if __name__ == "__main__":
 
     for fnum, fname in enumerate(fileList):
         ls = linestyles[fnum % len(linestyles)]
-        orders = FitsUtils.MakeXYpoints(fname, extensions=True, x="wavelength", y="flux", cont="continuum",
-                                        errors="error")
+        orders = HelperFunctions.ReadExtensionFits(fname)
+
         print fname, len(orders)
         if not oneplot:
             plt.figure(fnum)
