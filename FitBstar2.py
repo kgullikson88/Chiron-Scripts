@@ -1,16 +1,17 @@
 import os
-from scipy.interpolate import InterpolatedUnivariateSpline as spline, LinearNDInterpolator, NearestNDInterpolator
 import warnings
+import sys
+import FittingUtilities
 
+from scipy.interpolate import InterpolatedUnivariateSpline as spline, LinearNDInterpolator, NearestNDInterpolator
 import numpy as np
 import matplotlib.pyplot as plt
 import DataStructures
-import FittingUtilities
 from astropy import units as u, constants
-from lmfit import minimize, Parameters, report_fit
-
 import HelperFunctions
 import Broaden
+
+from lmfit import minimize, Parameters, report_fit
 
 
 class ModelGetter():
@@ -200,32 +201,96 @@ def MakeModel(pars, data, model_getter):
 
 if __name__ == "__main__":
     # Define some constants
-    v = -28 * u.km / u.s
     c = constants.c
-    vsini = 0.0 * u.km / u.s
+
+    # Set up default values, and then read in command line arguments
+    T_min = 9000
+    T_max = 9250
+    metal_min = -0.8
+    metal_max = 0.5
+    logg_min = 3.0
+    logg_max = 3.5
+    alpha_min = 0.0
+    alpha_max = 0.4
+    modeldir = "models/"
+    rv = 0.0 * u.km / u.s
+    vsini = 0.0 * u.km / u.x
     R = 80000.0
+    for arg in sys.argv[1:]:
+        if "temp" in arg.lower():
+            r = arg.partition("=")[-1]
+            values = r.partition(",")
+            T_min = float(values[0])
+            T_max = float(values[-1])
+        elif "metal" in arg.lower():
+            r = arg.partition("=")[-1]
+            values = r.partition(",")
+            metal_min = float(values[0])
+            metal_max = float(values[-1])
+        elif "logg" in arg.lower():
+            r = arg.partition("=")[-1]
+            values = r.partition(",")
+            logg_min = float(values[0])
+            logg_max = float(values[-1])
+        elif "alpha" in arg.lower():
+            r = arg.partition("=")[-1]
+            values = r.partition(",")
+            alpha_min = float(values[0])
+            alpha_max = float(values[-1])
+        elif "model" in arg.lower():
+            modeldir = arg.partition("=")[-1]
+            if not modeldir.endswith("/"):
+                modeldir = modeldir + "/"
+        elif "rv" in arg.lower():
+            rv = float(arg.partition("=")[-1]) * u.km / u.s
+        elif "vsini" in arg.lower():
+            vsini = float(arg.partition("=")[-1]) * u.km / u.s
+        elif "resolution" in arg.lower():
+            R = float(arg.partition("=")[-1])
+        else:
+            filename = arg
+
+
+
 
 
     #Find the models
-    model_list = sorted(["models/%s" % f for f in os.listdir("models")])
+    # model_list = sorted(["{:s}{:s}".format(modeldir, f) for f in os.listdir(modeldir)])
+    #model_list = sorted(["models/%s" % f for f in os.listdir("models")])
 
     #Read the data
-    orders = HelperFunctions.ReadExtensionFits("HIP_81692.fits")
+    orders = HelperFunctions.ReadExtensionFits(filename)
 
     #plt.plot(orders[7].x, orders[7].y)
     #plt.plot(orders[7].x, orders[7].cont)
 
     #Make an instance of the model getter
-    mg = ModelGetter("models", T_min=9000, T_max=9250, metal_min=-1.0, metal_max=1.0, wavemin=orders[0].x[0] - 1.0)
+    mg = ModelGetter(modeldir,
+                     T_min=T_min,
+                     T_max=T_max,
+                     logg_min=logg_min,
+                     logg_max=logg_max,
+                     metal_min=metal_min,
+                     metal_max=metal_max,
+                     alpha_min=alpha_min,
+                     alpha_max=alpha_max,
+                     wavemin=orders[0].x[0] - 1)
+    # mg = ModelGetter("models", T_min=9000, T_max=9250, metal_min=-1.0, metal_max=1.0, wavemin=orders[0].x[0] - 1.0)
+
+    #Make guess values for each of the values from the bounds
+    temperature = (T_min + T_max) / 2.0
+    logg = (logg_min + logg_max) / 2.0
+    metal = (metal_min + metal_max) / 2.0
+    alpha = (alpha_min + alpha_max) / 2.0
 
     #Perform the fit - Fit the RV and vsini to an initial guess model first
     params = Parameters()
-    params.add('rv', value=v.value, min=-50, max=50)
-    params.add('vsini', value=8.0, vary=True, min=0.0, max=500.0)
-    params.add('temperature', value=9000, min=9000, max=9250, vary=False)
-    params.add('logg', value=4.5, min=3.5, max=4.5, vary=False)
-    params.add('metal', value=0.0, min=-0.8, max=0.2, vary=False)
-    params.add('alpha', value=0.0, min=0.0, max=0.4, vary=False)
+    params.add('rv', value=rv.value, min=-50, max=50)
+    params.add('vsini', value=vsini.value, vary=True, min=0.0, max=500.0)
+    params.add('temperature', value=temperature, min=T_min, max=T_max, vary=False)
+    params.add('logg', value=logg, min=logg_min, max=logg_max, vary=False)
+    params.add('metal', value=metal, min=metal_min, max=metal_max, vary=False)
+    params.add('alpha', value=alpha, min=alpha_min, max=alpha_max, vary=False)
     #result = minimize(ErrorFunction, params, args=(data, model_fcn))
     result = minimize(ErrorFunction2, params, args=(orders, mg))
     report_fit(params)
