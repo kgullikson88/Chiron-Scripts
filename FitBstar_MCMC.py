@@ -1,17 +1,15 @@
+__author__ = 'kgulliks'
 import os
 import warnings
 import sys
-import FittingUtilities
 
 from scipy.interpolate import InterpolatedUnivariateSpline as spline, LinearNDInterpolator, NearestNDInterpolator
 import numpy as np
-import matplotlib.pyplot as plt
 import DataStructures
 from astropy import units as u, constants
 import HelperFunctions
 import Broaden
-
-from lmfit import minimize, Parameters, report_fit
+import emcee
 
 
 class ModelGetter():
@@ -87,7 +85,7 @@ class ModelGetter():
         self.grid = np.array((Tvals, loggvals, metalvals, alphavals)).T
         self.spectra = np.array(spectra)
 
-        #Make the interpolator instance
+        # Make the interpolator instance
         self.interpolator = LinearNDInterpolator(self.grid, self.spectra, rescale=True)
         self.NN_interpolator = NearestNDInterpolator(self.grid, self.spectra, rescale=True)
 
@@ -128,7 +126,7 @@ class ModelGetter():
             print alpha, alpha_min, alpha_max
             y = self.interpolator((T, logg, metal, alpha))
 
-        #Test to make sure the result is valid. If the requested point is
+        # Test to make sure the result is valid. If the requested point is
         #outside the Delaunay triangulation, it will return NaN's
         if np.any(np.isnan(y)):
             warnings.warn("Found NaNs in the interpolated spectrum! Falling back to Nearest Neighbor")
@@ -144,55 +142,18 @@ class ModelGetter():
 # ########################################################################
 # ########################################################################
 
-
-def ErrorFunction2(params, data, model_getter):
-    model_orders = MakeModel(params, data, model_getter)
-    loglikelihood = []
-    N = 0.0
-    for i, (o, m) in enumerate(zip(data, model_orders)):
-        ratio = o.y / m
-        # cont = FittingUtilities.Continuum(o.x, ratio, fitorder=5, lowreject=2, highreject=2)
-        cont = np.poly1d(np.polyfit(o.x, ratio, 5))(o.x)
-        #cont = o.cont
-        loglikelihood.append((o.y - cont * m) / o.err)
-        N += o.size()
-        data[i].cont = cont
-    loglikelihood = np.hstack(loglikelihood)
-    print "RV = {:g}, vsini = {:g} --> X^2 = {:g}".format(params['rv'].value, params['vsini'].value,
-                                                          np.sum(loglikelihood ** 2) / N)
-    return loglikelihood
-
-
-def ErrorFunction(params, data, model_getter):
-    model_orders = MakeModel(params, data, model_getter)
-    loglikelihood = []
-    N = 0.0
-    for i, (o, m) in enumerate(zip(data, model_orders)):
-        ratio = o.y / m
-        # cont = FittingUtilities.Continuum(o.x, ratio, fitorder=5, lowreject=2, highreject=2)
-        cont = np.poly1d(np.polyfit(o.x, ratio, 5))(o.x)
-
-        loglikelihood.append((o.y - o.cont * m) / o.err)
-        N += o.size()
-    loglikelihood = np.hstack(loglikelihood)
-    for key in params.keys():
-        print "{:s} = {:.10f}".format(key, params[key].value)
-    print "X^2 = {:g}\n\n".format(np.sum(loglikelihood ** 2) / N)
-    #print "RV = {:g}, vsini = {:g} --> X^2 = {:g}".format(params['rv'].value, params['vsini'].value, np.sum(loglikelihood**2)/N)
-    return loglikelihood
-
-
 def MakeModel(pars, data, model_getter):
-    vsini = pars['vsini'].value * u.km.to(u.cm)
-    rv = pars['rv'].value
-    T = pars['temperature'].value
-    logg = pars['logg'].value
-    metal = pars['metal'].value
-    alpha = pars['alpha'].value
+    vsini = pars[0]
+    rv = pars[1]
+    T = pars[2]
+    logg = pars[3]
+    metal = pars[4]
+    alpha = pars[5]
+    lnf = pars[6]
 
     c = constants.c.cgs.to(u.km / u.s).value
 
-    #Get the model from the ModelGetter instance
+    # Get the model from the ModelGetter instance
     model = model_getter(T, logg, metal, alpha)
 
     #First, broaden the model
@@ -202,6 +163,50 @@ def MakeModel(pars, data, model_getter):
     for order in data:
         model_orders.append(modelfcn(order.x * (1 - rv / c)))
     return model_orders
+
+
+def lnprior(theta, bounds):
+    vsini = theta[0]
+    rv = theta[1]
+    T = theta[2]
+    logg = theta[3]
+    metal = theta[4]
+    alpha = theta[5]
+    lnf = theta[6]
+    if (bounds[0]['lower'] < vsini < bounds[0]['upper'] and
+                    bounds[1]['lower'] < rv < bounds[1]['upper'] and
+                    bounds[2]['lower'] < T < bounds[2]['upper'] and
+                    bounds[3]['lower'] < logg < bounds[3]['upper'] and
+                    bounds[4]['lower'] < metal < bounds[4]['upper'] and
+                    bounds[5]['lower'] < alpha < bounds[5]['upper'] and
+                lnf < 1.0):
+        return 0.0
+
+    return -np.inf
+
+
+def lnlike(theta, data, model_getter):
+    model_orders = MakeModel(theta, data, model_getter)
+    lnf = theta[6]
+    loglikelihood = 0.0
+    N = 0.0
+    for i, (o, m) in enumerate(zip(data, model_orders)):
+        ratio = o.y / m
+        # cont = FittingUtilities.Continuum(o.x, ratio, fitorder=5, lowreject=2, highreject=2)
+        o.cont = np.poly1d(np.polyfit(o.x, ratio, 5))(o.x)
+
+        inv_sigma2 = 1.0 / (o.err ** 2 + m ** 2 * np.exp(2 * lnf))
+        loglikelihood += -0.5(np.sum((o.y - o.cont * m) ** 2 * inv_sigma2 - np.log(inv_sigma2)))
+        N += o.size()
+
+    return loglikelihood
+
+
+def lnprob(theta, data, bounds, model_getter):
+    lp = lnprior(theta, bounds)
+    if not np.isfinite(lp):
+        return -np.inf
+    return lp + lnlike(theta, data, model_getter)
 
 
 if __name__ == "__main__":
@@ -259,7 +264,7 @@ if __name__ == "__main__":
 
 
 
-    #Find the models
+    # Find the models
     # model_list = sorted(["{:s}{:s}".format(modeldir, f) for f in os.listdir(modeldir)])
     #model_list = sorted(["models/%s" % f for f in os.listdir("models")])
 
@@ -280,50 +285,33 @@ if __name__ == "__main__":
                      alpha_min=alpha_min,
                      alpha_max=alpha_max,
                      wavemin=orders[0].x[0] - 1)
-    # mg = ModelGetter("models", T_min=9000, T_max=9250, metal_min=-1.0, metal_max=1.0, wavemin=orders[0].x[0] - 1.0)
+
 
     #Make guess values for each of the values from the bounds
     temperature = (T_min + T_max) / 2.0
     logg = (logg_min + logg_max) / 2.0
     metal = (metal_min + metal_max) / 2.0
     alpha = (alpha_min + alpha_max) / 2.0
+    vsini = 100.0
+    rv = 0.0
+    lnf = 0.5
 
-    #Perform the fit - Fit the RV and vsini to an initial guess model first
-    params = Parameters()
-    params.add('rv', value=rv.value, min=-50, max=50)
-    params.add('vsini', value=vsini.value, vary=True, min=0.0, max=500.0)
-    params.add('temperature', value=temperature, min=T_min, max=T_max, vary=False)
-    params.add('logg', value=logg, min=logg_min, max=logg_max, vary=False)
-    params.add('metal', value=metal, min=metal_min, max=metal_max, vary=False)
-    params.add('alpha', value=alpha, min=alpha_min, max=alpha_max, vary=False)
-    #result = minimize(ErrorFunction, params, args=(data, model_fcn))
-    result = minimize(ErrorFunction2, params, args=(orders, mg))
-    report_fit(params)
+    pars = np.array([vsini, rv, T, logg, metal, alpha, lnf])
 
-    #plt.plot(orders[7].x, orders[7].cont, 'r--')
-    #plt.show()
+    #Set up the MCMC sampler
+    ndim, nwalkers = 3, 100
+    pos = [pars + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr))
 
-    #Now, fit the fundamental parameters
-    params['rv'].vary = False
-    params['vsini'].vary = True
-    params['temperature'].vary = True
-    params['logg'].vary = True
-    params['metal'].vary = True
-    params['alpha'].vary = True
-    result = minimize(ErrorFunction, params, args=(orders, mg))
+    #Run the MCMC sampler
+    sampler.run_mcmc(pos, 1000)
 
-    report_fit(params)
+    #Get the samples after burn-in
+    samples = sampler.chain[:, 50:, :].reshape((-1, ndim))
 
-    #Plot
-    fig1 = plt.figure(1)
-    ax1 = fig1.add_subplot(211)
-    ax2 = fig1.add_subplot(212, sharex=ax1)
-    model_orders = MakeModel(params, orders, mg)
-    for order, model in zip(orders, model_orders):
-        ratio = order.y / model
-        order.cont = FittingUtilities.Continuum(order.x, ratio, fitorder=5, lowreject=2, highreject=2)
-        ax1.plot(order.x, order.y / order.cont, 'k-')
-        ax1.plot(order.x, model, 'r-')
-        ax2.plot(order.x, ratio / order.cont)
-    plt.show()
+    #Save the output
+    import triangle
 
+    fig = triangle.corner(samples, labels=["$v\sin{i}$", "$RV$", "Temperature", "$\log{g}$", "[Fe/H]", "[$\alpha$/Fe]",
+                                           "$\ln\,f$"])
+    fig.savefig("triangle.pdf")
