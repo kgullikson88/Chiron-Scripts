@@ -15,7 +15,7 @@ import FindContinuum
 import HelperFunctions
 
 
-plot = False
+plot = True
 
 
 def ReadCorrectedFile(fname, yaxis="model"):

@@ -101,7 +101,7 @@ def GetModel(Temperature, grid):
     wave_A = np.arange(data.size) * header['CDELT1'] + header['CRVAL1']
     x = wave_A * units.angstrom.to(units.nm)
     y = data
-    left = np.searchsorted(x, 450)
+    left = np.searchsorted(x, 400)
     right = np.searchsorted(x, 900)
     model = DataStructures.xypoint(x=x[left:right], y=y[left:right])
     return model
@@ -167,7 +167,7 @@ if __name__ == "__main__":
             rootdir = rootdir + d + "/"
         header = fits.getheader(fname)
         starname = header['OBJECT']
-        # print starname
+        #print starname
 
         #Make sure this is not a multiple star
         """
@@ -316,9 +316,9 @@ if __name__ == "__main__":
         #vsini_err = A*np.sqrt(pcov[4][4]) /  np.sqrt(popt[4]**2 - sig0**2)
         vsini = popt[5]
         vsini_err = np.sqrt(pcov[5][5])
-        print "rv = %g km/s" % rv
-        print "centroid = %g km/s" % centroid
-        print "vsini = %g km/s" % vsini
+        print "rv = %g km/s" %rv
+        print "centroid = %g km/s" %centroid
+        print "vsini = %g km/s" %vsini
 
         ccf.output(fname.replace(".fits", "_CCF.txt"))
         plt.plot(ccf.x, ccf.y)
