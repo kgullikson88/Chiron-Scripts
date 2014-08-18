@@ -214,7 +214,7 @@ if __name__ == "__main__":
     alpha_max = 0.4
     modeldir = "models/"
     rv = 0.0 * u.km / u.s
-    vsini = 0.0 * u.km / u.x
+    vsini = 0.0 * u.km / u.s
     R = 80000.0
     for arg in sys.argv[1:]:
         if "temp" in arg.lower():
