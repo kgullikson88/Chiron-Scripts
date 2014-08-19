@@ -245,7 +245,7 @@ if __name__ == "__main__":
         elif "model" in arg.lower():
             modeldir = arg.partition("=")[-1]
             if not modeldir.endswith("/"):
-                modeldir = modeldir + "/"
+                modeldir += "/"
         elif "rv" in arg.lower():
             rv = float(arg.partition("=")[-1]) * u.km / u.s
         elif "vsini" in arg.lower():
@@ -258,10 +258,6 @@ if __name__ == "__main__":
 
 
 
-
-    #Find the models
-    # model_list = sorted(["{:s}{:s}".format(modeldir, f) for f in os.listdir(modeldir)])
-    #model_list = sorted(["models/%s" % f for f in os.listdir("models")])
 
     #Read the data
     orders = HelperFunctions.ReadExtensionFits(filename)

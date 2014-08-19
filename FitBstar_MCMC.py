@@ -306,7 +306,7 @@ if __name__ == "__main__":
     pars = np.array([vsini, rv, T, logg, metal, alpha, lnf])
 
     #Set up the MCMC sampler
-    ndim, nwalkers = 3, 100
+    ndim, nwalkers = 7, 100
     pos = [pars + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(orders, bounds, mg))
 
