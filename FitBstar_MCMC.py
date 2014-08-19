@@ -193,10 +193,11 @@ def lnlike(theta, data, model_getter):
     for i, (o, m) in enumerate(zip(data, model_orders)):
         ratio = o.y / m
         # cont = FittingUtilities.Continuum(o.x, ratio, fitorder=5, lowreject=2, highreject=2)
-        o.cont = np.poly1d(np.polyfit(o.x, ratio, 5))(o.x)
+        mean = o.x.mean()
+        o.cont = np.poly1d(np.polyfit(o.x - mean, ratio, 5))(o.x - mean)
 
         inv_sigma2 = 1.0 / (o.err ** 2 + m ** 2 * np.exp(2 * lnf))
-        loglikelihood += -0.5(np.sum((o.y - o.cont * m) ** 2 * inv_sigma2 - np.log(inv_sigma2)))
+        loglikelihood += -0.5*(np.sum((o.y - o.cont * m) ** 2 * inv_sigma2 - np.log(inv_sigma2)))
         N += o.size()
 
     return loglikelihood
@@ -288,20 +289,26 @@ if __name__ == "__main__":
 
 
     #Make guess values for each of the values from the bounds
-    temperature = (T_min + T_max) / 2.0
+    T = (T_min + T_max) / 2.0
     logg = (logg_min + logg_max) / 2.0
     metal = (metal_min + metal_max) / 2.0
     alpha = (alpha_min + alpha_max) / 2.0
     vsini = 100.0
     rv = 0.0
     lnf = 0.5
+    bounds = [dict(lower=0, upper=500),
+              dict(lower=-50, upper=50),
+              dict(lower=T_min, upper=T_max),
+              dict(lower=logg_min, upper=logg_max),
+              dict(lower=metal_min, upper=metal_max),
+              dict(lower=alpha_min, upper=alpha_max)]
 
     pars = np.array([vsini, rv, T, logg, metal, alpha, lnf])
 
     #Set up the MCMC sampler
     ndim, nwalkers = 3, 100
     pos = [pars + 1e-4 * np.random.randn(ndim) for i in range(nwalkers)]
-    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(x, y, yerr))
+    sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=(orders, bounds, mg))
 
     #Run the MCMC sampler
     sampler.run_mcmc(pos, 1000)
