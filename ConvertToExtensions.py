@@ -1,12 +1,10 @@
 import sys
 import os
-
 import FittingUtilities
+
 from astropy.io import fits as pyfits
 import numpy as np
-import pylab
 
-import FitsUtils
 import HelperFunctions
 
 
@@ -54,10 +52,10 @@ if __name__ == "__main__":
             order.y[zeros] = 0.0
 
             order.cont = FittingUtilities.Continuum(order.x, order.y, fitorder=3, lowreject=2, highreject=4)
-            columns = columns = {"wavelength": order.x,
-                                 "flux": order.y,
-                                 "continuum": order.cont,
-                                 "error": order.err}
+            columns = {"wavelength": order.x,
+                       "flux": order.y,
+                       "continuum": order.cont,
+                       "error": order.err}
             column_list.append(columns)
             snr = 1.0 / np.std(order.y / order.cont)
             if snr > maxsnr:
