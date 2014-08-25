@@ -1,14 +1,13 @@
-import Correlate
-import numpy
-from scipy.interpolate import InterpolatedUnivariateSpline as interp
-import os
 import sys
-import DataStructures
 import FittingUtilities
-import HelperFunctions
-import matplotlib.pyplot as plt
-from astropy import units, constants
 from collections import defaultdict
+
+import numpy
+from astropy import units
+
+import Correlate
+import DataStructures
+import HelperFunctions
 
 
 if "darwin" in sys.platform:
@@ -24,6 +23,8 @@ else:
 badregions = [[0, 466],
               [587.5, 593],
               [627, 634.5],
+              [655, 657],  # H alpha
+              [485, 487],  #H beta
               [686, 706],
               [716, 742],
               [749.1, 749.45],
@@ -177,13 +178,8 @@ def Process_Data(fname, extensions=True, trimsize=100):
     
   numorders = len(orders)
   for i, order in enumerate(orders[::-1]):
-    DATA = interp(order.x, order.y)
-    CONT = interp(order.x, order.cont)
-    ERROR = interp(order.x, order.err)
-    order.x = numpy.linspace(order.x[trimsize], order.x[-trimsize], order.size() - 2*trimsize)
-    order.y = DATA(order.x)
-    order.cont = CONT(order.x)
-    order.err = ERROR(order.x)
+      xgrid = numpy.linspace(order.x[trimsize], order.x[-trimsize], order.size() - 2 * trimsize)
+      order = FittingUtilities.RebinData(order, xgrid)
       
     #Remove bad regions from the data
     for region in badregions:
