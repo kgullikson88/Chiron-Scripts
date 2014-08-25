@@ -11,7 +11,7 @@ import HelperFunctions
 
 
 if "darwin" in sys.platform:
-  modeldir = "/Volumes/DATADRIVE/Stellar_Models/PHOENIX/Stellar/Vband/"
+    modeldir = "/Volumes/DATADRIVE/Stellar_Models/Coelho14/FullResolution/"
 elif "linux" in sys.platform:
   modeldir = "/media/FreeAgent_Drive/SyntheticSpectra/Sorted/Stellar/Vband/"
 else:
