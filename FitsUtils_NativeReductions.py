@@ -1,13 +1,11 @@
 from astropy.io import fits as pyfits
 import numpy as np
+from numpy.polynomial import chebyshev
+
 import DataStructures
 
-from np.polynomial import chebyshev
 
 # import Units
-from astropy import units, constants
-import FindContinuum
-import readmultispec as multispec
 import subprocess
 
 
