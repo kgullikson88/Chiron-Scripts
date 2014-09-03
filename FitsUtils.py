@@ -1,17 +1,18 @@
 from astropy.io import fits as pyfits
 import numpy as np
+from numpy.polynomial import chebyshev
+
 import DataStructures
 
-from np.polynomial import chebyshev
 
 # import Units
-from astropy import units, constants
+from astropy import units
 import FindContinuum
 import readmultispec as multispec
 import subprocess
 
 
-#Make a dictionary for converting from standard polynomial to chebyshev
+# Make a dictionary for converting from standard polynomial to chebyshev
 #   For now, only go up to order 5
 #standard_to_cheb = {0: [[1,],],
 #                    1: [[1,0], [0,1]],
