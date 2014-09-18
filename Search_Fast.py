@@ -29,5 +29,9 @@ if __name__ == "__main__":
         else:
             fileList.append(arg)
 
-    GenericSearch.CompanionSearch(fileList, extensions=extensions, resolution=80000.0, trimsize=trimsize)
+    GenericSearch.CompanionSearch(fileList, 
+	                          extensions=extensions, 
+				  resolution=80000.0, 
+				  trimsize=trimsize, 
+				  modeldir='/media/FreeAgent_Drive/SyntheticSpectra/Sorted/Stellar/Vband/')
 

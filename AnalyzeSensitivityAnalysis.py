@@ -237,6 +237,7 @@ def MakePlot(infilename):
                 ax.set_ylim([-0.05, 1.05])
             plt.title("Sensitivity Analysis")
 
+    plt.grid(True)
     plt.show()
 
 
