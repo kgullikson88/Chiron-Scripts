@@ -7,6 +7,16 @@ import Sensitivity
 import Search_Fast
 
 
+if "darwin" in sys.platform:
+    modeldir = "/Volumes/DATADRIVE/Stellar_Models/PHOENIX/Stellar/Vband/"
+elif "linux" in sys.platform:
+    modeldir = "/media/FreeAgent_Drive/SyntheticSpectra/Sorted/Stellar/Vband/"
+else:
+    modeldir = raw_input("sys.platform not recognized. Please enter model directory below: ")
+    if not modeldir.endswith("/"):
+        modeldir = modeldir + "/"
+
+
 if __name__ == "__main__":
     # Parse command-line arguments
     vsini_secondary = 20 * units.km.to(units.cm)
@@ -41,4 +51,10 @@ if __name__ == "__main__":
                         resolution=resolution,
                         debug=True,
                         badregions=Search_Fast.badregions,
-                        trimsize=trimsize)
+                        trimsize=trimsize,
+                        modeldir=modeldir,
+                        companion_file=companion_file,
+                        vsini_file=vsini_file,
+                        vsini_idx=vsini_idx,
+                        vsini_skip=vsini_skip,
+                        vsini_secondary=vsini_secondary)
