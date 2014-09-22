@@ -7,9 +7,10 @@ from scipy.interpolate import InterpolatedUnivariateSpline as spline, LinearNDIn
 import numpy as np
 import DataStructures
 from astropy import units as u, constants
+import emcee
+
 import HelperFunctions
 import Broaden
-import emcee
 
 
 class ModelGetter():
@@ -81,13 +82,21 @@ class ModelGetter():
                 alphavals.append(alpha)
                 spectra.append(y)
 
-        # Save the grid as a class variable
+        # Scale the variables so they all have about the same range
+        self.T_scale = (np.median(Tvals), max(Tvals) - min(Tvals))
+        self.metal_scale = (np.median(metalvals), max(metalvals) - min(metalvals))
+        self.logg_scale = (np.median(loggvals), max(loggvals) - min(loggvals))
+        self.alpha_scale = (np.median(alphavals), max(alphavals) - min(alphavals))
+        Tvals = (np.array(Tvals) - self.T_scale[0]) / self.T_scale[1]
+        loggvals = (np.array(loggvals) - self.logg_scale[0]) / self.logg_scale[1]
+        metalvals = (np.array(metalvals) - self.metal_scale[0]) / self.metal_scale[1]
+        alphavals = (np.array(alphavals) - self.alpha_scale[0]) / self.alpha_scale[1]
+
+        # Make the grid and interpolator instances
         self.grid = np.array((Tvals, loggvals, metalvals, alphavals)).T
         self.spectra = np.array(spectra)
-
-        # Make the interpolator instance
-        self.interpolator = LinearNDInterpolator(self.grid, self.spectra, rescale=True)
-        self.NN_interpolator = NearestNDInterpolator(self.grid, self.spectra, rescale=True)
+        self.interpolator = LinearNDInterpolator(self.grid, self.spectra)  # , rescale=True)
+        self.NN_interpolator = NearestNDInterpolator(self.grid, self.spectra)  #, rescale=True)
 
 
     def __call__(self, T, logg, metal, alpha, return_xypoint=True):
@@ -100,6 +109,12 @@ class ModelGetter():
         Before interpolating, we will do some error checking to make
         sure the requested values fall within the grid
         """
+
+        # Scale the requested values
+        T = (T - self.T_scale[0]) / self.T_scale[1]
+        logg = (logg - self.logg_scale[0]) / self.logg_scale[1]
+        metal = (metal - self.metal_scale[0]) / self.metal_scale[1]
+        alpha = (alpha - self.alpha_scale[0]) / self.alpha_scale[1]
 
         # Get the minimum and maximum values in the grid
         T_min = min(self.grid[:, 0])
