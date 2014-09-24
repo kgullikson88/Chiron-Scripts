@@ -1,144 +1,18 @@
-import os
-import warnings
 import sys
 import FittingUtilities
 
-from scipy.interpolate import InterpolatedUnivariateSpline as spline, LinearNDInterpolator, NearestNDInterpolator
+from scipy.interpolate import InterpolatedUnivariateSpline as spline
 import numpy as np
 import matplotlib.pyplot as plt
-import DataStructures
 from astropy import units as u, constants
-import HelperFunctions
-import Broaden
-
 from lmfit import minimize, Parameters, report_fit
 
-
-class ModelGetter():
-    def __init__(self, modeldir, rebin=True, T_min=7000, T_max=9000, logg_min=3.5, logg_max=4.5, metal_min=-0.5,
-                 metal_max=0.5, alpha_min=0.0, alpha_max=0.4, wavemin=0, wavemax=np.inf):
-        """
-        This class will read in a directory with Kurucz models
-
-        The associated methods can be used to interpolate a model at any
-        temperature, gravity, metallicity, and [alpha/Fe] value that
-        falls within the grid
-
-        modeldir: The directory where the models are stored
-        rebin: If True, it will rebin the models to a constant x-spacing
-        other args: The minimum and maximum values for the parameters to search.
-                    You need to keep this as small as possible to avoid memory issues!
-                    The whole grid would take about 36 GB of RAM!
-        """
-
-        # First, read in the grid
-        Tvals = []
-        loggvals = []
-        metalvals = []
-        alphavals = []
-        spectra = []
-        firstkeeper = True
-        modelfiles = [f for f in os.listdir(modeldir) if f.startswith("t") and f.endswith(".dat.bin.asc")]
-        for i, fname in enumerate(modelfiles):
-            T = float(fname[1:6])
-            logg = float(fname[8:12])
-            metal = float(fname[14:16]) / 10.0
-            alpha = float(fname[18:20]) / 10.0
-            if fname[13] == "m":
-                metal *= -1
-            if fname[17] == "m":
-                alpha *= -1
-
-            # Read in and save file if it falls in the correct parameter range
-            if (T_min <= T <= T_max and
-                            logg_min <= logg <= logg_max and
-                            metal_min <= metal <= metal_max and
-                            alpha_min <= alpha <= alpha_max):
-
-                print "Reading in file {:s}".format(fname)
-                x, y = np.loadtxt("{:s}/{:s}".format(modeldir, fname), usecols=(0, 3), unpack=True)
-                x *= u.angstrom.to(u.nm)
-
-                left = np.searchsorted(x, wavemin)
-                right = np.searchsorted(x, wavemax)
-                x = x[left:right]
-                y = y[left:right]
-
-                if rebin:
-                    xgrid = np.linspace(x[0], x[-1], x.size)
-                    fcn = spline(x, y)
-                    x = xgrid
-                    y = fcn(xgrid)
-
-                if firstkeeper:
-                    self.xaxis = x
-                    firstkeeper = False
-                elif np.max(np.abs(self.xaxis - x) > 1e-4):
-                    warnings.warn("x-axis for file {:s} is different from the master one! Not saving!".format(fname))
-                    continue
-
-                Tvals.append(T)
-                loggvals.append(logg)
-                metalvals.append(metal)
-                alphavals.append(alpha)
-                spectra.append(y)
-
-        # Save the grid as a class variable
-        self.grid = np.array((Tvals, loggvals, metalvals, alphavals)).T
-        self.spectra = np.array(spectra)
-
-        #Make the interpolator instance
-        self.interpolator = LinearNDInterpolator(self.grid, self.spectra, rescale=True)
-        self.NN_interpolator = NearestNDInterpolator(self.grid, self.spectra, rescale=True)
+import HelperFunctions
+import Broaden
+import FitBstar_MCMC
 
 
-    def __call__(self, T, logg, metal, alpha, return_xypoint=True):
-        """
-        Given parameters, return an interpolated spectrum
 
-        If return_xypoint is False, then it will only return
-          a numpy.ndarray with the spectrum
-
-        Before interpolating, we will do some error checking to make
-        sure the requested values fall within the grid
-        """
-
-        # Get the minimum and maximum values in the grid
-        T_min = min(self.grid[:, 0])
-        T_max = max(self.grid[:, 0])
-        logg_min = min(self.grid[:, 1])
-        logg_max = max(self.grid[:, 1])
-        metal_min = min(self.grid[:, 2])
-        metal_max = max(self.grid[:, 2])
-        alpha_min = min(self.grid[:, 3])
-        alpha_max = max(self.grid[:, 3])
-
-        # Check to make sure the requested values fall within the grid
-        if (T_min <= T <= T_max and
-                        logg_min <= logg <= logg_max and
-                        metal_min <= metal <= metal_max and
-                        alpha_min <= alpha <= alpha_max):
-
-            y = self.interpolator((T, logg, metal, alpha))
-        else:
-            warnings.warn("The requested parameters fall outside the model grid. Results may be unreliable!")
-            print T, T_min, T_max
-            print logg, logg_min, logg_max
-            print metal, metal_min, metal_max
-            print alpha, alpha_min, alpha_max
-            y = self.interpolator((T, logg, metal, alpha))
-
-        #Test to make sure the result is valid. If the requested point is
-        #outside the Delaunay triangulation, it will return NaN's
-        if np.any(np.isnan(y)):
-            warnings.warn("Found NaNs in the interpolated spectrum! Falling back to Nearest Neighbor")
-            y = self.NN_interpolator((T, logg, metal, alpha))
-
-        #Return the appropriate object
-        if return_xypoint:
-            return DataStructures.xypoint(x=self.xaxis, y=y)
-        else:
-            return y
 
 
 # ########################################################################
@@ -151,8 +25,8 @@ def ErrorFunction2(params, data, model_getter):
     N = 0.0
     for i, (o, m) in enumerate(zip(data, model_orders)):
         ratio = o.y / m
-        # cont = FittingUtilities.Continuum(o.x, ratio, fitorder=5, lowreject=2, highreject=2)
-        cont = np.poly1d(np.polyfit(o.x, ratio, 5))(o.x)
+        cont = FittingUtilities.Continuum(o.x, ratio, fitorder=5, lowreject=2, highreject=2)
+        # cont = np.poly1d(np.polyfit(o.x, ratio, 5))(o.x)
         #cont = o.cont
         loglikelihood.append((o.y - cont * m) / o.err)
         N += o.size()
@@ -169,8 +43,8 @@ def ErrorFunction(params, data, model_getter):
     N = 0.0
     for i, (o, m) in enumerate(zip(data, model_orders)):
         ratio = o.y / m
-        # cont = FittingUtilities.Continuum(o.x, ratio, fitorder=5, lowreject=2, highreject=2)
-        cont = np.poly1d(np.polyfit(o.x, ratio, 5))(o.x)
+        cont = FittingUtilities.Continuum(o.x, ratio, fitorder=5, lowreject=2, highreject=2)
+        #cont = np.poly1d(np.polyfit(o.x, ratio, 5))(o.x)
 
         loglikelihood.append((o.y - o.cont * m) / o.err)
         N += o.size()
@@ -199,6 +73,7 @@ def MakeModel(pars, data, model_getter):
     broadened = Broaden.RotBroad(model, vsini, linear=True)
     modelfcn = spline(broadened.x, broadened.y)
     model_orders = []
+    print rv /c
     for order in data:
         model_orders.append(modelfcn(order.x * (1 - rv / c)))
     return model_orders
@@ -214,12 +89,12 @@ if __name__ == "__main__":
     metal_min = -0.8
     metal_max = 0.5
     logg_min = 3.0
-    logg_max = 3.5
+    logg_max = 4.5
     alpha_min = 0.0
     alpha_max = 0.4
     modeldir = "models/"
     rv = 0.0 * u.km / u.s
-    vsini = 0.0 * u.km / u.s
+    vsini = 100.0 * u.km / u.s
     R = 80000.0
     for arg in sys.argv[1:]:
         if "temp" in arg.lower():
@@ -266,17 +141,16 @@ if __name__ == "__main__":
     #plt.plot(orders[7].x, orders[7].cont)
 
     #Make an instance of the model getter
-    mg = ModelGetter(modeldir,
-                     T_min=T_min,
-                     T_max=T_max,
-                     logg_min=logg_min,
-                     logg_max=logg_max,
-                     metal_min=metal_min,
-                     metal_max=metal_max,
-                     alpha_min=alpha_min,
-                     alpha_max=alpha_max,
-                     wavemin=orders[0].x[0] - 1)
-    # mg = ModelGetter("models", T_min=9000, T_max=9250, metal_min=-1.0, metal_max=1.0, wavemin=orders[0].x[0] - 1.0)
+    mg = FitBstar_MCMC.ModelGetter(modeldir,
+                                   T_min=T_min,
+                                   T_max=T_max,
+                                   logg_min=logg_min,
+                                   logg_max=logg_max,
+                                   metal_min=metal_min,
+                                   metal_max=metal_max,
+                                   alpha_min=alpha_min,
+                                   alpha_max=alpha_max,
+                                   wavemin=orders[0].x[0] - 1)
 
     #Make guess values for each of the values from the bounds
     temperature = (T_min + T_max) / 2.0
