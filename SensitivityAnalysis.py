@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     Sensitivity.Analyze(fileList,
                         resolution=resolution,
-                        debug=True,
+                        debug=False,
                         badregions=Search_Fast.badregions,
                         trimsize=trimsize,
                         modeldir=modeldir,
