@@ -5,11 +5,11 @@ from scipy.interpolate import InterpolatedUnivariateSpline as spline
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u, constants
-from lmfit import minimize, Parameters, report_fit
+import emcee
 
 import HelperFunctions
 import Broaden
-import FitBstar_MCMC
+import StellarModel
 
 
 
@@ -69,7 +69,7 @@ def MakeModel(pars, data, model_getter):
     #Get the model from the ModelGetter instance
     model = model_getter(T, logg, metal, alpha)
 
-    #First, broaden the model
+    # Next, broaden the model
     broadened = Broaden.RotBroad(model, vsini, linear=True)
     modelfcn = spline(broadened.x, broadened.y)
     model_orders = []
@@ -77,6 +77,24 @@ def MakeModel(pars, data, model_getter):
     for order in data:
         model_orders.append(modelfcn(order.x * (1 - rv / c)))
     return model_orders
+
+
+def LM_Model(x, vsini, rv, temperature, logg, metal, alpha, model_getter=None):
+    if model_getter is None:
+        raise KeyError("Must give model_getter keyword!")
+    c = constants.c.cgs.to(u.km / u.s).value
+    print vsini, rv, temperature, logg, metal, alpha, c
+    vsini *= u.km.to(u.cm)
+
+    # Get the model from the ModelGetter instance
+    model = model_getter(temperature, logg, metal, alpha)
+
+    # Next, broaden the model
+    broadened = Broaden.RotBroad(model, vsini, linear=True)
+
+    # Finally, interpolate to the x values
+    modelfcn = spline(broadened.x, broadened.y)
+    return modelfcn(x * (1.0 - rv / c))
 
 
 if __name__ == "__main__":
@@ -94,7 +112,7 @@ if __name__ == "__main__":
     alpha_max = 0.4
     modeldir = "models/"
     rv = 0.0 * u.km / u.s
-    vsini = 100.0 * u.km / u.s
+    vsini = 200.0 * u.km / u.s
     R = 80000.0
     for arg in sys.argv[1:]:
         if "temp" in arg.lower():
@@ -137,11 +155,8 @@ if __name__ == "__main__":
     #Read the data
     orders = HelperFunctions.ReadExtensionFits(filename)
 
-    #plt.plot(orders[7].x, orders[7].y)
-    #plt.plot(orders[7].x, orders[7].cont)
-
     #Make an instance of the model getter
-    mg = FitBstar_MCMC.ModelGetter(modeldir,
+    mg = StellarModel.KuruczGetter(modeldir,
                                    T_min=T_min,
                                    T_max=T_max,
                                    logg_min=logg_min,
@@ -158,6 +173,52 @@ if __name__ == "__main__":
     metal = (metal_min + metal_max) / 2.0
     alpha = (alpha_min + alpha_max) / 2.0
 
+    # Make the appropriate lmfit model
+    fitter = HelperFunctions.ListModel(LM_Model, independent_vars=['x'], model_getter=mg)
+
+    #Set default values
+    fitter.set_param_hint("rv", value=rv.value, min=-50, max=50)
+    fitter.set_param_hint('vsini', value=vsini.value, vary=True, min=0.0, max=500.0)
+    fitter.set_param_hint('temperature', value=temperature, min=T_min, max=T_max, vary=True)
+    fitter.set_param_hint('logg', value=logg, min=logg_min, max=logg_max, vary=True)
+    fitter.set_param_hint('metal', value=metal, min=metal_min, max=metal_max, vary=True)
+    fitter.set_param_hint('alpha', value=alpha, min=alpha_min, max=alpha_max, vary=True)
+    params = fitter.make_params()
+
+    #Perform the fit
+    optdict = {"epsfcn": 1e-2}
+    result = fitter.fit(orders, fit_kws=optdict, params=params)
+    print(result.fit_report())
+    for i, order in enumerate(orders):
+        m = result.best_fit[i]
+        ratio = order.y / m
+        order.cont = FittingUtilities.Continuum(order.x, ratio, lowreject=2, highreject=2, fitorder=5)
+        plt.plot(order.x, order.y / order.cont, 'k-', alpha=0.4)
+        plt.plot(order.x, result.best_fit[i], 'r-', alpha=0.5)
+    plt.show()
+
+
+    # Now, re-do the fit using emcee to get realistic error bars
+
+
+    #Now, fit the fundamental parameters
+    params['rv'].vary = False
+    params['vsini'].vary = True
+    params['temperature'].vary = True
+    params['logg'].vary = True
+    params['metal'].vary = True
+    params['alpha'].vary = True
+    result2 = fitter.fit(orders, params=params)
+    print(result2.fit_report())
+    for i, order in enumerate(orders):
+        m = result.best_fit[i]
+        ratio = order.y / m
+        order.cont = FittingUtilities.Continuum(order.x, ratio, lowreject=2, highreject=2, fitorder=5)
+        plt.plot(order.x, order.y / order.cont, 'k-', alpha=0.4)
+        plt.plot(order.x, result.best_fit[i], 'r-', alpha=0.5)
+    plt.show()
+
+    """
     #Perform the fit - Fit the RV and vsini to an initial guess model first
     params = Parameters()
     params.add('rv', value=rv.value, min=-50, max=50)
@@ -180,9 +241,11 @@ if __name__ == "__main__":
     params['logg'].vary = True
     params['metal'].vary = True
     params['alpha'].vary = True
+    fitter.make_params()
     result = minimize(ErrorFunction, params, args=(orders, mg))
 
     report_fit(params)
+    """
 
     #Plot
     fig1 = plt.figure(1)

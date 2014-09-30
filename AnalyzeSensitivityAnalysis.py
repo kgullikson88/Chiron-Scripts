@@ -151,7 +151,7 @@ def MakePlot(infilename):
         infile.close()
         print "Reading file %s" % infilename
         current_temp = float(lines[4].split()[2])
-        fname = lines[4].split()[0]
+        fname = lines[4].split()[0].split("/")[-1]
         starname = pyfits.getheader(fname)['object']
         detections = 0.0
         numsamples = 0.0
@@ -162,7 +162,7 @@ def MakePlot(infilename):
         for iternum, line in enumerate(lines[4:]):
             segments = line.split()
 
-            fname = segments[0]
+            fname = segments[0].split("/")[-1]
             T2 = float(segments[2])
             if fname in starname_dict and T2 == current_temp and current_fname == fname:
                 # Do the time-consuming SpectralType calls
@@ -205,7 +205,7 @@ def MakePlot(infilename):
                 # Reset things
                 current_temp = T2
                 current_fname = fname
-                fname = segments[0]
+                fname = segments[0].split("/")[-1]
                 if fname in starname_dict:
                     starname = starname_dict[fname]
                 else:

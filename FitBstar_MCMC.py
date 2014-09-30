@@ -64,7 +64,7 @@ class ModelGetter():
                 y = y[left:right]
 
                 if rebin:
-                    xgrid = np.linspace(x[0], x[-1], x.size)
+                    xgrid = np.linspace(x[0], x[-1], x.size) if firstkeeper else self.xaxis
                     fcn = spline(x, y)
                     x = xgrid
                     y = fcn(xgrid)
@@ -91,6 +91,10 @@ class ModelGetter():
         loggvals = (np.array(loggvals) - self.logg_scale[0]) / self.logg_scale[1]
         metalvals = (np.array(metalvals) - self.metal_scale[0]) / self.metal_scale[1]
         alphavals = (np.array(alphavals) - self.alpha_scale[0]) / self.alpha_scale[1]
+        print self.T_scale
+        print self.metal_scale
+        print self.logg_scale
+        print self.alpha_scale
 
         # Make the grid and interpolator instances
         self.grid = np.array((Tvals, loggvals, metalvals, alphavals)).T
@@ -139,7 +143,7 @@ class ModelGetter():
             print logg, logg_min, logg_max
             print metal, metal_min, metal_max
             print alpha, alpha_min, alpha_max
-            y = self.interpolator((T, logg, metal, alpha))
+            y = self.NN_interpolator((T, logg, metal, alpha))
 
         # Test to make sure the result is valid. If the requested point is
         #outside the Delaunay triangulation, it will return NaN's
