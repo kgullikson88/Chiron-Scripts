@@ -13,9 +13,7 @@ import triangle
 import os
 from astropy.io import fits
 from math import floor
-
-
-
+import GenericSearch
 
 # ########################################################################
 # ########################################################################
@@ -229,12 +227,12 @@ if __name__ == "__main__":
 
 
         # Now, re-do the fit several times to get bootstrap error estimates
-        fitparams = {"rv": [],
-                     "vsini": [],
-                     "temperature": [],
-                     "logg": [],
-                     "metal": [],
-                     "alpha": []}
+        fitparams = {"rv": np.zeros(N_iter),
+                     "vsini": np.zeros(N_iter),
+                     "temperature": np.zeros(N_iter),
+                     "logg": np.zeros(N_iter),
+                     "metal": np.zeros(N_iter),
+                     "alpha": np.zeros(N_iter)}
         params = result.params
         orders_original = [o.copy() for o in orders]
         for n in range(N_iter):
@@ -247,10 +245,16 @@ if __name__ == "__main__":
             result = fitter.fit(orders, fit_kws=optdict, params=params)
             if debug:
                 print "\n**********     Best values      ************"
-                for key in fitparams.keys():
-                    fitparams[key].append(result.best_values[key])
+            for key in fitparams.keys():
+                fitparams[key][n] = result.best_values[key]
+                if debug:
                     print key, ': ', result.best_values[key]
-                print "\n\n"
+            print "\n\n"
+
+        # Correct the velocity for barycentric motion
+        header = fits.getheader(filename)
+        vbary = GenericSearch.HelCorr(header, observatory="CTIO")
+        fitparams['rv'] += vbary
 
         # Save the fitted parameters
         texlog = open(texfile, "a")
