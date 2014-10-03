@@ -5,12 +5,14 @@ from scipy.interpolate import InterpolatedUnivariateSpline as spline
 import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u, constants
-import emcee
 
 import HelperFunctions
 import Broaden
 import StellarModel
-
+import triangle
+import os
+from astropy.io import fits
+from math import floor
 
 
 
@@ -83,7 +85,6 @@ def LM_Model(x, vsini, rv, temperature, logg, metal, alpha, model_getter=None):
     if model_getter is None:
         raise KeyError("Must give model_getter keyword!")
     c = constants.c.cgs.to(u.km / u.s).value
-    print vsini, rv, temperature, logg, metal, alpha, c
     vsini *= u.km.to(u.cm)
 
     # Get the model from the ModelGetter instance
@@ -100,6 +101,8 @@ def LM_Model(x, vsini, rv, temperature, logg, metal, alpha, model_getter=None):
 if __name__ == "__main__":
     # Define some constants
     c = constants.c
+    good_orders = range(41)
+    good_orders.pop(33)
 
     # Set up default values, and then read in command line arguments
     T_min = 9000
@@ -114,6 +117,12 @@ if __name__ == "__main__":
     rv = 0.0 * u.km / u.s
     vsini = 200.0 * u.km / u.s
     R = 80000.0
+    output_dir = "{:s}/Dropbox/School/Research/AstarStuff/Parameters/".format(os.environ['HOME'])
+    texfile = "Parameters.tex"  # Put in output_dir after command-line arguments are parsed
+    file_list = []
+    debug = False
+    N_iter = 100
+
     for arg in sys.argv[1:]:
         if "temp" in arg.lower():
             r = arg.partition("=")[-1]
@@ -145,15 +154,31 @@ if __name__ == "__main__":
             vsini = float(arg.partition("=")[-1]) * u.km / u.s
         elif "resolution" in arg.lower():
             R = float(arg.partition("=")[-1])
+        elif "outdir" in arg.lower():
+            output_dir = arg.partition("=")[-1]
+            if not output_dir.endswith("/"):
+                output_dir += "/"
+        elif "texfile" in arg.lower():
+            texfile = arg.partition("=")[-1]
+        elif "debug" in arg.lower():
+            debug = True
+            print "Debug mode ON"
+        elif "iteration" in arg.lower():
+            N_iter = int(arg.partition("=")[-1])
         else:
-            filename = arg
+            file_list.append(arg)
 
+    texfile = "{:s}{:s}".format(output_dir, texfile)
 
+    # Make sure files were give
+    if len(file_list) == 0:
+        sys.exit("Must give at least one file!")
 
-
-
-    #Read the data
-    orders = HelperFunctions.ReadExtensionFits(filename)
+    # Make guess values for each of the values from the bounds
+    temperature = (T_min + T_max) / 2.0
+    logg = (logg_min + logg_max) / 2.0
+    metal = (metal_min + metal_max) / 2.0
+    alpha = (alpha_min + alpha_max) / 2.0
 
     #Make an instance of the model getter
     mg = StellarModel.KuruczGetter(modeldir,
@@ -165,13 +190,7 @@ if __name__ == "__main__":
                                    metal_max=metal_max,
                                    alpha_min=alpha_min,
                                    alpha_max=alpha_max,
-                                   wavemin=orders[0].x[0] - 1)
-
-    #Make guess values for each of the values from the bounds
-    temperature = (T_min + T_max) / 2.0
-    logg = (logg_min + logg_max) / 2.0
-    metal = (metal_min + metal_max) / 2.0
-    alpha = (alpha_min + alpha_max) / 2.0
+                                   wavemin=350.0)
 
     # Make the appropriate lmfit model
     fitter = HelperFunctions.ListModel(LM_Model, independent_vars=['x'], model_getter=mg)
@@ -183,80 +202,98 @@ if __name__ == "__main__":
     fitter.set_param_hint('logg', value=logg, min=logg_min, max=logg_max, vary=True)
     fitter.set_param_hint('metal', value=metal, min=metal_min, max=metal_max, vary=True)
     fitter.set_param_hint('alpha', value=alpha, min=alpha_min, max=alpha_max, vary=True)
-    params = fitter.make_params()
-
-    #Perform the fit
-    optdict = {"epsfcn": 1e-2}
-    result = fitter.fit(orders, fit_kws=optdict, params=params)
-    print(result.fit_report())
-    for i, order in enumerate(orders):
-        m = result.best_fit[i]
-        ratio = order.y / m
-        order.cont = FittingUtilities.Continuum(order.x, ratio, lowreject=2, highreject=2, fitorder=5)
-        plt.plot(order.x, order.y / order.cont, 'k-', alpha=0.4)
-        plt.plot(order.x, result.best_fit[i], 'r-', alpha=0.5)
-    plt.show()
-
-
-    # Now, re-do the fit using emcee to get realistic error bars
-
-
-    #Now, fit the fundamental parameters
-    params['rv'].vary = False
-    params['vsini'].vary = True
-    params['temperature'].vary = True
-    params['logg'].vary = True
-    params['metal'].vary = True
-    params['alpha'].vary = True
-    result2 = fitter.fit(orders, params=params)
-    print(result2.fit_report())
-    for i, order in enumerate(orders):
-        m = result.best_fit[i]
-        ratio = order.y / m
-        order.cont = FittingUtilities.Continuum(order.x, ratio, lowreject=2, highreject=2, fitorder=5)
-        plt.plot(order.x, order.y / order.cont, 'k-', alpha=0.4)
-        plt.plot(order.x, result.best_fit[i], 'r-', alpha=0.5)
-    plt.show()
 
     """
-    #Perform the fit - Fit the RV and vsini to an initial guess model first
-    params = Parameters()
-    params.add('rv', value=rv.value, min=-50, max=50)
-    params.add('vsini', value=vsini.value, vary=True, min=0.0, max=500.0)
-    params.add('temperature', value=temperature, min=T_min, max=T_max, vary=False)
-    params.add('logg', value=logg, min=logg_min, max=logg_max, vary=False)
-    params.add('metal', value=metal, min=metal_min, max=metal_max, vary=False)
-    params.add('alpha', value=alpha, min=alpha_min, max=alpha_max, vary=False)
-    #result = minimize(ErrorFunction, params, args=(data, model_fcn))
-    result = minimize(ErrorFunction2, params, args=(orders, mg))
-    report_fit(params)
-
-    #plt.plot(orders[7].x, orders[7].cont, 'r--')
-    #plt.show()
-
-    #Now, fit the fundamental parameters
-    params['rv'].vary = False
-    params['vsini'].vary = True
-    params['temperature'].vary = True
-    params['logg'].vary = True
-    params['metal'].vary = True
-    params['alpha'].vary = True
-    fitter.make_params()
-    result = minimize(ErrorFunction, params, args=(orders, mg))
-
-    report_fit(params)
+    Here is the main loop over files!
     """
+    for filename in file_list:
+        print "Fitting parameters for {}".format(filename)
+        # Read the data
+        all_orders = HelperFunctions.ReadExtensionFits(filename)
+        orders = [o[1] for o in enumerate(all_orders) if o[0] in good_orders]
 
-    #Plot
-    fig1 = plt.figure(1)
-    ax1 = fig1.add_subplot(211)
-    ax2 = fig1.add_subplot(212, sharex=ax1)
-    model_orders = MakeModel(params, orders, mg)
-    for order, model in zip(orders, model_orders):
-        ratio = order.y / model
-        order.cont = FittingUtilities.Continuum(order.x, ratio, fitorder=5, lowreject=2, highreject=2)
-        ax1.plot(order.x, order.y / order.cont, 'k-')
-        ax1.plot(order.x, model, 'r-')
-        ax2.plot(order.x, ratio / order.cont)
-    plt.show()
+        # Perform the initial fit
+        optdict = {"epsfcn": 1e-2}
+        params = fitter.make_params()
+        result = fitter.fit(orders, fit_kws=optdict, params=params)
+
+        print(result.fit_report())
+        if debug:
+            for i, order in enumerate(orders):
+                m = result.best_fit[i]
+                ratio = order.y / m
+                order.cont = FittingUtilities.Continuum(order.x, ratio, lowreject=2, highreject=2, fitorder=5)
+                plt.plot(order.x, order.y / order.cont, 'k-', alpha=0.4)
+                plt.plot(order.x, result.best_fit[i], 'r-', alpha=0.5)
+            plt.show()
+
+
+        # Now, re-do the fit several times to get bootstrap error estimates
+        fitparams = {"rv": [],
+                     "vsini": [],
+                     "temperature": [],
+                     "logg": [],
+                     "metal": [],
+                     "alpha": []}
+        params = result.params
+        orders_original = [o.copy() for o in orders]
+        for n in range(N_iter):
+            print "Fitting iteration {:d}/{:d}".format(n + 1, N_iter)
+            orders = []
+            for order in orders_original:
+                o = order.copy()
+                o.y += np.random.normal(loc=0, scale=o.err)
+                orders.append(o.copy())
+            result = fitter.fit(orders, fit_kws=optdict, params=params)
+            if debug:
+                print "\n**********     Best values      ************"
+                for key in fitparams.keys():
+                    fitparams[key].append(result.best_values[key])
+                    print key, ': ', result.best_values[key]
+                print "\n\n"
+
+        # Save the fitted parameters
+        texlog = open(texfile, "a")
+        header = fits.getheader(filename)
+        date = header['date'].split("T")[0]
+        star = header['object']
+        texlog.write("{:s} & {:s}".format(star, date))
+        print "\n\nBest-fit parameters:\n================================="
+        for key in fitparams.keys():
+            low, med, up = np.percentile(fitparams[key], [16, 50, 84])
+            up_err = up - med
+            low_err = med - low
+            # Get significant digits
+            dist = max(-int(floor(np.log10(up_err))), -int(floor(np.log10(low_err))))
+            med = round(med, dist)
+            up_err = round(up_err, dist + 1)
+            low_err = round(low_err, dist + 1)
+            print "{:s} = {:g} + {:g} / - {:g}".format(key, med, up_err, low_err)
+            texlog.write(" & $%g^{+ %g}_{- %g$}" % (med, up_err, low_err))
+        texlog.write(" \\\\ \n")
+
+        # Save the full results in a directory labeled by the star name and date
+        HelperFunctions.ensure_dir("{:s}{:s}".format(output_dir, star.replace(" ", "_")))
+        HelperFunctions.ensure_dir("{:s}{:s}/{:s}".format(output_dir, star.replace(" ", "_"), date))
+        chain = np.vstack([fitparams[key] for key in fitparams.keys()]).T
+        print "Outputting chain to {:s}{:s}/{:s}/chain.dat".format(output_dir, star.replace(" ", "_"), date)
+        np.savetxt("{:s}{:s}/{:s}/chain.dat".format(output_dir, star.replace(" ", "_"), date), chain)
+        fig, axes = plt.subplots(len(fitparams), len(fitparams), figsize=(10, 10))
+        labeldict = {'rv': '$ \\rm rv$ $ \\rm (km \\cdot s^{-1}$)',
+                     'vsini': '$ \\rm v \sin{i}$ $ \\rm (km s^{-1}$)',
+                     'temperature': '$ \\rm T_{\\rm eff}$ $\\rm (K)$',
+                     'logg': '$\log{g}$',
+                     'metal': '$\\rm [Fe/H]$',
+                     'alpha': '$\\rm [\\alpha/Fe]$'}
+        names = [labeldict[key] for key in fitparams.keys()]
+        triangle.corner(chain, labels=names, fig=fig)
+        plt.savefig("{:s}{:s}/{:s}/corner_plot.pdf".format(output_dir, star.replace(" ", "_"), date))
+        plt.show()
+
+        print "Done with file {:s}\n\n\n".format(filename)
+
+
+
+
+
 
