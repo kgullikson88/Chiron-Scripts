@@ -235,6 +235,7 @@ if __name__ == "__main__":
                      "alpha": np.zeros(N_iter)}
         params = result.params
         orders_original = [o.copy() for o in orders]
+        chainfile = open("chain_temp.dat", "w")
         for n in range(N_iter):
             print "Fitting iteration {:d}/{:d}".format(n + 1, N_iter)
             orders = []
@@ -247,9 +248,12 @@ if __name__ == "__main__":
                 print "\n**********     Best values      ************"
             for key in fitparams.keys():
                 fitparams[key][n] = result.best_values[key]
+                chainfile.write("{:g}\t".format(result.best_values[key]))
                 if debug:
                     print key, ': ', result.best_values[key]
             print "\n\n"
+            chainfile.write("\n")
+        chainfile.close()
 
         # Correct the velocity for barycentric motion
         header = fits.getheader(filename)
