@@ -281,11 +281,14 @@ if __name__ == "__main__":
         texlog.write(" \\\\ \n")
 
         # Save the full results in a directory labeled by the star name and date
-        HelperFunctions.ensure_dir("{:s}{:s}".format(output_dir, star.replace(" ", "_")))
-        HelperFunctions.ensure_dir("{:s}{:s}/{:s}".format(output_dir, star.replace(" ", "_"), date))
+        stardir = "{:s}{:s}/".format(output_dir, star.replace(" ", "_"))
+        HelperFunctions.ensure_dir(stardir)
+        datedir = "{:s}{:s}/".format(stardir, date)
+        HelperFunctions.ensure_dir(datedir)
+        chain_filename = "{:s}chain.dat".format(datedir)
         chain = np.vstack([fitparams[key] for key in fitparams.keys()]).T
-        print "Outputting chain to {:s}{:s}/{:s}/chain.dat".format(output_dir, star.replace(" ", "_"), date)
-        np.savetxt("{:s}{:s}/{:s}/chain.dat".format(output_dir, star.replace(" ", "_"), date), chain)
+        print "Outputting chain to {:s}".format(chain_filename)
+        np.savetxt(chain_filename, chain)
         fig, axes = plt.subplots(len(fitparams), len(fitparams), figsize=(10, 10))
         labeldict = {'rv': '$ \\rm rv$ $ \\rm (km \\cdot s^{-1}$)',
                      'vsini': '$ \\rm v \sin{i}$ $ \\rm (km s^{-1}$)',
@@ -295,8 +298,8 @@ if __name__ == "__main__":
                      'alpha': '$\\rm [\\alpha/Fe]$'}
         names = [labeldict[key] for key in fitparams.keys()]
         triangle.corner(chain, labels=names, fig=fig)
-        plt.savefig("{:s}{:s}/{:s}/corner_plot.pdf".format(output_dir, star.replace(" ", "_"), date))
-        plt.show()
+        plt.savefig("{:s}corner_plot.pdf".format(datedir))
+        # plt.show()
 
         print "Done with file {:s}\n\n\n".format(filename)
 
