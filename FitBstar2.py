@@ -106,7 +106,7 @@ if __name__ == "__main__":
     T_min = 9000
     T_max = 9250
     metal_min = -0.8
-    metal_max = 0.5
+    metal_max = 0.2
     logg_min = 3.0
     logg_max = 4.5
     alpha_min = 0.0
