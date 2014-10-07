@@ -15,6 +15,7 @@ from astropy.io import fits
 from math import floor
 import GenericSearch
 
+
 # ########################################################################
 # ########################################################################
 
@@ -96,7 +97,7 @@ def LM_Model(x, vsini, rv, temperature, logg, metal, alpha, model_getter=None):
     return modelfcn(x * (1.0 - rv / c))
 
 
-if __name__ == "__main__":
+def Fit(arguments, mg=None):
     # Define some constants
     c = constants.c
     good_orders = range(41)
@@ -108,7 +109,7 @@ if __name__ == "__main__":
     metal_min = -0.8
     metal_max = 0.2
     logg_min = 3.0
-    logg_max = 4.5
+    logg_max = 5.0
     alpha_min = 0.0
     alpha_max = 0.4
     modeldir = "models/"
@@ -121,47 +122,47 @@ if __name__ == "__main__":
     debug = False
     N_iter = 100
 
-    for arg in sys.argv[1:]:
-        if "temp" in arg.lower():
+    for arg in arguments:
+        if "-temp" in arg.lower():
             r = arg.partition("=")[-1]
             values = r.partition(",")
             T_min = float(values[0])
             T_max = float(values[-1])
-        elif "metal" in arg.lower():
+        elif "-metal" in arg.lower():
             r = arg.partition("=")[-1]
             values = r.partition(",")
             metal_min = float(values[0])
             metal_max = float(values[-1])
-        elif "logg" in arg.lower():
+        elif "-logg" in arg.lower():
             r = arg.partition("=")[-1]
             values = r.partition(",")
             logg_min = float(values[0])
             logg_max = float(values[-1])
-        elif "alpha" in arg.lower():
+        elif "-alpha" in arg.lower():
             r = arg.partition("=")[-1]
             values = r.partition(",")
             alpha_min = float(values[0])
             alpha_max = float(values[-1])
-        elif "model" in arg.lower():
+        elif "-model" in arg.lower():
             modeldir = arg.partition("=")[-1]
             if not modeldir.endswith("/"):
                 modeldir += "/"
-        elif "rv" in arg.lower():
+        elif "-rv" in arg.lower():
             rv = float(arg.partition("=")[-1]) * u.km / u.s
-        elif "vsini" in arg.lower():
+        elif "-vsini" in arg.lower():
             vsini = float(arg.partition("=")[-1]) * u.km / u.s
-        elif "resolution" in arg.lower():
+        elif "-resolution" in arg.lower():
             R = float(arg.partition("=")[-1])
-        elif "outdir" in arg.lower():
+        elif "-outdir" in arg.lower():
             output_dir = arg.partition("=")[-1]
             if not output_dir.endswith("/"):
                 output_dir += "/"
-        elif "texfile" in arg.lower():
+        elif "-texfile" in arg.lower():
             texfile = arg.partition("=")[-1]
-        elif "debug" in arg.lower():
+        elif "-debug" in arg.lower():
             debug = True
             print "Debug mode ON"
-        elif "iteration" in arg.lower():
+        elif "-iteration" in arg.lower():
             N_iter = int(arg.partition("=")[-1])
         else:
             file_list.append(arg)
@@ -179,16 +180,17 @@ if __name__ == "__main__":
     alpha = (alpha_min + alpha_max) / 2.0
 
     #Make an instance of the model getter
-    mg = StellarModel.KuruczGetter(modeldir,
-                                   T_min=T_min,
-                                   T_max=T_max,
-                                   logg_min=logg_min,
-                                   logg_max=logg_max,
-                                   metal_min=metal_min,
-                                   metal_max=metal_max,
-                                   alpha_min=alpha_min,
-                                   alpha_max=alpha_max,
-                                   wavemin=350.0)
+    if mg is None:
+        mg = StellarModel.KuruczGetter(modeldir,
+                                       T_min=T_min,
+                                       T_max=T_max,
+                                       logg_min=logg_min,
+                                       logg_max=logg_max,
+                                       metal_min=metal_min,
+                                       metal_max=metal_max,
+                                       alpha_min=alpha_min,
+                                       alpha_max=alpha_max,
+                                       wavemin=350.0)
 
     # Make the appropriate lmfit model
     fitter = HelperFunctions.ListModel(LM_Model, independent_vars=['x'], model_getter=mg)
@@ -233,7 +235,7 @@ if __name__ == "__main__":
                      "logg": np.zeros(N_iter),
                      "metal": np.zeros(N_iter),
                      "alpha": np.zeros(N_iter)}
-        params = result.params
+        # params = result.params
         orders_original = [o.copy() for o in orders]
         chainfile = open("chain_temp.dat", "w")
         for n in range(N_iter):
@@ -304,7 +306,5 @@ if __name__ == "__main__":
         print "Done with file {:s}\n\n\n".format(filename)
 
 
-
-
-
-
+if __name__ == "__main__":
+    Fit(sys.argv[1:])
