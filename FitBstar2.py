@@ -1,19 +1,19 @@
 import sys
 import FittingUtilities
+import numpy as np
+import os
+from math import floor
 
 from scipy.interpolate import InterpolatedUnivariateSpline as spline
-import numpy as np
 import matplotlib.pyplot as plt
 from astropy import units as u, constants
-
 import HelperFunctions
 import Broaden
 import StellarModel
 import triangle
-import os
 from astropy.io import fits
-from math import floor
 import GenericSearch
+
 
 
 # ########################################################################
@@ -207,37 +207,32 @@ def Fit(arguments, mg=None):
     Here is the main loop over files!
     """
     for filename in file_list:
-        print "Fitting parameters for {}".format(filename)
+        # Make output directories
+        header = fits.getheader(filename)
+        date = header['date'].split("T")[0]
+        star = header['object']
+        stardir = "{:s}{:s}/".format(output_dir, star.replace(" ", "_"))
+        HelperFunctions.ensure_dir(stardir)
+        datedir = "{:s}{:s}/".format(stardir, date)
+        HelperFunctions.ensure_dir(datedir)
+        chain_filename = "{:s}chain.dat".format(datedir)
+
         # Read the data
+        print "Fitting parameters for {}".format(filename)
         all_orders = HelperFunctions.ReadExtensionFits(filename)
         orders = [o[1] for o in enumerate(all_orders) if o[0] in good_orders]
 
-        # Perform the initial fit
+        # Perform the fit
         optdict = {"epsfcn": 1e-2}
         params = fitter.make_params()
-        result = fitter.fit(orders, fit_kws=optdict, params=params)
-
-        print(result.fit_report())
-        if debug:
-            for i, order in enumerate(orders):
-                m = result.best_fit[i]
-                ratio = order.y / m
-                order.cont = FittingUtilities.Continuum(order.x, ratio, lowreject=2, highreject=2, fitorder=5)
-                plt.plot(order.x, order.y / order.cont, 'k-', alpha=0.4)
-                plt.plot(order.x, result.best_fit[i], 'r-', alpha=0.5)
-            plt.show()
-
-
-        # Now, re-do the fit several times to get bootstrap error estimates
         fitparams = {"rv": np.zeros(N_iter),
                      "vsini": np.zeros(N_iter),
                      "temperature": np.zeros(N_iter),
                      "logg": np.zeros(N_iter),
                      "metal": np.zeros(N_iter),
                      "alpha": np.zeros(N_iter)}
-        # params = result.params
         orders_original = [o.copy() for o in orders]
-        chainfile = open("chain_temp.dat", "w")
+        chainfile = open(chain_filename, "w")
         for n in range(N_iter):
             print "Fitting iteration {:d}/{:d}".format(n + 1, N_iter)
             orders = []
@@ -258,15 +253,11 @@ def Fit(arguments, mg=None):
         chainfile.close()
 
         # Correct the velocity for barycentric motion
-        header = fits.getheader(filename)
         vbary = GenericSearch.HelCorr(header, observatory="CTIO")
         fitparams['rv'] += vbary
 
         # Save the fitted parameters
         texlog = open(texfile, "a")
-        header = fits.getheader(filename)
-        date = header['date'].split("T")[0]
-        star = header['object']
         texlog.write("{:s} & {:s}".format(star, date))
         print "\n\nBest-fit parameters:\n================================="
         for key in fitparams.keys():
@@ -282,15 +273,8 @@ def Fit(arguments, mg=None):
             texlog.write(" & $%g^{+ %g}_{- %g$}" % (med, up_err, low_err))
         texlog.write(" \\\\ \n")
 
-        # Save the full results in a directory labeled by the star name and date
-        stardir = "{:s}{:s}/".format(output_dir, star.replace(" ", "_"))
-        HelperFunctions.ensure_dir(stardir)
-        datedir = "{:s}{:s}/".format(stardir, date)
-        HelperFunctions.ensure_dir(datedir)
-        chain_filename = "{:s}chain.dat".format(datedir)
+        # Save a corner plot of the fitted results
         chain = np.vstack([fitparams[key] for key in fitparams.keys()]).T
-        print "Outputting chain to {:s}".format(chain_filename)
-        np.savetxt(chain_filename, chain)
         fig, axes = plt.subplots(len(fitparams), len(fitparams), figsize=(10, 10))
         labeldict = {'rv': '$ \\rm rv$ $ \\rm (km \\cdot s^{-1}$)',
                      'vsini': '$ \\rm v \sin{i}$ $ \\rm (km s^{-1}$)',
@@ -301,7 +285,6 @@ def Fit(arguments, mg=None):
         names = [labeldict[key] for key in fitparams.keys()]
         triangle.corner(chain, labels=names, fig=fig)
         plt.savefig("{:s}corner_plot.pdf".format(datedir))
-        # plt.show()
 
         print "Done with file {:s}\n\n\n".format(filename)
 
