@@ -15,82 +15,18 @@ from astropy.io import fits
 import GenericSearch
 
 
-
-# ########################################################################
-# ########################################################################
-
-
-def ErrorFunction2(params, data, model_getter):
-    model_orders = MakeModel(params, data, model_getter)
-    loglikelihood = []
-    N = 0.0
-    for i, (o, m) in enumerate(zip(data, model_orders)):
-        ratio = o.y / m
-        cont = FittingUtilities.Continuum(o.x, ratio, fitorder=5, lowreject=2, highreject=2)
-        # cont = np.poly1d(np.polyfit(o.x, ratio, 5))(o.x)
-        #cont = o.cont
-        loglikelihood.append((o.y - cont * m) / o.err)
-        N += o.size()
-        data[i].cont = cont
-    loglikelihood = np.hstack(loglikelihood)
-    print "RV = {:g}, vsini = {:g} --> X^2 = {:g}".format(params['rv'].value, params['vsini'].value,
-                                                          np.sum(loglikelihood ** 2) / N)
-    return loglikelihood
-
-
-def ErrorFunction(params, data, model_getter):
-    model_orders = MakeModel(params, data, model_getter)
-    loglikelihood = []
-    N = 0.0
-    for i, (o, m) in enumerate(zip(data, model_orders)):
-        ratio = o.y / m
-        cont = FittingUtilities.Continuum(o.x, ratio, fitorder=5, lowreject=2, highreject=2)
-        #cont = np.poly1d(np.polyfit(o.x, ratio, 5))(o.x)
-
-        loglikelihood.append((o.y - o.cont * m) / o.err)
-        N += o.size()
-    loglikelihood = np.hstack(loglikelihood)
-    for key in params.keys():
-        print "{:s} = {:.10f}".format(key, params[key].value)
-    print "X^2 = {:g}\n\n".format(np.sum(loglikelihood ** 2) / N)
-    #print "RV = {:g}, vsini = {:g} --> X^2 = {:g}".format(params['rv'].value, params['vsini'].value, np.sum(loglikelihood**2)/N)
-    return loglikelihood
-
-
-def MakeModel(pars, data, model_getter):
-    vsini = pars['vsini'].value * u.km.to(u.cm)
-    rv = pars['rv'].value
-    T = pars['temperature'].value
-    logg = pars['logg'].value
-    metal = pars['metal'].value
-    alpha = pars['alpha'].value
-
-    c = constants.c.cgs.to(u.km / u.s).value
-
-    #Get the model from the ModelGetter instance
-    model = model_getter(T, logg, metal, alpha)
-
-    # Next, broaden the model
-    broadened = Broaden.RotBroad(model, vsini, linear=True)
-    modelfcn = spline(broadened.x, broadened.y)
-    model_orders = []
-    print rv /c
-    for order in data:
-        model_orders.append(modelfcn(order.x * (1 - rv / c)))
-    return model_orders
-
-
-def LM_Model(x, vsini, rv, temperature, logg, metal, alpha, model_getter=None):
+def LM_Model(x, vsini, rv, temperature, logg, metal, alpha, model_getter=None, **mgargs):
     if model_getter is None:
         raise KeyError("Must give model_getter keyword!")
     c = constants.c.cgs.to(u.km / u.s).value
-    vsini *= u.km.to(u.cm)
+    # vsini *= u.km.to(u.cm)
 
     # Get the model from the ModelGetter instance
-    model = model_getter(temperature, logg, metal, alpha)
+    mgargs['vsini'] = vsini
+    broadened = model_getter(temperature, logg, metal, alpha, **mgargs)
 
     # Next, broaden the model
-    broadened = Broaden.RotBroad(model, vsini, linear=True)
+    #broadened = Broaden.RotBroad(model, vsini, linear=True)
 
     # Finally, interpolate to the x values
     modelfcn = spline(broadened.x, broadened.y)
@@ -239,6 +175,7 @@ def Fit(arguments, mg=None):
                      "alpha": np.zeros(N_iter)}
         orders_original = [o.copy() for o in orders]
         chainfile = open(chain_filename, "w")
+        vbary = GenericSearch.HelCorr(header, observatory="CTIO")
         for n in range(N_iter):
             print "Fitting iteration {:d}/{:d}".format(n + 1, N_iter)
             orders = []
@@ -246,7 +183,14 @@ def Fit(arguments, mg=None):
                 o = order.copy()
                 o.y += np.random.normal(loc=0, scale=o.err)
                 orders.append(o.copy())
-            result = fitter.fit(orders, fit_kws=optdict, params=params)
+
+            # Make a fast interpolator instance if not the first loop
+            if n > 0:
+                fast_interpolator = mg.make_vsini_interpolator()
+                result = fitter.fit(orders, fit_kws=optdict, params=params, first_interpolator=fast_interpolator)
+            else:
+                result = fitter.fit(orders, fit_kws=optdict, params=params)
+            result.best_values['rv'] += vbary
             if debug:
                 print "\n**********     Best values      ************"
             for key in fitparams.keys():
@@ -257,10 +201,6 @@ def Fit(arguments, mg=None):
             print "\n\n"
             chainfile.write("\n")
         chainfile.close()
-
-        # Correct the velocity for barycentric motion
-        vbary = GenericSearch.HelCorr(header, observatory="CTIO")
-        fitparams['rv'] += vbary
 
         # Save the fitted parameters
         texlog = open(texfile, "a")
