@@ -145,7 +145,13 @@ def Fit(arguments, mg=None):
             alpha_max = float(values[-1])
         elif "-model" in arg.lower():
             modeldir = arg.partition("=")[-1]
-            if not modeldir.endswith("/"):
+            if "," in modeldir:
+                #More than one directory is given
+                modeldir = modeldir.split(",")
+                for m in modeldir:
+                    if not m.endswith("/"):
+                        m += "/"
+            elif not modeldir.endswith("/"):
                 modeldir += "/"
         elif "-rv" in arg.lower():
             rv = float(arg.partition("=")[-1]) * u.km / u.s
