@@ -202,7 +202,11 @@ def Fit(arguments, mg=None):
         texlog = open(texfile, "a")
         texlog.write("{:s} & {:s}".format(star, date))
         print "\n\nBest-fit parameters:\n================================="
-        for key in ['rv', 'temperature', 'metal', 'vsini', 'logg', 'alpha']:
+        if mg.alpha_varies:
+            keys = ['rv', 'temperature', 'metal', 'vsini', 'logg', 'alpha']
+        else:
+            keys = ['rv', 'temperature', 'metal', 'vsini', 'logg']
+        for key in keys:
             low, med, up = np.percentile(fitparams[key], [16, 50, 84])
             up_err = up - med
             low_err = med - low
@@ -213,6 +217,8 @@ def Fit(arguments, mg=None):
             low_err = round(low_err, dist + 1)
             print "{:s} = {:g} + {:g} / - {:g}".format(key, med, up_err, low_err)
             texlog.write(" & $%g^{+ %g}_{- %g}$" % (med, up_err, low_err))
+        if not mg.alpha_varies:
+            texlog.write(" & $0.0^{+0.0}_{-0.0}$")
         texlog.write(" \\\\ \n")
 
         # Save a corner plot of the fitted results
