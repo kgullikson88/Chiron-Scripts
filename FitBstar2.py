@@ -269,7 +269,7 @@ def Fit(arguments, mg=None):
         star = header['object']
         texlog.write("{:s} & {:s}".format(star, date))
         print "\n\nBest-fit parameters:\n================================="
-        for key in fitparams.keys():
+        for key in ['rv', 'temperature', 'metal', 'vsini', 'logg', 'alpha']:
             low, med, up = np.percentile(fitparams[key], [16, 50, 84])
             up_err = up - med
             low_err = med - low
@@ -279,7 +279,7 @@ def Fit(arguments, mg=None):
             up_err = round(up_err, dist + 1)
             low_err = round(low_err, dist + 1)
             print "{:s} = {:g} + {:g} / - {:g}".format(key, med, up_err, low_err)
-            texlog.write(" & $%g^{+ %g}_{- %g$}" % (med, up_err, low_err))
+            texlog.write(" & $%g^{+ %g}_{- %g}$" % (med, up_err, low_err))
         texlog.write(" \\\\ \n")
 
         # Save the full results in a directory labeled by the star name and date
