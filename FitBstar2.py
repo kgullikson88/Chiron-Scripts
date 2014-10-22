@@ -201,7 +201,7 @@ def Fit(arguments, mg=None):
     fitter.set_param_hint('temperature', value=temperature, min=T_min, max=T_max, vary=True)
     fitter.set_param_hint('logg', value=logg, min=logg_min, max=logg_max, vary=True)
     fitter.set_param_hint('metal', value=metal, min=metal_min, max=metal_max, vary=True)
-    fitter.set_param_hint('alpha', value=alpha, min=alpha_min, max=alpha_max, vary=True)
+    fitter.set_param_hint('alpha', value=0.0, min=alpha_min, max=alpha_max, vary=mg.alpha_varies)
 
     """
     Here is the main loop over files!
