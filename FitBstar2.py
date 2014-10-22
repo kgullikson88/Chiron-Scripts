@@ -175,7 +175,7 @@ def Fit(arguments, mg=None):
                      "alpha": np.zeros(N_iter)}
         orders_original = [o.copy() for o in orders]
         chainfile = open(chain_filename, "w")
-        vbary = GenericSearch.HelCorr(header, observatory="CTIO")
+        vbary = GenericSearch.HelCorr_IRAF(header, observatory="CTIO")
         for n in range(N_iter):
             print "Fitting iteration {:d}/{:d}".format(n + 1, N_iter)
             orders = []
