@@ -185,11 +185,7 @@ def Fit(arguments, mg=None):
                 orders.append(o.copy())
 
             # Make a fast interpolator instance if not the first loop
-            if n > 0:
-                fast_interpolator = mg.make_vsini_interpolator()
-                result = fitter.fit(orders, fit_kws=optdict, params=params, first_interpolator=fast_interpolator)
-            else:
-                result = fitter.fit(orders, fit_kws=optdict, params=params)
+            result = fitter.fit(orders, fit_kws=optdict, params=params)
             result.best_values['rv'] += vbary
             if debug:
                 print "\n**********     Best values      ************"
