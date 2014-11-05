@@ -151,7 +151,7 @@ def Fit(arguments, mg=None):
     for filename in file_list:
         # Make output directories
         header = fits.getheader(filename)
-        date = header['date'].split("T")[0]
+        date = header['date-obs'].split("T")[0]
         star = header['object']
         stardir = "{:s}{:s}/".format(output_dir, star.replace(" ", "_"))
         HelperFunctions.ensure_dir(stardir)
@@ -174,8 +174,8 @@ def Fit(arguments, mg=None):
                      "metal": np.zeros(N_iter),
                      "alpha": np.zeros(N_iter)}
         orders_original = [o.copy() for o in orders]
-        chainfile = open(chain_filename, "w")
-        vbary = GenericSearch.HelCorr_IRAF(header, observatory="CTIO")
+        chainfile = open(chain_filename, "a")
+        vbary = GenericSearch.HelCorr(header, observatory="CTIO")
         for n in range(N_iter):
             print "Fitting iteration {:d}/{:d}".format(n + 1, N_iter)
             orders = []
@@ -185,6 +185,11 @@ def Fit(arguments, mg=None):
                 orders.append(o.copy())
 
             # Make a fast interpolator instance if not the first loop
+            #if n > 0:
+            #    fast_interpolator = mg.make_vsini_interpolator()
+            #    result = fitter.fit(orders, fit_kws=optdict, params=params, first_interpolator=fast_interpolator)
+            #else:
+            #    result = fitter.fit(orders, fit_kws=optdict, params=params)
             result = fitter.fit(orders, fit_kws=optdict, params=params)
             result.best_values['rv'] += vbary
             if debug:
