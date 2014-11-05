@@ -231,8 +231,11 @@ def Fit(arguments, mg=None):
                      'metal': '$\\rm [Fe/H]$',
                      'alpha': '$\\rm [\\alpha/Fe]$'}
         names = [labeldict[key] for key in fitparams.keys()]
-        triangle.corner(chain, labels=names, fig=fig)
-        plt.savefig("{:s}corner_plot.pdf".format(datedir))
+        try: 
+           triangle.corner(chain, labels=names, fig=fig)
+           plt.savefig("{:s}corner_plot.pdf".format(datedir))
+        except AttributeError:
+           print "Could not save the corner plot!"
 
         print "Done with file {:s}\n\n\n".format(filename)
 
