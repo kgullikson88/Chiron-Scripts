@@ -7,13 +7,23 @@ import GenericSearch
 badregions = [[0, 466],
               [587.5, 593],
               [627, 634.5],
-              [655, 657],  # H alpha
-              [485, 487],  #H beta
+              #[655, 657],  # H alpha
+              #[485, 487],  #H beta
               [686, 706],
               [716, 742],
               [749.1, 749.45],
               [759, 770],
               [780, 9e9]]
+
+
+if "darwin" in sys.platform:
+    modeldir = "/Volumes/DATADRIVE/Stellar_Models/Sorted/Stellar/Vband/"
+elif "linux" in sys.platform:
+    modeldir = "/media/FreeAgent_Drive/SyntheticSpectra/Sorted/Stellar/Vband/"
+else:
+    modeldir = raw_input("sys.platform not recognized. Please enter model directory below: ")
+    if not modeldir.endswith("/"):
+        modeldir = modeldir + "/"
 
 if __name__ == "__main__":
     # Parse command line arguments:
@@ -30,8 +40,16 @@ if __name__ == "__main__":
             fileList.append(arg)
 
     GenericSearch.CompanionSearch(fileList, 
-	                          extensions=extensions, 
-				  resolution=80000.0, 
-				  trimsize=trimsize, 
-				  modeldir='/media/FreeAgent_Drive/SyntheticSpectra/Sorted/Stellar/Vband/')
+                                  extensions=extensions,
+                                  resolution=80000.0,
+                                  trimsize=trimsize,
+                                  modeldir=modeldir,
+                                  badregions=badregions,
+                                  Tvalues=[4000,],
+                                  logg_values=[4.5,],
+                                  vsini_values=[10.0,],
+                                  metal_values=[0.0],
+                                  vbary_correct=False,
+                                  debug=True,
+                                  addmode='weighted')
 
