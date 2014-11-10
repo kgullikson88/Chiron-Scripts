@@ -45,11 +45,6 @@ if __name__ == "__main__":
                                   trimsize=trimsize,
                                   modeldir=modeldir,
                                   badregions=badregions,
-                                  Tvalues=[4000,],
-                                  logg_values=[4.5,],
-                                  vsini_values=[10.0,],
-                                  metal_values=[0.0],
-                                  vbary_correct=False,
-                                  debug=True,
+                                  vsini_values=(1, 10, 20, 30, 40),
                                   addmode='weighted')
 
