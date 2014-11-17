@@ -47,4 +47,3 @@ if __name__ == "__main__":
                                   badregions=badregions,
                                   vsini_values=(1, 10, 20, 30, 40),
                                   addmode='weighted')
-
