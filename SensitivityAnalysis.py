@@ -2,8 +2,8 @@ import os
 import sys
 
 from astropy import units
-import Sensitivity
 
+import Sensitivity
 import Search_Fast
 
 
@@ -19,7 +19,7 @@ else:
 
 if __name__ == "__main__":
     # Parse command-line arguments
-    vsini_secondary = 20 * units.km.to(units.cm)
+    vsini_secondary = 10 * units.km.to(units.cm)
     resolution = 80000
     smooth_factor = 0.8
     vel_list = range(-400, 400, 50)
@@ -57,4 +57,5 @@ if __name__ == "__main__":
                         vsini_file=vsini_file,
                         vsini_idx=vsini_idx,
                         vsini_skip=vsini_skip,
-                        vsini_secondary=vsini_secondary)
+                        vsini_secondary=vsini_secondary,
+                        addmode="weighted")
