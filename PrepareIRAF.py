@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     # Make a list of the science data, checking some information in the header
     allscience = [f for f in os.listdir(datadir) if f.startswith("chi")]
-    #allfile = open("inlist", "w")
+    # allfile = open("inlist", "w")
     #outfile = open("science.list", "w")
     print "Science data:"
     fname = allscience[0]
@@ -125,7 +125,7 @@ if __name__ == "__main__":
     subprocess.check_call(["scp", "-r", outdir, "kgulliks@kepler:~/"])
 
     #tar.gz the useful files
-    archive_dir = "/Volumes/DATADRIVE/CHIRON_data/Adam_Data/%s/" % date
+    archive_dir = "/Volumes/DATADRIVE/CHIRON_data/%s/" % date
     subprocess.check_call(["tar", "czvf", "%s%s.tar.gz" % (archive_dir, outdir), outdir])
 
     #Remove the unnecessary files
