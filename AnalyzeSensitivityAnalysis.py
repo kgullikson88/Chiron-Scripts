@@ -271,13 +271,14 @@ def MakePlot(infilename):
                 elif "Magnitude" in yaxis:
                     ax = plt.gca()
                     ax.set_ylim(ax.get_ylim()[::-1])
-            plt.legend(loc='best')
-            plt.xlabel(labeldict[xaxis])
-            plt.ylabel(labeldict[yaxis])
+            leg = plt.legend(loc='best', fancybox=True)
+            leg.get_frame().set_alpha(0.4)
+	    plt.xlabel(labeldict[xaxis], fontsize=15)
+            plt.ylabel(labeldict[yaxis], fontsize=15)
             if "DetectionRate" in yaxis:
                 ax = plt.gca()
                 ax.set_ylim([-0.05, 1.05])
-            plt.title("Sensitivity Analysis")
+            #plt.title("Sensitivity Analysis")
 
     plt.grid(True)
     plt.show()
