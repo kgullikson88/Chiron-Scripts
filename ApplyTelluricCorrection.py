@@ -6,12 +6,13 @@ import FittingUtilities
 from astropy.io import fits as pyfits
 import matplotlib.pyplot as plt
 import numpy as np
-
 import DataStructures
+
 import HelperFunctions
 
 
-plot = False
+
+# plot = True
 
 
 def ReadCorrectedFile(fname, yaxis="model"):
@@ -31,7 +32,7 @@ def ReadCorrectedFile(fname, yaxis="model"):
     return orders, headers
 
 
-def Correct(original, corrected, offset=None, get_primary=False):
+def Correct(original, corrected, offset=None, get_primary=False, plot=False):
     # Read in the data and model
     original_orders = HelperFunctions.ReadFits(original, extensions=True, x="wavelength", y="flux", errors="error",
                                                cont="continuum")
@@ -102,17 +103,22 @@ def Correct(original, corrected, offset=None, get_primary=False):
 
 def main1():
     primary = False
+    plot = False
     if len(sys.argv) > 2:
         original = sys.argv[1]
         corrected = sys.argv[2]
         # plot = True
-        if len(sys.argv) > 3 and "prim" in sys.argv[3]:
-            primary = True
+        if len(sys.argv) > 3:
+            if "prim" in sys.argv[3]:
+                primary = True
+            elif "plot" in sys.argv[3]:
+                plot = True
+
 
         outfilename = "%s_telluric_corrected.fits" % (original.split(".fits")[0])
         print "Outputting to %s" % outfilename
 
-        corrected_orders = Correct(original, corrected, offset=None, get_primary=primary)
+        corrected_orders = Correct(original, corrected, offset=None, get_primary=primary, plot=plot)
 
         column_list = []
         if plot:
@@ -155,7 +161,7 @@ def main1():
             outfilename = "%s_telluric_corrected.fits" % (original.split(".fits")[0])
             print "Outputting to %s" % outfilename
 
-            corrected_orders = Correct(original, corrected, offset=None)
+            corrected_orders = Correct(original, corrected, offset=None, plot=plot)
 
             column_list = []
             if plot:
