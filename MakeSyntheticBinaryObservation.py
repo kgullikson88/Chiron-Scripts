@@ -25,7 +25,6 @@ import astropy.units as u
 import HelperFunctions
 import SpectralTypeRelations
 import pySIMBAD
-import ConvertToExtensions
 from PlotBlackbodies import Planck
 
 
@@ -72,18 +71,10 @@ def combine(early_filename, late_filename, increase_scale=False):
     T2 = MS.Interpolate(MS.Temperature, late_dict['SpT'])
     R2 = MS.Interpolate(MS.Radius, late_dict['SpT'])
 
-    # Get the blazefile for my data
-    header = fits.getheader(early_filename)
-    try:
-        blazefile = "Blazefiles/{}.fits".format(header['BLAZE'])
-    except KeyError:
-        allfiles = os.listdir("Blazefiles")
-        blazefile = ["Blazefiles/{}".format(f) for f in allfiles if "BLAZE" in f][0]
-
     # Read in the orders for both files
     # early_orders = ConvertToExtensions.read_orders(early_filename, blazefile)
     early_orders = HelperFunctions.ReadExtensionFits(early_filename)
-    late_orders = ConvertToExtensions.read_orders(late_filename)
+    late_orders = HelperFunctions.ReadExtensionFits(late_filename)
 
     # Before combining, we need to adjust the scale factor for atmospheric effects (clouds, poor seeing, etc)
     scale_adjust = []
