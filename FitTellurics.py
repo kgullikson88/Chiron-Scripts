@@ -1,18 +1,13 @@
 import sys
 import os
-from scipy.interpolate import InterpolatedUnivariateSpline as interp
+import FittingUtilities
 
 import numpy as np
-import matplotlib.pyplot as plt
 from astropy.io import fits as pyfits
-from astropy import units, constants
 import TelluricFitter
 import DataStructures
 from astropy import units, constants
-import FittingUtilities
-import MakeModel
 
-import Units
 import HelperFunctions
 import GetAtmosphere
 
@@ -40,22 +35,6 @@ namedict = {"pressure": ["PRESFIT", "PRESVAL", "Pressure"],
             "no2": ["NO2FIT", "NO2VAL", "NO2 abundance"],
             "nh3": ["NH3FIT", "NH3VAL", "NH3 abundance"],
             "hno3": ["HNO3FIT", "HNO3VAL", "HNO3 abundance"]}
-
-
-def FindOrderNums(orders, wavelengths):
-    """
-      Given a list of xypoint orders and
-      another list of wavelengths, this
-      finds the order numbers with the
-      requested wavelengths
-    """
-    nums = []
-    for wave in wavelengths:
-        for i, order in enumerate(orders):
-            if order.x[0] < wave and order.x[-1] > wave:
-                nums.append(i)
-                break
-    return nums
 
 
 if __name__ == "__main__":
@@ -137,7 +116,7 @@ if __name__ == "__main__":
         chisquared = []
         #for i in [27, 28, 36, 37]:
         #for i in [42, 45, 46, 47]:
-        for i in FindOrderNums(orders, [595, 650, 717, 726]):
+        for i in HelperFunctions.FindOrderNums(orders, [595, 650, 717, 726]):
             print "\n***************************\nFitting order %i: " % (i)
             order = orders[i]
             fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
@@ -176,7 +155,7 @@ if __name__ == "__main__":
         # Now, determine the O2 abundance
         fitter.FitVariable({"o2": 2.12e5})
         #for i in [33, 41]:
-        for i in FindOrderNums(orders, [630, 690]):
+        for i in HelperFunctions.FindOrderNums(orders, [630, 690]):
             order = orders[i]
             fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
                                 "waveend": order.x[-1] + 20.0})
