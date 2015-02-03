@@ -84,11 +84,13 @@ def MedianAdd(fileList, outfilename="Total.fits"):
 def Add(fileList, outfilename=None):
     all_data = []
     numorders = []
+    exptime = 0.0
     for fname in fileList:
         observation = HelperFunctions.ReadFits(fname, extensions=True, x="wavelength", y="flux", cont="continuum",
                                                errors="error")
         all_data.append(observation)
         numorders.append(len(observation))
+        exptime += pyfits.getheader(fname)['EXPTIME']
 
     if any(n != numorders[0] for n in numorders):
         print "Error! Some of the files had different numbers of orders!"
@@ -161,6 +163,7 @@ def Add(fileList, outfilename=None):
     header = hdulist[0].header
     for i in range(len(fileList)):
         header.set("FILE%i" % (i + 1), fileList[i], "File %i used in Co-Adding" % (i + 1))
+    header.set('EXPTIME', exptime, 'Total exposure time (seconds)')
     hdulist[0].header = header
     hdulist.flush()
     hdulist.close()
@@ -172,7 +175,15 @@ if __name__ == "__main__":
         fileList.append(arg)
 
     if len(fileList) > 1:
-        Add(fileList)
+        #Add(fileList)
+        fileDict = defaultdict(list)
+        for fname in fileList:
+            header = pyfits.getheader(fname)
+            starname = header['OBJECT'].replace(" ", "_")
+            fileDict[starname].append(fname)
+            print(fname, starname)
+        for star in fileDict.keys():
+            Add(fileDict[star], outfilename="%s.fits" % star)
     else:
         allfiles = [f for f in os.listdir("./") if f.startswith("echi") and "-0" in f and "telluric" in f]
         fileDict = defaultdict(list)

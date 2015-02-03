@@ -41,9 +41,9 @@ if __name__ == "__main__":
 
     GenericSearch.CompanionSearch(fileList, 
                                   extensions=extensions,
-                                  resolution=80000.0,
+                                  resolution=None,
                                   trimsize=trimsize,
-                                  modeldir=modeldir,
+                                  hdf5_file='/media/ExtraSpace/PhoenixGrid/CHIRON_Grid.hdf5',
                                   badregions=badregions,
                                   vsini_values=(1, 10, 20, 30, 40),
                                   addmode='weighted')
