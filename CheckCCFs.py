@@ -126,4 +126,4 @@ def check_high_t(T=6000, metal=0.0, vsini=10):
 
 
 if __name__ == "__main__":
-    check_high_t()
+    check_all()

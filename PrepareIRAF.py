@@ -2,19 +2,22 @@ import sys
 import os
 from collections import defaultdict
 import subprocess
+import socket
 
 from astropy.io import fits as pyfits
-
 import HelperFunctions
+
 import ConvertToExtensions_NativeReductions as convert
 
 
 if __name__ == "__main__":
     date = os.getcwd().split("/")[-1]
     outdir = "files_%s/" % (date)
-    tarfiles = [f for f in os.listdir("./") if ".tgz" in f]
-    caldir = [f.split(".tgz")[0] for f in tarfiles if "cals" in f][0] + "/"
-    datadir = [f.split(".tgz")[0] for f in tarfiles if "planid" in f][0] + "/"
+    # tarfiles = [f for f in os.listdir("./") if ".tgz" in f]
+    #caldir = [f.split(".tgz")[0] for f in tarfiles if "cals" in f][0] + "/"
+    #datadir = [f.split(".tgz")[0] for f in tarfiles if "planid" in f][0] + "/"
+    caldir = ['{}/'.format(f) for f in os.listdir('./') if f.endswith('_cals')][0]
+    datadir = ['{}/'.format(f) for f in os.listdir('./') if '_planid_' in f][0]
     for arg in sys.argv[1:]:
         if "-datadir" in arg:
             datadir = arg.split("=")[-1]
@@ -47,7 +50,7 @@ if __name__ == "__main__":
         #print fname, header['IMAGETYP'], header['object'], header['deckpos']
         if header['IMAGETYP'].strip().lower == "calibration" and header['object'].lower() != 'thar':
             print "Calibration image found in data directory: %s\n  Moving to calibration directory" % fname
-            cmd = "mv %s%s %s" % (datadir, fname, caldir)
+            cmd = "cp %s%s %s" % (datadir, fname, caldir)
             subprocess.check_call(cmd, shell=True)
             continue
 
@@ -122,10 +125,13 @@ if __name__ == "__main__":
 
     #Copy the files to kepler
     outdir = outdir.strip("/")
-    subprocess.check_call(["scp", "-r", outdir, "kgulliks@kepler:~/"])
+    subprocess.check_call(["scp", "-r", outdir, "kgulliks@kepler.as.utexas.edu:~/"])
 
     #tar.gz the useful files
-    archive_dir = "/Volumes/DATADRIVE/CHIRON_data/%s/" % date
+    if socket.gethostname().lower() == 'hal9000':
+        archive_dir = "/media/FreeAgent_Drive/data/CHIRON_data/%s/" % date
+    else:
+        archive_dir = "/Volumes/DATADRIVE/CHIRON_data/%s/" % date
     subprocess.check_call(["tar", "czvf", "%s%s.tar.gz" % (archive_dir, outdir), outdir])
 
     #Remove the unnecessary files

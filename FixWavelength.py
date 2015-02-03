@@ -31,11 +31,11 @@ if __name__ == "__main__":
             fileList.append(arg)
 
     # Read in the blaze file (we will need it later)
-    blazefile = [f for f in os.listdir("./") if "blaze" in f][0]
-    try:
-        blazeorders = HelperFunctions.ReadFits(blazefile, extensions=False)[::-1]
-    except ValueError:
-        blazeorders = HelperFunctions.ReadFits(blazefile, extensions=False, errors=2)[::-1]
+    #blazefile = [f for f in os.listdir("./") if "blaze" in f][0]
+    #try:
+    #    blazeorders = HelperFunctions.ReadFits(blazefile, extensions=False)[::-1]
+    #except ValueError:
+    #    blazeorders = HelperFunctions.ReadFits(blazefile, extensions=False, errors=2)[::-1]
 
     if find_template:
         ach_files = [f for f in os.listdir("./") if f.startswith("achi") and f.endswith("-0.fits")]
