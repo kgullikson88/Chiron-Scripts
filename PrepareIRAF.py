@@ -129,7 +129,7 @@ if __name__ == "__main__":
     subprocess.check_call(["tar", "czvf", "%s%s.tar.gz" % (archive_dir, outdir), outdir])
 
     #Remove the unnecessary files
-    cmd = "rm -r 14* files*"
+    cmd = "rm -r 15* files*"
     subprocess.check_call(cmd, shell=True)
 
   
