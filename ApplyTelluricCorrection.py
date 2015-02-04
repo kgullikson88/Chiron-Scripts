@@ -83,7 +83,7 @@ def Correct(original, corrected, offset=None, get_primary=False, plot=False):
             sys.exit("Error! Model size (%i) is larger than data size (%i)" % (model.size(), data.size()))
 
         # if np.sum((model.x-data.x)**2) > 1e-8:
-        #  model = FittingUtilities.RebinData(model, data.x)
+        # model = FittingUtilities.RebinData(model, data.x)
 
         data.y[data.y / data.cont < 1e-5] = 1e-5 * data.cont[data.y / data.cont < 1e-5]
         badindices = np.where(np.logical_or(data.y <= 0, model.y < 0.05))[0]
@@ -114,7 +114,6 @@ def main1():
             elif "plot" in sys.argv[3]:
                 plot = True
 
-
         outfilename = "%s_telluric_corrected.fits" % (original.split(".fits")[0])
         print "Outputting to %s" % outfilename
 
@@ -139,12 +138,14 @@ def main1():
         HelperFunctions.OutputFitsFileExtensions(column_list, original, outfilename, mode="new")
 
     else:
+        if len(sys.argv) > 1 and 'plot' in sys.argv[1]:
+            plot = True
         allfiles = os.listdir("./")
         corrected_files = [f for f in allfiles if "Corrected_" in f and f.endswith("-0.fits")]
         # original_files = [f for f in allfiles if any(f in cf for cf in corrected_files)]
 
         # print corrected_files
-        #print original_files
+        # print original_files
 
         for corrected in corrected_files:
             original = corrected.split("Corrected_")[-1]  #.split("-")[0] + ".fits"
