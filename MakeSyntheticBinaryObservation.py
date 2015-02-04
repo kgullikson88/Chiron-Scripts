@@ -21,7 +21,6 @@ from astropy.io import fits
 import numpy as np
 from astroquery.simbad import Simbad
 import astropy.units as u
-
 import HelperFunctions
 import SpectralTypeRelations
 import pySIMBAD
@@ -159,7 +158,7 @@ def classify_file(filename, astroquery=True):
 
 
 if __name__ == '__main__':
-    scale = False
+    scale = True
     early, late = parse_input(sys.argv[1:])
 
     # Add each late file to all of the early-type files
