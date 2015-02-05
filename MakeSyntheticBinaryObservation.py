@@ -132,17 +132,26 @@ def classify_file(filename, astroquery=True):
     object = header['object']
     print object
 
-    # Default values
+    # Default values if I can't get it any other way
     plx = 30.0
+
+    MS = SpectralTypeRelations.MainSequence()
 
     # Make a Simbad object
     if astroquery:
         sim = Simbad()
-        sim.add_votable_fields('plx', 'sp')
+        sim.add_votable_fields('plx', 'sp', 'flux(V)')
         data = sim.query_object(object)
-        plx = data['PLX_VALUE'].item()
         spt_full = data['SP_TYPE'].item()
         spt = spt_full[0] + re.search(r'\d*\.?\d*', spt_full[1:]).group()
+        if data['PLX_VALUE'].mask:
+            if not data['FLUX_V'].mask:
+                # Fall back to photometric parallax
+                Vmag_obs = data['FLUX_V'].item()
+                Vmag_abs = MS.GetAbsoluteMagnitude(spt, color='V')
+                plx = 10 ** (3.0 + (Vmag_abs - Vmag_obs - 5.0) / 5.0)
+        else:
+            plx = data['PLX_VALUE'].item()
     else:
         link = pySIMBAD.buildLink(object)
         data = pySIMBAD.simbad(link)
