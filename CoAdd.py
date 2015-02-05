@@ -180,10 +180,14 @@ if __name__ == "__main__":
         for fname in fileList:
             header = pyfits.getheader(fname)
             starname = header['OBJECT'].replace(" ", "_")
-            fileDict[starname].append(fname)
-            print(fname, starname)
+            #fileDict[starname].append(fname)
+            #print(fname, starname)
+            starname1 = header['OBJECT1'].replace(" ", "_")
+            starname2 = header['OBJECT2'].replace(" ", "_")
+            key = "{}+{}".format(starname1, starname2)
+            fileDict[key].append(fname)
         for star in fileDict.keys():
-            Add(fileDict[star], outfilename="%s.fits" % star)
+            Add(fileDict[star], outfilename="%s_bright.fits" % star)
     else:
         allfiles = [f for f in os.listdir("./") if f.startswith("echi") and "-0" in f and "telluric" in f]
         fileDict = defaultdict(list)
