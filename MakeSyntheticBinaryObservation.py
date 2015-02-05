@@ -143,7 +143,8 @@ def classify_file(filename, astroquery=True):
         sim.add_votable_fields('plx', 'sp', 'flux(V)')
         data = sim.query_object(object)
         spt_full = data['SP_TYPE'].item()
-        spt = spt_full[0] + re.search(r'\d*\.?\d*', spt_full[1:]).group()
+        #spt = spt_full[0] + re.search(r'\d*\.?\d*', spt_full[1:]).group()
+        spt = spt_full
         if data['PLX_VALUE'].mask:
             if not data['FLUX_V'].mask:
                 # Fall back to photometric parallax
