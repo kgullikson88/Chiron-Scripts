@@ -69,5 +69,6 @@ if __name__ == '__main__':
                                         observatory='CTIO',
                                         debug=False,
                                         vbary_correct=False,
-                                        addmode='simple')
+                                        addmode='simple',
+                                        output_mode='hdf')
 
