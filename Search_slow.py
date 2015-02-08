@@ -70,5 +70,5 @@ if __name__ == '__main__':
                                         debug=False,
                                         vbary_correct=False,
                                         addmode='simple',
-                                        output_mode='hdf')
+                                        output_mode='hdf5')
 
