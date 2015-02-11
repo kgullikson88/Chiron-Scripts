@@ -66,10 +66,10 @@ if __name__ == '__main__':
                                         badregions=badregions,
                                         metal_values=(0.0,),
                                         vsini_values=(1, 5.0, 10.0, 15.0),
-                                        Tvalues=range(3200, 6900, 100),
+                                        Tvalues=range(3000, 6900, 100),
                                         observatory='CTIO',
                                         debug=False,
                                         vbary_correct=False,
-                                        addmode='simple',
+                                        addmode='ml',
                                         output_mode='hdf5')
 
