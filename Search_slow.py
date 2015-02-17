@@ -1,4 +1,5 @@
 import sys
+import os
 
 import GenericSearch
 import pandas
@@ -41,7 +42,8 @@ if __name__ == '__main__':
 
     # Get the primary star vsini values
     prim_vsini = []
-    vsini = pandas.read_csv("../../Useful_Datafiles/Vsini.csv", sep='|', skiprows=8)[1:]
+    homedir = os.environ['HOME']
+    vsini = pandas.read_csv("{}/School/Research/Useful_Datafiles/Vsini.csv".format(homedir), sep='|', skiprows=8)[1:]
     vsini_dict = {}
     for fname in fileList:
         root = fname.split('/')[-1][:9]
@@ -49,7 +51,7 @@ if __name__ == '__main__':
             prim_vsini.append(vsini_dict[root])
         else:
             header = fits.getheader(fname)
-            star = header['OBJECT1']
+            star = header['OBJECT']
             print fname, star
             v = vsini.loc[vsini.Identifier.str.strip() == star]['vsini(km/s)'].values[0]
             prim_vsini.append(float(v) * 0.8)
@@ -64,12 +66,12 @@ if __name__ == '__main__':
                                         trimsize=trimsize,
                                         modeldir=modeldir,
                                         badregions=badregions,
-                                        metal_values=(0.0,),
-                                        vsini_values=(1, 5.0, 10.0, 15.0),
+                                        metal_values=(0.0,-0.5, 0.5),
+                                        vsini_values=(1, 5.0, 10.0, 20.0, 30),
                                         Tvalues=range(3000, 6900, 100),
                                         observatory='CTIO',
                                         debug=False,
-                                        vbary_correct=False,
-                                        addmode='ml',
+                                        vbary_correct=True,
+                                        addmode='simple',
                                         output_mode='hdf5')
 
