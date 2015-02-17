@@ -1,10 +1,12 @@
 import sys
 import FittingUtilities
+import os
 
 import numpy as np
 from astropy.io import fits as pyfits
 import TelluricFitter
 
+import GetAtmosphere
 import HelperFunctions
 
 
@@ -68,6 +70,15 @@ if __name__ == "__main__":
         humidity = max(header["OUTHUM"], 5)
         pressure = header["OUTPRESS"]
         temperature = header["OUTTEMP"] + 273.15
+
+        if edit_atmosphere:
+            filenames = [f for f in os.listdir("./") if "GDAS" in f]
+            height, Pres, Temp, h2o = GetAtmosphere.GetProfile(filenames, header['date-obs'].split("T")[0],
+                                                               header['ut'])
+
+            fitter.EditAtmosphereProfile("Temperature", height, Temp)
+            fitter.EditAtmosphereProfile("Pressure", height, Pres)
+            fitter.EditAtmosphereProfile("H2O", height, h2o)
 
         #Adjust fitter values
         fitter.AdjustValue({"angle": angle,
