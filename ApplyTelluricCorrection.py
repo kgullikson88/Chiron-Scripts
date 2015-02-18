@@ -1,14 +1,15 @@
 import sys
 import os
 import warnings
-import FittingUtilities
 
 from astropy.io import fits as pyfits
 import matplotlib.pyplot as plt
 import numpy as np
 import DataStructures
 
+import FittingUtilities
 import HelperFunctions
+
 
 
 
@@ -90,7 +91,7 @@ def Correct(original, corrected, offset=None, get_primary=False, plot=False):
         model.y[badindices] = data.y[badindices] / data.cont[badindices]
         model.y[model.y < 1e-5] = 1e-5
 
-        #plt.plot(data.x, data.y / model.y)
+        # plt.plot(data.x, data.y / model.y)
         data.y /= model.y
         data.err /= model.y
         if get_primary:
@@ -103,7 +104,7 @@ def Correct(original, corrected, offset=None, get_primary=False, plot=False):
 
 def main1():
     primary = False
-    plot = False
+    plot = True
     if len(sys.argv) > 2:
         original = sys.argv[1]
         corrected = sys.argv[2]
@@ -148,11 +149,11 @@ def main1():
         # print original_files
 
         for corrected in corrected_files:
-            original = corrected.split("Corrected_")[-1]  #.split("-")[0] + ".fits"
+            original = corrected.split("Corrected_")[-1]  # .split("-")[0] + ".fits"
             if original not in allfiles:
                 warnings.warn("File %s not found. Skipping!" % original)
                 continue
-            #original = [f for f in allfiles if (f in corrected and f != corrected)]
+            # original = [f for f in allfiles if (f in corrected and f != corrected)]
             #if len(original) == 1:
             #  original = original[0]
             #else:
