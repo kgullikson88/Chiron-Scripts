@@ -4,7 +4,7 @@ import os
 import GenericSearch
 import pandas
 from astropy.io import fits
-
+import StarData
 
 # Define regions contaminated by telluric residuals or other defects. We will not use those regions in the cross-correlation
 badregions = [[567.5, 575.5],
@@ -21,6 +21,8 @@ badregions = [[567.5, 575.5],
               #[396, 398],  #H epsilon
               #[388, 390],  #H zeta
 ]
+interp_regions = []
+trimsize = 10
 
 if "darwin" in sys.platform:
     modeldir = "/Volumes/DATADRIVE/Stellar_Models/PHOENIX/Stellar/Vband/"
@@ -34,30 +36,12 @@ else:
 if __name__ == '__main__':
     # Parse command line arguments:
     fileList = []
-    trimsize = 10
     for arg in sys.argv[1:]:
         if 1:
             fileList.append(arg)
-    prim_vsini = [100.0] * len(fileList)
 
     # Get the primary star vsini values
-    prim_vsini = []
-    homedir = os.environ['HOME']
-    vsini = pandas.read_csv("{}/School/Research/Useful_Datafiles/Vsini.csv".format(homedir), sep='|', skiprows=8)[1:]
-    vsini_dict = {}
-    for fname in fileList:
-        root = fname.split('/')[-1][:9]
-        if root in vsini_dict:
-            prim_vsini.append(vsini_dict[root])
-        else:
-            header = fits.getheader(fname)
-            star = header['OBJECT']
-            print fname, star
-            v = vsini.loc[vsini.Identifier.str.strip() == star]['vsini(km/s)'].values[0]
-            prim_vsini.append(float(v) * 0.8)
-            vsini_dict[root] = float(v) * 0.8
-    for fname, vsini in zip(fileList, prim_vsini):
-        print fname, vsini
+    prim_vsini = StarData.get_vsini(fileList)
 
     GenericSearch.slow_companion_search(fileList, prim_vsini,
                                         hdf5_file='/media/ExtraSpace/PhoenixGrid/CHIRON_Grid.hdf5',
