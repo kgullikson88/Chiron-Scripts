@@ -20,7 +20,7 @@ if __name__ == '__main__':
     prim_vsini = StarData.get_vsini(fileList)
 
     Sensitivity.Analyze(fileList, prim_vsini,
-                        hdf5_file='/media/ExtraSpace/PhoenixGrid/TS23_Grid.hdf5',
+                        hdf5_file='/media/ExtraSpace/PhoenixGrid/CHIRON_Grid.hdf5',
                         extensions=True,
                         resolution=None,
                         trimsize=trimsize,
