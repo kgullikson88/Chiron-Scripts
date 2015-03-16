@@ -1,14 +1,15 @@
 import sys
 import os
 import warnings
+import FittingUtilities
 
 from astropy.io import fits as pyfits
 import matplotlib.pyplot as plt
 import numpy as np
-import DataStructures
 
-import FittingUtilities
+import DataStructures
 import HelperFunctions
+
 
 
 
@@ -104,7 +105,7 @@ def Correct(original, corrected, offset=None, get_primary=False, plot=False):
 
 def main1():
     primary = False
-    plot = True
+    plot = False
     if len(sys.argv) > 2:
         original = sys.argv[1]
         corrected = sys.argv[2]
@@ -154,7 +155,7 @@ def main1():
                 warnings.warn("File %s not found. Skipping!" % original)
                 continue
             # original = [f for f in allfiles if (f in corrected and f != corrected)]
-            #if len(original) == 1:
+            # if len(original) == 1:
             #  original = original[0]
             #else:
             #  sys.exit("Error! %i matches found to corrected file %s" %(len(original), corrected))

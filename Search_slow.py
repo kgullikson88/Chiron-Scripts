@@ -1,9 +1,6 @@
 import sys
-import os
 
 import GenericSearch
-import pandas
-from astropy.io import fits
 import StarData
 
 # Define regions contaminated by telluric residuals or other defects. We will not use those regions in the cross-correlation
@@ -52,7 +49,7 @@ if __name__ == '__main__':
                                         badregions=badregions,
                                         metal_values=(0.0,-0.5, 0.5),
                                         vsini_values=(1, 5.0, 10.0, 20.0, 30),
-                                        Tvalues=range(3000, 6900, 100),
+                                        Tvalues=range(3000, 7100, 100),
                                         observatory='CTIO',
                                         debug=False,
                                         vbary_correct=True,
