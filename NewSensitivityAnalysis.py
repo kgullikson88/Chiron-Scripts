@@ -2,14 +2,17 @@
 Sensitivity analysis, using the new search method.
 """
 import sys
+import logging
 
 import matplotlib.pyplot as plt
+
 import Sensitivity
 import StarData
 import SpectralTypeRelations
-
 import Search_slow
+from HelperFunctions import ensure_dir
 
+logging.basicConfig(level='INFO')
 MS = SpectralTypeRelations.MainSequence()
 
 
@@ -40,11 +43,15 @@ def check_sensitivity():
 
 if __name__ == '__main__':
     if '--analyze' in sys.argv[1]:
-        output = Sensitivity.analyze_sensitivity(hdf5_file='Sensitivity_known.hdf5', update=True)
-        sig_fig, rate_fig, lum_fig, rate_ax, rate_top_ax, sig_ax, sig_top_ax, lum_ax, lum_top_ax = output
-        sig_fig.savefig('CHIRON_Significance.pdf')
-        rate_fig.savefig('CHIRON_Rate.pdf')
-        lum_fig.savefig('CHIRON_LumRatio.pdf')
+        # Make the 2d plots
+        df = Sensitivity.analyze_sensitivity(hdf5_file='Sensitivity_known.hdf5')
+
+    elif '--marginalize' in sys.argv[1]:
+        fig, ax = Sensitivity.marginalize_sensitivity(infilename='Sensitivity_Dataframe.csv')
         plt.show()
+        ensure_dir('Figures/')
+        plt.savefig('Figures/Sensitivity_Marginalized.pdf')
+
+
     else:
         check_sensitivity()
