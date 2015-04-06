@@ -12,6 +12,7 @@ import SpectralTypeRelations
 import Search_slow
 from HelperFunctions import ensure_dir
 
+
 logging.basicConfig(level='INFO')
 MS = SpectralTypeRelations.MainSequence()
 
@@ -48,7 +49,7 @@ if __name__ == '__main__':
 
     elif '--marginalize' in sys.argv[1]:
         fig, ax = Sensitivity.marginalize_sensitivity(infilename='Sensitivity_Dataframe.csv')
-        plt.show()
+        # plt.show()
         ensure_dir('Figures/')
         plt.savefig('Figures/Sensitivity_Marginalized.pdf')
 
