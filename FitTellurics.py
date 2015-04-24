@@ -114,8 +114,6 @@ if __name__ == "__main__":
         waveshifts = []
         wave0 = []
         chisquared = []
-        #for i in [27, 28, 36, 37]:
-        #for i in [42, 45, 46, 47]:
         for i in HelperFunctions.FindOrderNums(orders, [595, 650, 717, 726]):
             print "\n***************************\nFitting order %i: " % (i)
             order = orders[i]
@@ -195,46 +193,38 @@ if __name__ == "__main__":
         logfile.write("Best fit o2 mixing ratio = %g ppmv\n" % o2)
         logfile.write("Best fit resolution = %g\n" % resolution)
         logfile.write("Best fit velocity shift = %g km/s\n" % vel)
-        """
-
-        o2 = 225494
-        humidity = 20.9806
-        resolution = 78959.6
-        vel = 4.4297
-        wave0 = orders[0].x.mean()
-        fitter.shift = vel/(constants.c.cgs.value*units.cm.to(units.km)) * wave0
-        """
 
         # Finally, apply these parameters to all orders in the data
-        for i, order in enumerate(orders):
-            print "\n\nGenerating model for order %i of %i\n" % (i, len(orders))
-            fitter.AdjustValue({"wavestart": order.x[0] - 20.0,
-                                "waveend": order.x[-1] + 20.0,
-                                "o2": o2,
-                                "h2o": humidity,
-                                "resolution": resolution})
-            fitpars = [fitter.const_pars[j] for j in range(len(fitter.parnames)) if fitter.fitting[j]]
-            order.cont = FittingUtilities.Continuum(order.x, order.y, fitorder=3, lowreject=1.5, highreject=10)
-            fitter.ImportData(order)
-            fitter.resolution_fit_mode = "gauss"
-            #fitter.resolution_fit_mode = "svd"
-            #wave0 = order.x.mean()
-            #fitter.shift = vel/(constants.c.cgs.value*units.cm.to(units.km)) * wave0
-            print "fitter.shift = ", fitter.shift
-            primary, model = fitter.GenerateModel(fitpars,
-                                                  separate_primary=True,
-                                                  return_resolution=False)
 
-            data = fitter.data
-            if min(model.y) > 0.98:
-                #The wavelength calibration might be off
-                wave0 = order.x.mean()
-                fitter.shift = vel / (constants.c.cgs.value * units.cm.to(units.km)) * wave0
-                model = fitter.GenerateModel(fitpars, separate_primary=False, nofit=True)
-                model.x /= (1.0 + vel / (constants.c.cgs.value * units.cm.to(units.km)))
+        # Make a model for the whole spectrum
+        fitter.AdjustValue({"wavestart": orders[0].x[0] - 20.0,
+                            "waveend": orders[-1].x[-1] + 20.0,
+                            "o2": o2,
+                            "h2o": humidity,
+                            "resolution": resolution})
+        fitpars = [fitter.const_pars[j] for j in range(len(fitter.parnames)) if fitter.fitting[j]]
+        full_model = fitter.GenerateModel(fitpars, separate_primary=False, return_resolution=False,
+                                          broaden=False, nofit=True)
+
+        for i, order in enumerate(orders):
+            left = np.searchsorted(full_model.x, order.x[0] - 5)
+            right = np.searchsorted(full_model.x, order.x[-1] + 5)
+            if min(full_model.y[left:right]) > 0.97:
+                model = FittingUtilities.ReduceResolution(full_model[left:right].copy(), resolution)
                 model = FittingUtilities.RebinData(model, order.x)
                 data = order.copy()
                 data.cont = FittingUtilities.Continuum(data.x, data.y, fitorder=3, lowreject=2, highreject=5)
+
+            else:
+                print "\n\nGenerating model for order %i of %i\n" % (i, len(orders))
+                order.cont = FittingUtilities.Continuum(order.x, order.y, fitorder=3, lowreject=1.5, highreject=10)
+                fitter.ImportData(order)
+                fitter.resolution_fit_mode = "gauss"
+                primary, model = fitter.GenerateModel(fitpars, model=full_model[left:right].copy(),
+                                                      separate_primary=True,
+                                                      return_resolution=False)
+
+                data = fitter.data
 
             # Set up data structures for OutputFitsFile
             columns = {"wavelength": data.x,
