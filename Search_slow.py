@@ -15,7 +15,7 @@ badregions = [[567.5, 575.5],
               # [485, 487],  #H beta
               # [433, 435],  #H gamma
               # [409, 411],  #H delta
-              #[396, 398],  #H epsilon
+              # [396, 398],  #H epsilon
               #[388, 390],  #H zeta
 ]
 interp_regions = []
@@ -23,8 +23,10 @@ trimsize = 10
 
 if "darwin" in sys.platform:
     modeldir = "/Volumes/DATADRIVE/Stellar_Models/PHOENIX/Stellar/Vband/"
+    hdf5_filename = '/Volumes/DATADRIVE/PhoenixGrid/CHIRON_Grid.hdf5'
 elif "linux" in sys.platform:
     modeldir = "/media/FreeAgent_Drive/SyntheticSpectra/Sorted/Stellar/Vband/"
+    hdf5_filename = '/media/ExtraSpace/PhoenixGrid/CHIRON_Grid.hdf5'
 else:
     modeldir = raw_input("sys.platform not recognized. Please enter model directory below: ")
     if not modeldir.endswith("/"):
@@ -42,7 +44,7 @@ if __name__ == '__main__':
 
     # Use this one for the real data search
     GenericSearch.slow_companion_search(fileList, prim_vsini,
-                                        hdf5_file='/media/ExtraSpace/PhoenixGrid/CHIRON_Grid.hdf5',
+                                        hdf5_file=hdf5_filename,
                                         extensions=True,
                                         resolution=None,
                                         trimsize=trimsize,
@@ -53,7 +55,7 @@ if __name__ == '__main__':
                                         Tvalues=range(3000, 9000, 100),
                                         # Tvalues = [5200,],
                                         # metal_values=[-0.5,],
-                                        #vsini_values=[5,],
+                                        # vsini_values=[5,],
                                         observatory='CTIO',
                                         debug=False,
                                         vbary_correct=True,
