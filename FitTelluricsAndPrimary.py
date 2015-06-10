@@ -1,16 +1,12 @@
 import sys
 import os
-from scipy.interpolate import InterpolatedUnivariateSpline as interp
 
 import numpy as np
-import matplotlib.pyplot as plt
 from astropy.io import fits as pyfits
+
 import TelluricFitter
 import DataStructures
-from astropy import units, constants
-
 import FitsUtils
-import Units
 import FindContinuum
 import HelperFunctions
 
@@ -38,7 +34,7 @@ if __name__ == "__main__":
             fileList.append(arg)
 
 
-    #START LOOPING OVER INPUT FILES
+    # START LOOPING OVER INPUT FILES
     for fname in fileList:
         logfile.write("Fitting file %s\n" % (fname))
         name = fname.split(".fits")[0]
@@ -108,7 +104,7 @@ if __name__ == "__main__":
                 data = order.copy()
                 fitter.resolution_fit_mode = "gauss"
                 fitter.fit_primary = True
-                primary, model = fitter.GenerateModel(fitpars, LineList, separate_primary=True)
+                primary, model = fitter.GenerateModel(fitpars, LineList, separate_source=True)
             elif model_amplitude >= 0.01 and model_amplitude < 1:
                 logfile.write("Fitting order %i with guassian line profiles\n" % (i + start))
                 print "Fitting line profiles with gaussian profile"
@@ -136,7 +132,7 @@ if __name__ == "__main__":
 
             logfile.write("Array sizes: wave, flux, cont, error, model, primary\n")
             logfile.write("%i\n%i\n%i\n%i\n%i\n%i\n\n\n" % (
-            data.x.size, data.y.size, data.cont.size, data.err.size, model.y.size, primary.y.size))
+                data.x.size, data.y.size, data.cont.size, data.err.size, model.y.size, primary.y.size))
             #Set up data structures for OutputFitsFile
             columns = {"wavelength": data.x,
                        "flux": data.y,

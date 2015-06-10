@@ -1,18 +1,18 @@
 import sys
-import FittingUtilities
 import os
 
 import numpy as np
 from astropy.io import fits as pyfits
-import TelluricFitter
 
+import FittingUtilities
+import TelluricFitter
 import GetAtmosphere
 import HelperFunctions
 
 
 badregions = [[588.98, 589.037],  # Na D line 1
               [589.567, 589.632],  # Na D line 2
-              [627.4, 629.0],  #O2 band
+              [627.4, 629.0],  # O2 band
               [686.4, 690.7]]  # O2 band
 
 namedict = {"pressure": ["PRESFIT", "PRESVAL", "Pressure"],
@@ -80,7 +80,7 @@ if __name__ == "__main__":
             fitter.EditAtmosphereProfile("Pressure", height, Pres)
             fitter.EditAtmosphereProfile("H2O", height, h2o)
 
-        #Adjust fitter values
+        # Adjust fitter values
         fitter.AdjustValue({"angle": angle,
                             "pressure": pressure,
                             "resolution": resolution,
@@ -110,7 +110,7 @@ if __name__ == "__main__":
             fitter.resolution_fit_mode = "gauss"
             fitter.fit_source = False
             fitter.fit_primary = False
-            model = fitter.GenerateModel(fitpars, separate_primary=False, return_resolution=False)
+            model = fitter.GenerateModel(fitpars, separate_source=False, return_resolution=False)
 
             # Find the best scale factor
             model.cont = np.ones(model.size())
@@ -138,7 +138,7 @@ if __name__ == "__main__":
             fitter.resolution_fit_mode = "gauss"
             fitter.fit_source = False
             fitter.fit_primary = False
-            model = fitter.GenerateModel(fitpars, separate_primary=False, return_resolution=False)
+            model = fitter.GenerateModel(fitpars, separate_source=False, return_resolution=False)
 
             # Find the best scale factor
             model.cont = np.ones(model.size())
@@ -180,7 +180,7 @@ if __name__ == "__main__":
                 #wave0 = order.x.mean()
                 #fitter.shift = vel/(constants.c.cgs.value*units.cm.to(units.km)) * wave0
                 fitter.DisplayVariables()
-                model = fitter.GenerateModel(fitpars, separate_primary=False, return_resolution=False)
+                model = fitter.GenerateModel(fitpars, separate_source=False, return_resolution=False)
 
                 data = fitter.data
 

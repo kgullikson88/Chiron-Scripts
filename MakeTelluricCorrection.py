@@ -1,19 +1,12 @@
 import sys
 import os
-from scipy.interpolate import InterpolatedUnivariateSpline as interp
 import time
 
-import numpy as np
-import matplotlib.pyplot as plt
 from astropy.io import fits as pyfits
 from astropy import units, constants
-import TelluricFitter
-import DataStructures
-from astropy import units, constants
-import FittingUtilities
-import MakeModel
 
-import Units
+import TelluricFitter
+import FittingUtilities
 import HelperFunctions
 import GetAtmosphere
 
@@ -22,7 +15,7 @@ sleep = True
 homedir = os.environ["HOME"]
 
 badregions = [[588.98, 589.037],  # Na D line 1
-              [589.567, 589.632],  #Na D line 2
+              [589.567, 589.632],  # Na D line 2
               [627.4, 629.0],  #O2 band
               [686.4, 690.7]]  # O2 band
 
@@ -83,7 +76,7 @@ if __name__ == "__main__":
             fileList.append(arg)
 
 
-    #START LOOPING OVER INPUT FILES
+    # START LOOPING OVER INPUT FILES
     for fname in fileList:
         name = fname.split(".fits")[0]
         outfilename = "Corrected_%s.fits" % name
@@ -153,7 +146,7 @@ if __name__ == "__main__":
             #fitter.shift = vel/(constants.c.cgs.value*units.cm.to(units.km)) * wave0
             print "fitter.shift = ", fitter.shift
             primary, model = fitter.GenerateModel(fitpars,
-                                                  separate_primary=True,
+                                                  separate_source=True,
                                                   return_resolution=False)
 
             data = fitter.data
@@ -161,7 +154,7 @@ if __name__ == "__main__":
                 #The wavelength calibration might be off
                 wave0 = order.x.mean()
                 fitter.shift = vel / (constants.c.cgs.value * units.cm.to(units.km)) * wave0
-                model = fitter.GenerateModel(fitpars, separate_primary=False, nofit=True)
+                model = fitter.GenerateModel(fitpars, separate_source=False, nofit=True)
                 model.x /= (1.0 + vel / (constants.c.cgs.value * units.cm.to(units.km)))
                 model = FittingUtilities.RebinData(model, order.x)
                 data = order.copy()

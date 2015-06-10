@@ -1,13 +1,13 @@
 import sys
 import os
-import FittingUtilities
 
 import numpy as np
 from astropy.io import fits as pyfits
-import TelluricFitter
-import DataStructures
 from astropy import units, constants
 
+import FittingUtilities
+import TelluricFitter
+import DataStructures
 import HelperFunctions
 import GetAtmosphere
 
@@ -15,7 +15,7 @@ import GetAtmosphere
 homedir = os.environ["HOME"]
 
 badregions = [[588.98, 589.037],  # Na D line 1
-              [589.567, 589.632],  #Na D line 2
+              [589.567, 589.632],  # Na D line 2
               [627.4, 629.0],  #O2 band
               [686.4, 690.7]]  # O2 band
 
@@ -35,7 +35,6 @@ namedict = {"pressure": ["PRESFIT", "PRESVAL", "Pressure"],
             "no2": ["NO2FIT", "NO2VAL", "NO2 abundance"],
             "nh3": ["NH3FIT", "NH3VAL", "NH3 abundance"],
             "hno3": ["HNO3FIT", "HNO3VAL", "HNO3 abundance"]}
-
 
 if __name__ == "__main__":
     # Initialize fitter
@@ -60,7 +59,7 @@ if __name__ == "__main__":
             fileList.append(arg)
 
 
-    #START LOOPING OVER INPUT FILES
+    # START LOOPING OVER INPUT FILES
     for fname in fileList:
         logfile = open("fitlog_%s.txt" % (fname.split(".fits")[0]), "a")
         logfile.write("Fitting file %s\n" % (fname))
@@ -203,7 +202,7 @@ if __name__ == "__main__":
                             "h2o": humidity,
                             "resolution": resolution})
         fitpars = [fitter.const_pars[j] for j in range(len(fitter.parnames)) if fitter.fitting[j]]
-        full_model = fitter.GenerateModel(fitpars, separate_primary=False, return_resolution=False,
+        full_model = fitter.GenerateModel(fitpars, separate_source=False, return_resolution=False,
                                           broaden=False, nofit=True)
 
         for i, order in enumerate(orders):
@@ -221,7 +220,7 @@ if __name__ == "__main__":
                 fitter.ImportData(order)
                 fitter.resolution_fit_mode = "gauss"
                 primary, model = fitter.GenerateModel(fitpars, model=full_model[left:right].copy(),
-                                                      separate_primary=True,
+                                                      separate_source=True,
                                                       return_resolution=False)
 
                 data = fitter.data
