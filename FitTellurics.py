@@ -67,7 +67,7 @@ if __name__ == "__main__":
         outfilename = "Corrected_%s.fits" % name
 
         #Read file
-        orders = HelperFunctions.ReadFits(fname, errors="error", extensions=True, x="wavelength", y="flux")
+        orders = HelperFunctions.ReadExtensionFits(fname)
 
         header = pyfits.getheader(fname)
         angle = float(header["ZD"])
