@@ -51,7 +51,7 @@ if __name__ == "__main__":
                 order.x = np.arange(order.size())
 
             if normalize:
-                plt.plot(order.x, order.y / order.cont, ls, rasterized=True)
+                plt.plot(order.x, order.y / order.cont, ls, rasterized=True, alpha=0.4)
                 plt.text(order.x.mean(), 1.1, str(i + 1))
             else:
                 if errors:
@@ -62,6 +62,7 @@ if __name__ == "__main__":
             if byorder:
                 plt.title("Order %i" % i)
                 plt.show()
+        plt.plot([], [], ls, label=fname)
     if not byorder:
         plt.xlabel("Wavelength (nm)", fontsize=15)
         if normalize:
@@ -69,4 +70,5 @@ if __name__ == "__main__":
             plt.ylim((-0.1, 1.2))
         else:
             plt.ylabel("Flux", fontsize=15)
+        leg = plt.legend(loc='best', fancybox=True)
         plt.show()
