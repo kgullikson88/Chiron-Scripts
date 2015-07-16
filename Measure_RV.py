@@ -17,7 +17,7 @@ MS = SpectralTypeRelations.MainSequence()
 sptnum2teff = MT.get_interpolator('SpTNum', 'Teff') 
 
 
-def make_fitter(fname, logg=4.0, feh=0.0):
+def make_fitter(fname, logg=4.0, feh=0.0, first_order=8, last_order=20):
     orders = HelperFunctions.ReadExtensionFits(fname)
     header = fits.getheader(fname)
     starname = header['OBJECT']
@@ -34,7 +34,7 @@ def make_fitter(fname, logg=4.0, feh=0.0):
 
 
     print(hdf5_filename)
-    fitter = Fitters.RVFitter_MultiNest(orders[8:20], model_library=hdf5_filename, T=Teff, logg=logg, feh=feh)
+    fitter = Fitters.RVFitter(orders[first_order:last_order], model_library=hdf5_filename, T=Teff, logg=logg, feh=feh)
 
     return fitter
 
