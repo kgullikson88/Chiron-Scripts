@@ -34,7 +34,7 @@ def make_fitter(fname, logg=4.0, feh=0.0):
 
 
     print(hdf5_filename)
-    fitter = Fitters.RVFitter(orders[8:20], model_library=hdf5_filename, T=Teff, logg=logg, feh=feh)
+    fitter = Fitters.RVFitter_MultiNest(orders[8:20], model_library=hdf5_filename, T=Teff, logg=logg, feh=feh)
 
     return fitter
 
