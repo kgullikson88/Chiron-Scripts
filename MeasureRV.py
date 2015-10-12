@@ -27,7 +27,7 @@ logger.setLevel(logging.INFO)
 
 # Get the HDF5 filename. Might want to change this eventually.
 #HDF5_FILENAME = '/Volumes/DATADRIVE/Kurucz_Grid/TS23_grid_full.hdf5'
-HDF5_FILENAME = '/Users/kevingullikson/StellarLibrary/Kurucz_Grid/HRS_grid_air.hdf5'
+HDF5_FILENAME = '/Users/kevingullikson/StellarLibrary/Kurucz_Grid/CHIRON_grid_air.hdf5'
 PAR_LOGFILE = 'Flatten.log'
 
 
