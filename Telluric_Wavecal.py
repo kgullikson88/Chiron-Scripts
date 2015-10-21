@@ -20,7 +20,7 @@ import FittingUtilities
 C_LIGHT = constants.c.cgs.to(u.km/u.s).value
 
 class VelocityFitter(object):
-    def __init__(self, filename, tell_orders=[690., 700., 715., 725., 735.]):
+    def __init__(self, filename, tell_orders=[690., 700., 715., 725., 735.], telluric_model=None):
         """
         Fit the velocity shift, with uncertainties, to make the spectrum line up with the telluric lines
 
@@ -34,6 +34,10 @@ class VelocityFitter(object):
          - tell_orders:      iterable object
                              Should contain either the order numbers to use for fitting, or wavelengths
                              that map to a unique order. The default is the O2 and H2O band from 690-740 nm.
+
+         - telluric_model:   DataStructures.xypoint instance 
+                             Contain a raw (fresh out of MakeModel) telluric spectrum. If not given, 
+                             we will make one.
 
         """
         # First thing: Find all of the original files.
@@ -58,10 +62,14 @@ class VelocityFitter(object):
                     max_wave = self.data[basename][-1].x[-1]
 
         # Generate a generic telluric model
-        modeler = telfit.Modeler()
-        lowfreq = 1e7/(max_wave+2)
-        highfreq = 1e7/(min_wave-2)
-        original_model = modeler.MakeModel(lowfreq=lowfreq, highfreq=highfreq)
+        if telluric_model is None or telluric_model.x[0] > min_wave or telluric_model.x[-1] < max_wave:
+            logging.debug('Generating a telluric model from {} to {} nm'.format(min_wave-2, max_wave+2))
+            modeler = telfit.Modeler()
+            lowfreq = 1e7/(max_wave+2)
+            highfreq = 1e7/(min_wave-2)
+            original_model = modeler.MakeModel(lowfreq=lowfreq, highfreq=highfreq)
+        else:
+            original_model = telluric_model
 
         # Reduce the resolution to match CHIRON
         new_x = np.logspace(np.log(original_model.x[0]), np.log(original_model.x[-1]), original_model.size(), base=np.e)
