@@ -43,6 +43,10 @@ class VelocityFitter(object):
         """
         # First thing: Find all of the original files.
         original_files = self._find_original_files(filename)
+        if original_files is None:
+            # Files were not found. exit
+            self.successful_init = False
+            return
 
         # Compile all of the relevant orders for each file
         self.data = defaultdict(list)
@@ -82,6 +86,8 @@ class VelocityFitter(object):
 
         # Make a function to adjust the telluric model to better match the data.
         self.new_telluric = lambda tell, alpha, x: tell(x)**alpha
+        self.successful_init = True
+        return
 
 
     def lnlike(self, pars, data_orders, telluric_model):
@@ -182,6 +188,11 @@ class VelocityFitter(object):
         if all(os.path.exists('{}{}/backup/{}'.format(ARCHIVE_DIR, date, f)) for f in names):
             return ['{}{}/backup/{}'.format(ARCHIVE_DIR, date, f) for f in names]
 
+        # Check Adam's section of the data archive
+        logging.debug('Checking archive directory {}Adam_Data/{}'.format(ARCHIVE_DIR, date))
+        if all(os.path.exists('{}Adam_Data/{}/{}'.format(ARCHIVE_DIR, date, f)) for f in names ):
+            return ['{}Adam_Data/{}/{}'.format(ARCHIVE_DIR, date, f) for f in names]
+        
         # Ask the user
         done = False
         print('Where are the following files located?')
@@ -191,6 +202,8 @@ class VelocityFitter(object):
             basedir = raw_input('Enter directory where the files can be found: ')
             if all([os.path.exists('{}{}'.format(basedir, f)) for f in names]):
                 done = True
+            elif basedir == 'skip':
+                return None
         return ['{}{}'.format(basedir, f) for f in names]
 
 
