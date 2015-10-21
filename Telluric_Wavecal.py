@@ -18,6 +18,7 @@ import FittingUtilities
 
 # Make the speed of light a constant
 C_LIGHT = constants.c.cgs.to(u.km/u.s).value
+ARCHIVE_DIR = '/media/FreeAgent_Drive_/data/CHIRON_data/'
 
 class VelocityFitter(object):
     def __init__(self, filename, tell_orders=[690., 700., 715., 725., 735.], telluric_model=None):
@@ -164,14 +165,22 @@ class VelocityFitter(object):
         basedir = os.path.dirname(filename)
         if len(basedir) > 0 and not basedir.endswith('/'):
             basedir += '/'
+        date = os.path.basename(basedir[:-1])
 
         # Check in the same directory as the given file
+        logging.debug('Checking same directory as given file ({})'.format(basedir))
         if all([os.path.exists('{}{}'.format(basedir, f)) for f in names]):
             return ['{}{}'.format(basedir, f) for f in names]
 
         # Check the backup subdirectory
+        logging.debug('Checking directory {}backup/'.format(basedir))
         if all([os.path.exists('{}backup/{}'.format(basedir, f)) for f in names]):
             return ['{}backup/{}'.format(basedir, f) for f in names]
+
+        # Check the data archive
+        logging.debug('Checking archive directory: {}{}/backup/'.format(ARCHIVE_DIR, date))
+        if all(os.path.exists('{}{}/backup/{}'.format(ARCHIVE_DIR, date, f)) for f in names):
+            return ['{}{}/backup/{}'.format(ARCHIVE_DIR, date, f) for f in names]
 
         # Ask the user
         done = False
