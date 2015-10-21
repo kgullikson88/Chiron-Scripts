@@ -26,11 +26,12 @@ def check_sensitivity():
     badregions = Search_slow.badregions
     interp_regions = Search_slow.interp_regions
     trimsize = Search_slow.trimsize
-    prim_vsini = StarData.get_vsini(fileList)
+    prim_vsini = StarData.get_vsini(fileList, vsini_filename='../Useful_Datafiles/Vsini.csv')
 
     Sensitivity.Analyze(fileList, prim_vsini,
-                        hdf5_file='/media/ExtraSpace/PhoenixGrid/CHIRON_Grid.hdf5',
-                        extensions=True,
+                        #hdf5_file='/media/ExtraSpace/PhoenixGrid/CHIRON_Grid.hdf5',
+                        hdf5_file='/Users/kevingullikson/StellarLibrary/PhoenixGrid/CHIRON_Grid.hdf5',
+			extensions=True,
                         resolution=None,
                         trimsize=trimsize,
                         badregions=badregions, interp_regions=interp_regions,
