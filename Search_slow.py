@@ -59,7 +59,7 @@ if __name__ == '__main__':
                                         observatory='CTIO',
                                         debug=False,
                                         vbary_correct=True,
-                                        addmode='simple',
+                                        addmode='all',
                                         output_mode='hdf5')
     """
     
