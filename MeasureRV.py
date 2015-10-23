@@ -62,9 +62,15 @@ if __name__ == '__main__':
         logging.info('Fitting RV for {}'.format(filename))
 
         # Find this filename in the fitted dataframe (generated while flattening the spectra)
-        original_fname = filename.split('_renormalized.fits')[0] + '.fits'
-        subset = fitted_df.loc[fitted_df.fname == original_fname]
-        teff = float(subset.teff)
+        header = fits.getheader(filename)
+	starname = header['OBJECT']
+	date = header['DATE-OBS']
+	#original_fname = filename.split('_renormalized.fits')[0] + '.fits'
+        #subset = fitted_df.loc[fitted_df.fname == original_fname]
+        print(starname, date)
+	subset = fitted_df.loc[(fitted_df.star==starname) & (fitted_df.date==date)]
+	print(subset)
+	teff = float(subset.teff)
         logg = float(subset.logg)
         logging.info('Teff = {}\nlogg = {}'.format(teff, logg))
 
