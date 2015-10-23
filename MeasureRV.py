@@ -33,7 +33,8 @@ PAR_LOGFILE = 'Flatten.log'
 
 def fit(filename, model_library, teff, logg, feh=0.0, output_basename='RVFitter'):
     # Read in the (assumed flattened) spectra
-    orders = HelperFunctions.ReadExtensionFits(filename)
+    all_orders = HelperFunctions.ReadExtensionFits(filename)
+    orders = [o.copy() for o in all_orders if o.x[0] < 475 or o.x[-1] > 495]
 
     # Set up the fitter
     fitter = Fitters.RVFitter(orders, model_library=model_library,
@@ -63,15 +64,13 @@ if __name__ == '__main__':
 
         # Find this filename in the fitted dataframe (generated while flattening the spectra)
         header = fits.getheader(filename)
-	starname = header['OBJECT']
-	date = header['DATE-OBS']
-	#original_fname = filename.split('_renormalized.fits')[0] + '.fits'
-        #subset = fitted_df.loc[fitted_df.fname == original_fname]
+        starname = header['OBJECT']
+        date = header['DATE-OBS'].split('T')[0]
         print(starname, date)
-	subset = fitted_df.loc[(fitted_df.star==starname) & (fitted_df.date==date)]
-	print(subset)
-	teff = float(subset.teff)
+        subset = fitted_df.loc[(fitted_df.star==starname) & (fitted_df.date==date)]
+        print(subset)
+        teff = float(subset.teff)
         logg = float(subset.logg)
         logging.info('Teff = {}\nlogg = {}'.format(teff, logg))
 
-        fitter = fit(filename, HDF5_FILENAME, teff=teff, logg=logg, output_basename='RVFitter_flattened')
+        fitter = fit(filename, HDF5_FILENAME, teff=teff, logg=logg, output_basename='RVFitter_nobalmer')
