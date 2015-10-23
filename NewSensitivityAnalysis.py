@@ -29,15 +29,14 @@ def check_sensitivity():
     prim_vsini = StarData.get_vsini(fileList, vsini_filename='../Useful_Datafiles/Vsini.csv')
 
     Sensitivity.Analyze(fileList, prim_vsini,
-                        #hdf5_file='/media/ExtraSpace/PhoenixGrid/CHIRON_Grid.hdf5',
-                        hdf5_file='/Users/kevingullikson/StellarLibrary/PhoenixGrid/CHIRON_Grid.hdf5',
+                        hdf5_file='/media/ExtraSpace/PhoenixGrid/CHIRON_Grid.hdf5',
 			extensions=True,
                         resolution=None,
                         trimsize=trimsize,
                         badregions=badregions, interp_regions=interp_regions,
                         metal_values=(0.0,),
                         vsini_values=(0, 10, 20, 30, 40, 50),
-                        Tvalues=range(3900, 7000, 100),
+                        Tvalues=range(4000, 6000, 100),
                         debug=False,
                         addmode='all',
                         output_mode='hdf5')
