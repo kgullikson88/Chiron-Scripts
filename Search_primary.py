@@ -45,4 +45,5 @@ if __name__ == '__main__':
                                         reject_outliers=False,
                                         vbary_correct=True,
                                         addmode='all',
-                                        output_mode='hdf5')
+                                        output_mode='hdf5',
+                                        output_file='CCF_primary.hdf5')
