@@ -15,7 +15,6 @@ import seaborn as sns
 import HelperFunctions
 import Fitters
 
-
 # Set up plotting
 sns.set_style('white')
 sns.set_style('ticks')
@@ -41,7 +40,7 @@ def fit(filename, model_library, teff, logg, feh=0.0, output_basename='RVFitter'
                               T=teff, logg=logg, feh=feh)
     header = fits.getheader(filename)
     starname = header['OBJECT']
-    date = header['DATE-OBS']
+    date = header['DATE-OBS'].split('T')[0]
     stardata_str = '{}_{}-'.format(starname.replace(' ', ''), date.replace('-', ''))
     basename = os.path.join(output_basename, stardata_str)
 
@@ -65,7 +64,7 @@ if __name__ == '__main__':
         # Find this filename in the fitted dataframe (generated while flattening the spectra)
         header = fits.getheader(filename)
         starname = header['OBJECT']
-        date = header['DATE-OBS'].split('T')[0]
+        date = header['DATE-OBS']
         print(starname, date)
         subset = fitted_df.loc[(fitted_df.star==starname) & (fitted_df.date==date)]
         print(subset)
@@ -73,4 +72,4 @@ if __name__ == '__main__':
         logg = float(subset.logg)
         logging.info('Teff = {}\nlogg = {}'.format(teff, logg))
 
-        fitter = fit(filename, HDF5_FILENAME, teff=teff, logg=logg, output_basename='RVFitter_nobalmer')
+        fitter = fit(filename, HDF5_FILENAME, teff=teff, logg=logg, output_basename='RVFitter_nobalmer_veiling')
