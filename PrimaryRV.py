@@ -21,8 +21,6 @@ def measure_rv(hdf5_file, output_log=None):
                 print(date_grp.name)
                 summary = defaultdict(list)
                 for ds_name, dataset in date_grp.iteritems():
-                    if dataset.attrs['addmode'] != ADDMODE:
-                        continue
                     summary['teff'].append(dataset.attrs['T'])
                     summary['vsini'].append(dataset.attrs['vsini'])
                     summary['logg'].append(dataset.attrs['logg'])
@@ -37,7 +35,7 @@ def measure_rv(hdf5_file, output_log=None):
 
                 # Save the maximum value, if requested
                 if output_log is not None:
-                    best = df.sort_values(by='CCF').tail(1)
+                    best = df.loc[df.addmode == ADDMODE].sort_values(by='CCF').tail(1)
                     best = {k: v for k, v in zip(best.columns, best.values[0])}
                     with open(output_log, 'a') as log:
                         log.write('{star},{date},{teff},{logg},{feh},{vsini},{addmode},{RV},{CCF}\n'.format(**best))
