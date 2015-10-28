@@ -48,7 +48,7 @@ def measure_rv(hdf5_file, output_log=None):
 if __name__ == '__main__':
     for fname in sys.argv[1:]:
         output = fname.replace('hdf5', 'rv.txt')
-        with open(output, 'w'):
-            output.write('star,date,teff,logg,feh,vsini,addmode,rv,ccf\n')
+        with open(output, 'w') as log:
+            log.write('star,date,teff,logg,feh,vsini,addmode,rv,ccf\n')
         summary = measure_rv(fname, output_log=output)
         summary.to_csv(output.replace('.txt', '_summary.txt'), index=False)
