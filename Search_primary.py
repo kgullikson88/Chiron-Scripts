@@ -4,13 +4,14 @@ import GenericSearch
 import StarData
 
 # Define regions contaminated by telluric residuals or other defects. We will not use those regions in the cross-correlation
-badregions = []
+badregions = [[475, 495]]
 interp_regions = []
 trimsize = 10
 
 if "darwin" in sys.platform:
     modeldir = "/Volumes/DATADRIVE/Stellar_Models/PHOENIX/Stellar/Vband/"
-    hdf5_filename = '/Volumes/DATADRIVE/Kurucz_Grid/CHIRON_grid_air.hdf5'
+    hdf5_filename = '/Users/kevingullikson/StellarLibrary/Kurucz_Grid/CHIRON_grid_air.hdf5'
+    #hdf5_filename = '/Volumes/DATADRIVE/Kurucz_Grid/CHIRON_grid_air.hdf5'
 elif "linux" in sys.platform:
     modeldir = "/media/FreeAgent_Drive/SyntheticSpectra/Sorted/Stellar/Vband/"
     hdf5_filename = '/media/ExtraSpace/Kurucz_FullGrid/CHIRON_grid_air.hdf5'
@@ -38,12 +39,13 @@ if __name__ == '__main__':
                                         modeldir=modeldir,
                                         badregions=badregions,
                                         metal_values=(0.0),
-                                        vsini_values=(10.0, 40, 80, 150),
-                                        Tvalues=range(8000, 20000, 1000),
+					logg_values=(3.5, 4.0, 4.5,),
+                                        vsini_values=(10, 40, 80, 150, 250),
+                                        Tvalues=range(7000, 20000, 1000),
                                         observatory='CTIO',
                                         debug=False,
                                         reject_outliers=False,
-                                        vbary_correct=True,
+                                        vbary_correct=False,
                                         addmode='all',
                                         output_mode='hdf5',
-                                        output_file='CCF_primary.hdf5')
+                                        output_file='CCF_primary_nobalmer.hdf5')
