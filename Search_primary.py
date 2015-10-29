@@ -1,7 +1,6 @@
 import sys
 
 import GenericSearch
-import StarData
 
 # Define regions contaminated by telluric residuals or other defects. We will not use those regions in the cross-correlation
 badregions = [[475, 495]]
@@ -39,7 +38,7 @@ if __name__ == '__main__':
                                         modeldir=modeldir,
                                         badregions=badregions,
                                         metal_values=(0.0),
-					logg_values=(3.5, 4.0, 4.5,),
+                                        logg_values=(3.5, 4.0, 4.5,),
                                         vsini_values=(10, 40, 80, 150, 250),
                                         Tvalues=range(7000, 20000, 1000),
                                         observatory='CTIO',
