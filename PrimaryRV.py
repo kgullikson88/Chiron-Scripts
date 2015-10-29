@@ -41,7 +41,7 @@ def collect_rv(hdf5_file, output_log=None):
                     best = df.loc[df.addmode == ADDMODE].sort_values(by='CCF').tail(1)
                     best = {k: v for k, v in zip(best.columns, best.values[0])}
                     with open(output_log, 'a') as log:
-                        log.write('{star},{date},{teff},{logg},{feh},{vsini},{addmode},{RV},{CCF}\n'.format(**best))
+                        log.write('{star},{date},{teff},{logg},{feh},{vsini},{addmode},{RV},{RV_err},{CCF}\n'.format(**best))
 
     return pd.concat(df_list, ignore_index=True)
 
@@ -87,8 +87,8 @@ def measure_rv(hdf5_file, output_log=None, update_attrs=True):
                     summary['addmode'].append(dataset.attrs['addmode'])
 
                     # Estimate the rv and rv_error
-                    vel, corr, ccf = dataset.value
-                    rv, rv_err = get_rv(vel, corr, Npix)
+                    vel, corr = dataset.value
+                    rv, rv_err, ccf = get_rv(vel, corr, Npix)
                     if dataset.attrs['addmode'] != 'ml':
                         rv_err = np.nan
                     summary['RV'].append(rv)
@@ -112,7 +112,7 @@ def measure_rv(hdf5_file, output_log=None, update_attrs=True):
                     best = df.loc[df.addmode == ADDMODE].sort_values(by='CCF').tail(1)
                     best = {k: v for k, v in zip(best.columns, best.values[0])}
                     with open(output_log, 'a') as log:
-                        log.write('{star},{date},{teff},{logg},{feh},{vsini},{addmode},{RV},{CCF}\n'.format(**best))
+                        log.write('{star},{date},{teff},{logg},{feh},{vsini},{addmode},{RV},{RV_err},{CCF}\n'.format(**best))
 
     return pd.concat(df_list, ignore_index=True)
 
@@ -121,6 +121,6 @@ if __name__ == '__main__':
     for fname in sys.argv[1:]:
         output = fname.replace('hdf5', 'rv.txt')
         with open(output, 'w') as log:
-            log.write('star,date,teff,logg,feh,vsini,addmode,rv,ccf\n')
+            log.write('star,date,teff,logg,feh,vsini,addmode,rv,rv_err,ccf\n')
         summary = measure_rv(fname, output_log=output)
         summary.to_csv(output.replace('.txt', '_summary.txt'), index=False)
