@@ -97,6 +97,7 @@ def measure_rv(hdf5_file, output_log=None, update_attrs=True):
                                       extensions=True, trimsize=trimsize, vsini=None,
                                       reject_outliers=False)
                 Npix = sum([o.size() for o in orders])
+                jd = get_jd(fname)
 
                 # Loop over the datasets
                 summary = defaultdict(list)
@@ -107,7 +108,7 @@ def measure_rv(hdf5_file, output_log=None, update_attrs=True):
                     summary['logg'].append(dataset.attrs['logg'])
                     summary['feh'].append(dataset.attrs['[Fe/H]'])
                     summary['addmode'].append(dataset.attrs['addmode'])
-                    summary['HJD'].append(get_jd(dataset.attrs[fname]))
+                    summary['HJD'].append(jd)
 
                     # Estimate the rv and rv_error
                     vel, corr = dataset.value
