@@ -46,6 +46,28 @@ def collect_rv(hdf5_file, output_log=None):
     return pd.concat(df_list, ignore_index=True)
 
 
+from astropy.io import fits
+import os
+
+jd_cache = {}
+
+
+def get_jd(fname, dirname='{}/School/Research/CHIRON_data'.format(os.environ['HOME'])):
+    fname = os.path.join(dirname, fname)
+    if fname in jd_cache:
+        return jd_cache[fname]
+    if not os.path.exists(fname):
+        return np.nan
+    header = fits.getheader(fname)
+    if 'HJD' in header:
+        jd = header['HJD']
+    else:
+        jd = header['JD']
+
+    jd_cache[fname] = jd
+    return jd
+
+
 def measure_rv(hdf5_file, output_log=None, update_attrs=True):
     """
     Measure the RV of each star/date combo in the HDF5 file.
@@ -85,6 +107,7 @@ def measure_rv(hdf5_file, output_log=None, update_attrs=True):
                     summary['logg'].append(dataset.attrs['logg'])
                     summary['feh'].append(dataset.attrs['[Fe/H]'])
                     summary['addmode'].append(dataset.attrs['addmode'])
+                    summary['HJD'].append(get_jd(dataset.attrs[fname]))
 
                     # Estimate the rv and rv_error
                     vel, corr = dataset.value
@@ -112,7 +135,9 @@ def measure_rv(hdf5_file, output_log=None, update_attrs=True):
                     best = df.loc[df.addmode == ADDMODE].sort_values(by='CCF').tail(1)
                     best = {k: v for k, v in zip(best.columns, best.values[0])}
                     with open(output_log, 'a') as log:
-                        log.write('{star},{date},{teff},{logg},{feh},{vsini},{addmode},{RV},{RV_err},{CCF}\n'.format(**best))
+                        log.write(
+                            '{star},{date},{HJD},{teff},{logg},{feh},{vsini},{addmode},{RV},{RV_err},{CCF}\n'.format(
+                                **best))
 
     return pd.concat(df_list, ignore_index=True)
 
