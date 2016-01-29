@@ -30,6 +30,7 @@ if __name__ == '__main__':
     prim_vsini = [None for _ in fileList]
 
     # Use this one for the real data search
+    Tvalues = range(7000, 10000, 1000) + range(10000, 30000, 2000)
     GenericSearch.slow_companion_search(fileList, prim_vsini,
                                         hdf5_file=hdf5_filename,
                                         extensions=True,
@@ -39,12 +40,14 @@ if __name__ == '__main__':
                                         badregions=badregions,
                                         metal_values=(0.0),
                                         logg_values=(3.5, 4.0, 4.5,),
-                                        vsini_values=(10, 40, 80, 150, 250),
-                                        Tvalues=range(7000, 20000, 1000),
+                                        #vsini_values=(10, 40, 80, 150, 250),
+                                        #Tvalues=range(7000, 20000, 1000),
+                                        vsini_values=range(100, 300, 25),
+                                        Tvalues=Tvalues,
                                         observatory='CTIO',
                                         debug=False,
                                         reject_outliers=False,
-                                        vbary_correct=False,
+                                        vbary_correct=True,
                                         addmode='all',
                                         output_mode='hdf5',
                                         output_file='CCF_primary_nobalmer.hdf5')
