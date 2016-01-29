@@ -1,7 +1,7 @@
 import sys
 
-import GenericSearch
-import StarData
+from kglib.cross_correlation import GenericSearch
+from kglib.utils import StarData
 
 # Define regions contaminated by telluric residuals or other defects. We will not use those regions in the cross-correlation
 badregions = [[567.5, 575.5],
@@ -52,7 +52,7 @@ if __name__ == '__main__':
                                         badregions=badregions,
                                         metal_values=(0.0, -0.5, 0.5),
                                         vsini_values=(1, 5.0, 10.0, 20.0, 30),
-                                        Tvalues=range(4100, 9000, 100),
+                                        Tvalues=range(9000, 12000, 100),
                                         # Tvalues = [5300,],
                                         #metal_values=[-0.5,],
                                         #vsini_values=[5,],
